@@ -1,0 +1,94 @@
+@import "tailwindcss";
+
+@layer base {
+
+  html,
+  body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+  }
+
+  .font-poppins {
+    font-family: var(--font-poppins), "Poppins", sans-serif;
+  }
+
+  /* Hide default cursor to allow custom trailing drop */
+  * {
+    cursor: none !important;
+  }
+}
+
+/* ── Animated mesh gradient background ── */
+@keyframes blob-drift-1 {
+
+  0%,
+  100% {
+    transform: translate(0%, 0%) scale(1);
+  }
+
+  25% {
+    transform: translate(10%, -15%) scale(1.1);
+  }
+
+  50% {
+    transform: translate(-5%, 10%) scale(0.95);
+  }
+
+  75% {
+    transform: translate(-10%, -5%) scale(1.05);
+  }
+}
+
+@keyframes blob-drift-2 {
+
+  0%,
+  100% {
+    transform: translate(0%, 0%) scale(1);
+  }
+
+  25% {
+    transform: translate(-12%, 10%) scale(1.08);
+  }
+
+  50% {
+    transform: translate(8%, -8%) scale(0.92);
+  }
+
+  75% {
+    transform: translate(5%, 12%) scale(1.04);
+  }
+}
+
+@keyframes blob-drift-3 {
+
+  0%,
+  100% {
+    transform: translate(0%, 0%) scale(1);
+  }
+
+  25% {
+    transform: translate(8%, 12%) scale(0.96);
+  }
+
+  50% {
+    transform: translate(-10%, -6%) scale(1.1);
+  }
+
+  75% {
+    transform: translate(12%, -10%) scale(1.02);
+  }
+}
+
+/* Subtle ambient pulse for glass glow */
+@keyframes glass-glow {
+
+  0%,
+  100% {
+    opacity: 0.6;
+  }
+
+  50% {
+    opacity: 0.85;
+  }
+}

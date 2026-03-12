@@ -1,0 +1,15 @@
+{
+  "campaigns": [
+    {
+      "id": "1bed78cd0e374ecea32eb2b604ad0f0b",
+      "owner_identifier": "Jill",
+      "title": "Surgery",
+      "description": "Open heart surgery",
+      "goal_amount": 2000.0,
+      "status": "active",
+      "deadline": null,
+      "created_at": "2026-03-12T00:40:33.505647+00:00"
+    }
+  ],
+  "contributions": []
+}

@@ -1,0 +1,33 @@
+# Python
+__pycache__/
+*.py[cod]
+.env
+venv/
+.venv/
+*.egg-info/
+dist/
+
+# Node
+node_modules/
+.next/
+out/
+.env.local
+*.tsbuildinfo
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Secrets
+apikeys.txt
+
+# Agent worktrees
+.claude/worktrees/
+.worktrees/
+
+node_modules
+.vercel

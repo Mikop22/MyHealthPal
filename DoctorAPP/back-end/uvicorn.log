@@ -1,0 +1,37 @@
+🩺 Starting Diagnostic API on http://localhost:8000
+   Health check: http://localhost:8000/health
+
+💡 To expose to the internet for Vercel, run in another terminal:
+   ngrok http 8000
+
+INFO:     Will watch for changes in these directories: ['/Users/user/Desktop/diagnostic/back-end']
+INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
+INFO:     Started reloader process [24047] using WatchFiles
+/Users/user/Desktop/diagnostic/back-end/venv/lib/python3.9/site-packages/urllib3/__init__.py:35: NotOpenSSLWarning: urllib3 v2 only supports OpenSSL 1.1.1+, currently the 'ssl' module is compiled with 'LibreSSL 2.8.3'. See: https://github.com/urllib3/urllib3/issues/3020
+  warnings.warn(
+INFO:     Started server process [24050]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     129.100.255.82:0 - "OPTIONS /api/v1/patients HTTP/1.1" 200 OK
+INFO:     129.100.255.82:0 - "GET /api/v1/patients HTTP/1.1" 200 OK
+INFO:     129.100.255.82:0 - "OPTIONS /api/v1/patients/pt_mock_2950ccd7/dashboard HTTP/1.1" 200 OK
+INFO:     129.100.255.82:0 - "GET /api/v1/patients/pt_mock_2950ccd7/dashboard HTTP/1.1" 200 OK
+INFO:     129.100.255.82:0 - "GET /api/v1/patients/pt_mock_2950ccd7/dashboard HTTP/1.1" 200 OK
+INFO:     129.100.255.82:0 - "GET /api/v1/patients/pt_mock_2950ccd7/dashboard HTTP/1.1" 200 OK
+INFO:     129.100.255.82:0 - "GET /api/v1/patients/pt_mock_2950ccd7/dashboard HTTP/1.1" 200 OK
+INFO:     129.100.255.82:0 - "GET /api/v1/patients/pt_mock_2950ccd7/dashboard HTTP/1.1" 200 OK
+INFO:     129.100.255.82:0 - "GET /api/v1/patients/pt_mock_2950ccd7/dashboard HTTP/1.1" 200 OK
+INFO:     129.100.255.82:0 - "GET /api/v1/patients/pt_mock_2950ccd7/dashboard HTTP/1.1" 200 OK
+INFO:     129.100.255.82:0 - "GET /api/v1/patients HTTP/1.1" 200 OK
+INFO:     129.100.255.82:0 - "GET /api/v1/patients/pt_mock_2950ccd7/dashboard HTTP/1.1" 200 OK
+INFO:     129.100.255.82:0 - "GET /api/v1/patients/pt_mock_2950ccd7/dashboard HTTP/1.1" 200 OK
+INFO:     129.100.255.82:0 - "OPTIONS /api/v1/paper/PMC8475133 HTTP/1.1" 200 OK
+INFO:     129.100.255.82:0 - "OPTIONS /api/v1/paper/PMC7821117 HTTP/1.1" 200 OK
+INFO:     129.100.255.82:0 - "OPTIONS /api/v1/paper/PMC7370081 HTTP/1.1" 200 OK
+INFO:     129.100.255.82:0 - "OPTIONS /api/v1/paper/PMC5895379 HTTP/1.1" 200 OK
+INFO:     129.100.255.82:0 - "OPTIONS /api/v1/paper/PMC10210381 HTTP/1.1" 200 OK
+INFO:     129.100.255.82:0 - "GET /api/v1/paper/PMC5895379 HTTP/1.1" 200 OK
+INFO:     129.100.255.82:0 - "GET /api/v1/paper/PMC7821117 HTTP/1.1" 200 OK
+INFO:     129.100.255.82:0 - "GET /api/v1/paper/PMC8475133 HTTP/1.1" 200 OK
+INFO:     129.100.255.82:0 - "GET /api/v1/paper/PMC7370081 HTTP/1.1" 200 OK
+INFO:     129.100.255.82:0 - "GET /api/v1/paper/PMC10210381 HTTP/1.1" 200 OK

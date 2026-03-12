@@ -1,0 +1,52 @@
+t=2026-03-03T13:27:16-0500 lvl=info msg="no configuration paths supplied"
+t=2026-03-03T13:27:16-0500 lvl=info msg="using configuration at default config path" path="/Users/user/Library/Application Support/ngrok/ngrok.yml"
+t=2026-03-03T13:27:16-0500 lvl=info msg="open config file" path="/Users/user/Library/Application Support/ngrok/ngrok.yml" err=nil
+t=2026-03-03T13:27:16-0500 lvl=info msg="FIPS 140 mode" enabled=false
+t=2026-03-03T13:27:16-0500 lvl=info msg="starting web service" obj=web addr=127.0.0.1:4040 allow_hosts=[]
+t=2026-03-03T13:27:16-0500 lvl=info msg="client session established" obj=tunnels.session
+t=2026-03-03T13:27:16-0500 lvl=info msg="tunnel session started" obj=tunnels.session
+t=2026-03-03T13:27:16-0500 lvl=info msg="started tunnel" obj=tunnels name=command_line addr=http://localhost:8000 url=https://01b7-129-100-255-82.ngrok-free.app
+t=2026-03-03T14:01:28-0500 lvl=info msg="join connections" obj=join id=0880de0d1476 l=127.0.0.1:8000 r=129.100.255.82:53487
+t=2026-03-03T14:01:28-0500 lvl=info msg="join connections" obj=join id=3aa5a6a3a656 l=127.0.0.1:8000 r=129.100.255.82:53487
+t=2026-03-03T14:11:32-0500 lvl=info msg="join connections" obj=join id=316e2a5d4c6f l=127.0.0.1:8000 r=129.100.255.82:56343
+t=2026-03-03T14:22:49-0500 lvl=info msg="join connections" obj=join id=b1042af72f4d l=127.0.0.1:8000 r=129.100.255.82:56596
+t=2026-03-03T14:24:42-0500 lvl=info msg="join connections" obj=join id=59a34744452f l=127.0.0.1:8000 r=129.100.255.82:60622
+t=2026-03-03T14:25:38-0500 lvl=info msg="join connections" obj=join id=e07c3e7040d8 l=127.0.0.1:8000 r=129.100.255.82:60622
+t=2026-03-03T14:25:52-0500 lvl=info msg="join connections" obj=join id=dfa6f22fdc23 l=127.0.0.1:8000 r=129.100.255.82:56785
+t=2026-03-03T14:25:52-0500 lvl=info msg="join connections" obj=join id=1e271db7d66b l=127.0.0.1:8000 r=129.100.255.82:56784
+t=2026-03-03T14:25:53-0500 lvl=info msg="join connections" obj=join id=dbfe64f3c445 l=127.0.0.1:8000 r=129.100.255.82:60622
+t=2026-03-03T14:25:53-0500 lvl=info msg="join connections" obj=join id=7600b8163478 l=127.0.0.1:8000 r=129.100.255.82:60622
+t=2026-03-03T14:25:53-0500 lvl=info msg="join connections" obj=join id=c3d70ef62368 l=127.0.0.1:8000 r=129.100.255.82:60622
+t=2026-03-03T14:25:53-0500 lvl=info msg="join connections" obj=join id=4b9ca30ac306 l=127.0.0.1:8000 r=129.100.255.82:60622
+t=2026-03-03T14:25:53-0500 lvl=info msg="join connections" obj=join id=3c3759f31fda l=127.0.0.1:8000 r=129.100.255.82:60622
+t=2026-03-03T14:25:53-0500 lvl=info msg="join connections" obj=join id=d115240ed5f4 l=127.0.0.1:8000 r=129.100.255.82:60622
+t=2026-03-03T14:25:53-0500 lvl=info msg="join connections" obj=join id=d7b8623af06b l=127.0.0.1:8000 r=129.100.255.82:60622
+t=2026-03-03T14:26:02-0500 lvl=info msg="join connections" obj=join id=f39caa83be5c l=127.0.0.1:8000 r=129.100.255.82:60622
+t=2026-03-03T14:26:02-0500 lvl=info msg="join connections" obj=join id=a8923b8e6f37 l=127.0.0.1:8000 r=129.100.255.82:60622
+t=2026-03-03T14:26:05-0500 lvl=info msg="join connections" obj=join id=362895d1e99e l=127.0.0.1:8000 r=129.100.255.82:56823
+t=2026-03-03T14:26:21-0500 lvl=info msg="join connections" obj=join id=f1a6db416936 l=127.0.0.1:8000 r=129.100.255.82:56832
+t=2026-03-03T14:26:21-0500 lvl=info msg="join connections" obj=join id=5ec1c1bee403 l=127.0.0.1:8000 r=129.100.255.82:56832
+t=2026-03-03T14:26:21-0500 lvl=info msg="join connections" obj=join id=a086480edc54 l=127.0.0.1:8000 r=129.100.255.82:56832
+t=2026-03-03T14:26:21-0500 lvl=info msg="join connections" obj=join id=6414d995a897 l=127.0.0.1:8000 r=129.100.255.82:56832
+t=2026-03-03T14:26:21-0500 lvl=info msg="join connections" obj=join id=6d7af53ce9fc l=127.0.0.1:8000 r=129.100.255.82:56832
+t=2026-03-03T14:26:21-0500 lvl=info msg="join connections" obj=join id=82f1f40e10c6 l=127.0.0.1:8000 r=129.100.255.82:56832
+t=2026-03-03T14:52:59-0500 lvl=eror msg="session closed, starting reconnect loop" obj=tunnels.session obj=csess id=66b4518ebc82 err="read tcp 172.30.22.122:50670->3.16.250.205:443: read: connection reset by peer"
+t=2026-03-03T14:53:00-0500 lvl=info msg="client session established" obj=tunnels.session
+t=2026-03-03T14:53:00-0500 lvl=info msg="tunnel session started" obj=tunnels.session
+t=2026-03-03T14:53:13-0500 lvl=eror msg="heartbeat timeout, terminating session" obj=tunnels.session obj=csess id=e16a525039d9 clientid=82edad9cd702cd46660e138a91f6d246
+t=2026-03-03T14:54:12-0500 lvl=eror msg="heartbeat timeout, terminating session" obj=tunnels.session obj=csess id=cc68eef03641 clientid=82edad9cd702cd46660e138a91f6d246
+t=2026-03-03T14:54:12-0500 lvl=eror msg="session closed, starting reconnect loop" obj=tunnels.session obj=csess id=66b4518ebc82 err="session closed"
+t=2026-03-03T14:54:13-0500 lvl=info msg="client session established" obj=tunnels.session
+t=2026-03-03T14:54:13-0500 lvl=info msg="tunnel session started" obj=tunnels.session
+t=2026-03-03T14:56:17-0500 lvl=eror msg="heartbeat timeout, terminating session" obj=tunnels.session obj=csess id=37b2b7c283b1 clientid=82edad9cd702cd46660e138a91f6d246
+t=2026-03-03T14:56:17-0500 lvl=eror msg="session closed, starting reconnect loop" obj=tunnels.session obj=csess id=66b4518ebc82 err="session closed"
+t=2026-03-03T14:56:17-0500 lvl=eror msg="failed to reconnect session" obj=tunnels.session err="failed to dial ngrok server with address \"connect.ngrok-agent.com:443\": dial tcp: lookup connect.ngrok-agent.com: no such host"
+t=2026-03-03T14:56:18-0500 lvl=eror msg="failed to reconnect session" obj=tunnels.session err="failed to dial ngrok server with address \"connect.ngrok-agent.com:443\": dial tcp: lookup connect.ngrok-agent.com: no such host"
+t=2026-03-03T14:56:19-0500 lvl=eror msg="failed to reconnect session" obj=tunnels.session err="failed to dial ngrok server with address \"connect.ngrok-agent.com:443\": dial tcp: lookup connect.ngrok-agent.com: no such host"
+t=2026-03-03T14:56:21-0500 lvl=eror msg="failed to reconnect session" obj=tunnels.session err="failed to dial ngrok server with address \"connect.ngrok-agent.com:443\": dial tcp: lookup connect.ngrok-agent.com: no such host"
+t=2026-03-03T14:56:25-0500 lvl=eror msg="failed to reconnect session" obj=tunnels.session err="failed to dial ngrok server with address \"connect.ngrok-agent.com:443\": dial tcp: lookup connect.ngrok-agent.com: no such host"
+t=2026-03-03T14:56:33-0500 lvl=eror msg="failed to reconnect session" obj=tunnels.session err="failed to dial ngrok server with address \"connect.ngrok-agent.com:443\": dial tcp: lookup connect.ngrok-agent.com: no such host"
+t=2026-03-03T14:57:38-0500 lvl=eror msg="failed to reconnect session" obj=tunnels.session err="failed to dial ngrok server with address \"connect.ngrok-agent.com:443\": dial tcp: lookup connect.ngrok-agent.com: no such host"
+t=2026-03-03T14:58:57-0500 lvl=eror msg="failed to reconnect session" obj=tunnels.session err="failed to dial ngrok server with address \"connect.ngrok-agent.com:443\": dial tcp: lookup connect.ngrok-agent.com: no such host"
+t=2026-03-03T14:59:28-0500 lvl=info msg="client session established" obj=tunnels.session
+t=2026-03-03T14:59:28-0500 lvl=info msg="tunnel session started" obj=tunnels.session

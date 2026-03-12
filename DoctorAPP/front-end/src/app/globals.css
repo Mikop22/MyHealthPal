@@ -1,0 +1,347 @@
+@import "tailwindcss";
+
+:root {
+  --background: #F8FDF8;
+  --foreground: #171717;
+
+  /* ── Brand palette (My HealthPal green) ── */
+  --purple-primary: #44AD4F;
+  --purple-dark: #368B3E;
+  --purple-light: #6DC94F;
+  --purple-accent: #7CC95E;
+
+  /* ── Typography ── */
+  --text-primary: #1F2D1F;
+  --text-secondary: #3D5C3D;
+  --text-muted: #6B7E6B;
+  --text-nav: #4A5E4A;
+  --text-body: #2D3B2D;
+
+  /* ── Translucent fills (glass-compatible, mint) ── */
+  --lavender-bg: rgba(224, 245, 230, 0.55);
+  --lavender-border: rgba(200, 230, 210, 0.6);
+  --avatar-purple-bg: rgba(200, 230, 210, 0.5);
+  --avatar-lavender-bg: rgba(224, 245, 230, 0.5);
+  --green-text: #2E7D32;
+  --green-bg: rgba(232, 245, 233, 0.6);
+  --orange-text: #E65100;
+  --orange-bg: rgba(255, 243, 224, 0.6);
+  --page-bg: transparent;
+  --red-alert: #E25C5C;
+
+  /* ── Glass borders ── */
+  --border-nav-inactive: rgba(255, 255, 255, 0.22);
+  --table-border-header: 1px solid rgba(255, 255, 255, 0.18);
+  --table-border-row: 1px solid rgba(255, 255, 255, 0.10);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-lato);
+  --font-mono: var(--font-geist-mono);
+}
+
+/* ═══════════════════════════════════════════
+   LIQUID GLASS CANVAS — Animated Mesh Gradient
+   ═══════════════════════════════════════════ */
+
+@keyframes drift-1 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  25%      { transform: translate(80px, -60px) scale(1.05); }
+  50%      { transform: translate(-40px, 40px) scale(0.95); }
+  75%      { transform: translate(60px, 80px) scale(1.02); }
+}
+
+@keyframes drift-2 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  25%      { transform: translate(-70px, 50px) scale(0.97); }
+  50%      { transform: translate(50px, -70px) scale(1.04); }
+  75%      { transform: translate(-40px, -30px) scale(0.98); }
+}
+
+@keyframes drift-3 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  25%      { transform: translate(40px, 70px) scale(1.03); }
+  50%      { transform: translate(-80px, -20px) scale(0.96); }
+  75%      { transform: translate(30px, -60px) scale(1.01); }
+}
+
+.liquid-canvas {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  background: linear-gradient(135deg, #F8FDF8 0%, #E8F5EE 35%, #E0F5E6 65%, #F0F9F2 100%);
+}
+
+.blob {
+  position: absolute;
+  border-radius: 50%;
+  opacity: 0.5;
+  will-change: transform;
+}
+
+.blob-1 {
+  width: 520px;
+  height: 520px;
+  background: #B8E0B0;
+  filter: blur(120px);
+  top: -8%;
+  left: 12%;
+  animation: drift-1 25s ease-in-out infinite;
+}
+
+.blob-2 {
+  width: 460px;
+  height: 460px;
+  background: #A8D8C8;
+  filter: blur(130px);
+  top: 35%;
+  right: 8%;
+  animation: drift-2 22s ease-in-out infinite;
+}
+
+.blob-3 {
+  width: 440px;
+  height: 440px;
+  background: #C0E8B8;
+  filter: blur(120px);
+  bottom: -5%;
+  left: 35%;
+  animation: drift-3 28s ease-in-out infinite;
+}
+
+/* ═══════════════════════════════════════════
+   LIQUID GLASS MATERIAL SYSTEM
+   ═══════════════════════════════════════════
+
+   The glass effect requires something colorful and
+   dynamic behind it. The animated mesh gradient canvas
+   provides the refractive substrate.
+
+   Material recipe (from the guide):
+   A. Fill — sheer white (8–12%)
+   B. Blur + Saturation — backdrop-blur 24–28px
+   C. Edges — white/20 to white/30 border
+   D. Shadows — tinted drop + inset specular highlight
+   E. Inner glow — radial gradient baked into background
+   ═══════════════════════════════════════════ */
+
+/* Primary glass surface — cards, panels, containers */
+.glass-card {
+  position: relative;
+  background:
+    radial-gradient(ellipse at 50% 0%, rgba(255, 255, 255, 0.18) 0%, transparent 55%),
+    rgba(255, 255, 255, 0.10);
+  backdrop-filter: blur(24px) saturate(140%);
+  -webkit-backdrop-filter: blur(24px) saturate(140%);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  box-shadow:
+    0 8px 32px rgba(68, 173, 79, 0.10),
+    inset 0 1px 0 rgba(255, 255, 255, 0.35);
+}
+
+/* Lighter glass — inputs, search bars, filter controls */
+.glass-control {
+  position: relative;
+  background:
+    radial-gradient(ellipse at 50% 0%, rgba(255, 255, 255, 0.12) 0%, transparent 50%),
+    rgba(255, 255, 255, 0.07);
+  backdrop-filter: blur(20px) saturate(130%);
+  -webkit-backdrop-filter: blur(20px) saturate(130%);
+  border: 1px solid rgba(255, 255, 255, 0.20);
+  box-shadow:
+    0 4px 16px rgba(68, 173, 79, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.25);
+}
+
+/* Green CTA glass button (brand) */
+.glass-purple {
+  position: relative;
+  background:
+    radial-gradient(ellipse at 30% 10%, rgba(255, 255, 255, 0.20) 0%, transparent 50%),
+    linear-gradient(135deg, rgba(109, 201, 79, 0.85), rgba(68, 173, 79, 0.75));
+  backdrop-filter: blur(20px) saturate(140%);
+  -webkit-backdrop-filter: blur(20px) saturate(140%);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  box-shadow:
+    0 8px 24px rgba(68, 173, 79, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.30);
+}
+
+/* Active nav pill — subtle glass chip */
+.nav-pill-active {
+  background:
+    radial-gradient(ellipse at 50% 0%, rgba(255, 255, 255, 0.15) 0%, transparent 50%),
+    rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(16px) saturate(130%);
+  -webkit-backdrop-filter: blur(16px) saturate(130%);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  box-shadow:
+    0 2px 8px rgba(68, 173, 79, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.30);
+}
+
+/* Glass nav bar — subtle separation from content */
+.glass-nav {
+  background:
+    radial-gradient(ellipse at 50% 100%, rgba(255, 255, 255, 0.08) 0%, transparent 60%),
+    rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(20px) saturate(120%);
+  -webkit-backdrop-filter: blur(20px) saturate(120%);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+/* Gradient text for logo (My HealthPal green) */
+.gradient-logo {
+  background: linear-gradient(to right, #368B3E, #6DC94F);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ═══════════════════════════════════════════
+   BASE STYLES
+   ═══════════════════════════════════════════ */
+
+@layer base {
+  html, body {
+    height: 100%;
+  }
+
+  .font-poppins {
+    font-family: var(--font-lato), "Lato", sans-serif;
+  }
+}
+
+body {
+  background: transparent;
+  color: var(--foreground);
+  font-family: var(--font-lato), "Lato", sans-serif;
+}
+
+/* ═══════════════════════════════════════════
+   MICROINTERACTIONS
+   ═══════════════════════════════════════════ */
+
+/* Glass card hover glow — subtle lift + shadow bloom */
+.glass-card {
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.glass-card:hover {
+  transform: translateY(-1px);
+  box-shadow:
+    0 12px 40px rgba(68, 173, 79, 0.14),
+    0 4px 16px rgba(68, 173, 79, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.40);
+}
+
+/* Row hover lift — patient & schedule table rows */
+.row-hover {
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+              background-color 0.2s ease;
+}
+
+.row-hover:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(68, 173, 79, 0.08);
+}
+
+/* Logo hover shimmer — gradient angle shift */
+.gradient-logo {
+  transition: filter 0.4s ease;
+}
+
+.gradient-logo:hover {
+  background: linear-gradient(135deg, #44AD4F, #7CC95E, #368B3E);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  filter: brightness(1.1);
+}
+
+/* Progress bar fill animation */
+@keyframes fill-bar {
+  from { width: 0; }
+}
+
+.animate-fill-bar {
+  animation: fill-bar 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Skeleton pulse */
+@keyframes skeleton-pulse {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 0.7; }
+}
+
+.skeleton-pulse {
+  animation: skeleton-pulse 1.8s ease-in-out infinite;
+  background: linear-gradient(90deg,
+    rgba(200, 230, 210, 0.3) 0%,
+    rgba(200, 230, 210, 0.5) 50%,
+    rgba(200, 230, 210, 0.3) 100%);
+  background-size: 200% 100%;
+  border-radius: 8px;
+}
+
+/* Custom scrollbar — thin green-tinted */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(68, 173, 79, 0.15);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(68, 173, 79, 0.25);
+}
+
+/* Glass tooltip */
+.glass-tooltip {
+  position: absolute;
+  z-index: 50;
+  padding: 6px 12px;
+  border-radius: 10px;
+  background: radial-gradient(ellipse at 50% 0%, rgba(255,255,255,0.20) 0%, transparent 55%),
+              rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(16px) saturate(140%);
+  -webkit-backdrop-filter: blur(16px) saturate(140%);
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  box-shadow: 0 4px 16px rgba(68, 173, 79, 0.12),
+              inset 0 1px 0 rgba(255, 255, 255, 0.4);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-primary);
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(4px);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.tooltip-trigger:hover .glass-tooltip {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Count-up number animation */
+@keyframes count-fade-in {
+  from { opacity: 0; transform: translateY(6px); filter: blur(4px); }
+  to   { opacity: 1; transform: translateY(0);   filter: blur(0); }
+}
+
+.count-animate {
+  animation: count-fade-in 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
