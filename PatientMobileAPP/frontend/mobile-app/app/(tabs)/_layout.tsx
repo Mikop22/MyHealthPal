@@ -81,14 +81,14 @@ export default function TabsLayout() {
         tabBarInactiveTintColor: TAB_INACTIVE,
         tabBarShowLabel: true,
         tabBarStyle: {
-          backgroundColor: Platform.OS === "web" ? TAB_BG : "transparent",
-          borderTopColor: TAB_BORDER,
-          borderTopWidth: StyleSheet.hairlineWidth,
+          backgroundColor:
+            Platform.OS === "web" ? "rgba(255,255,255,0.06)" : "transparent",
+          borderTopColor: Colors.tabBar.border,
+          borderTopWidth: 1,
           ...(Platform.OS === "web"
             ? ({
-              backdropFilter: "blur(24px) saturate(150%)",
-              WebkitBackdropFilter: "blur(24px) saturate(150%)",
-              boxShadow: "0 -8px 30px rgba(15,23,42,0.06)",
+              backdropFilter: "blur(20px) saturate(120%)",
+              WebkitBackdropFilter: "blur(20px) saturate(120%)",
             } as Record<string, string>)
             : {}),
           height: Platform.OS === "web" ? 68 : 72,
@@ -106,8 +106,7 @@ export default function TabsLayout() {
         tabBarLabelStyle: {
           fontSize: 11,
           fontWeight: "600",
-          letterSpacing: 0.15,
-          marginBottom: 2,
+          letterSpacing: 0.2,
         },
         tabBarBackground: () =>
           Platform.OS !== "web" ? (

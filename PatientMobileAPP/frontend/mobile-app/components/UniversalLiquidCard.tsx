@@ -48,13 +48,13 @@ const VARIANT_FILL: Record<GlassVariant, ViewStyle> = {
 
 const WEB_SHADOW: Record<GlassVariant, string> = {
   default:
-    "0 1px 2px rgba(22,101,52,0.03), 0 4px 12px rgba(22,101,52,0.04), 0 12px 36px rgba(22,101,52,0.05)",
+    "0 8px 32px rgba(68,173,79,0.10), inset 0 1px 0 rgba(255,255,255,0.35)",
   elevated:
-    "0 1px 3px rgba(22,101,52,0.04), 0 6px 16px rgba(22,101,52,0.05), 0 16px 48px rgba(22,101,52,0.06), inset 0 0.5px 0 rgba(255,255,255,0.6)",
+    "0 8px 32px rgba(68,173,79,0.10), 0 16px 48px rgba(68,173,79,0.06), inset 0 1px 0 rgba(255,255,255,0.40)",
   active:
-    "0 1px 2px rgba(34,197,94,0.06), 0 4px 14px rgba(34,197,94,0.08), 0 14px 40px rgba(34,197,94,0.06), inset 0 0.5px 0 rgba(255,255,255,0.5)",
+    "0 4px 14px rgba(68,173,79,0.12), 0 14px 40px rgba(68,173,79,0.08), inset 0 1px 0 rgba(255,255,255,0.35)",
   subtle:
-    "0 2px 8px rgba(22,101,52,0.03), 0 8px 24px rgba(22,101,52,0.03)",
+    "0 2px 8px rgba(68,173,79,0.04), 0 8px 24px rgba(68,173,79,0.03)",
 };
 
 export function UniversalLiquidCard({
@@ -151,10 +151,10 @@ export function UniversalLiquidCard({
 
 const nativeStyles = StyleSheet.create({
   wrapper: {
-    shadowColor: "rgba(22, 101, 52, 0.12)",
-    shadowOffset: { width: 0, height: 6 },
+    shadowColor: "rgba(68, 173, 79, 0.15)",
+    shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 1,
-    shadowRadius: 24,
+    shadowRadius: 32,
     elevation: 8,
   },
   innerGlow: {

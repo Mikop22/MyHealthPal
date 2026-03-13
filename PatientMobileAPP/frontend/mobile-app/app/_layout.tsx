@@ -36,7 +36,7 @@ export default function RootLayout() {
   const isScanner = pathname.includes("scanner");
 
   return (
-    <View style={{ flex: 1, backgroundColor: isOnboarding ? "white" : "transparent" }}>
+    <View style={{ flex: 1, backgroundColor: isOnboarding ? Colors.background : "transparent" }}>
       {!isOnboarding && <GlassCanvas />}
       <StatusBar style={isScanner ? "light" : "dark"} />
       <Stack
@@ -44,13 +44,13 @@ export default function RootLayout() {
           headerStyle: {
             backgroundColor:
               Platform.OS === "web"
-                ? "rgba(255, 255, 255, 0.08)"
+                ? "rgba(255, 255, 255, 0.06)"
                 : "transparent",
           },
-          headerTintColor: Colors.primary,
+          headerTintColor: Colors.text.primary,
           headerTitleStyle: {
             fontWeight: "700",
-            color: Colors.primary,
+            color: Colors.text.primary,
           },
           headerShadowVisible: false,
           contentStyle: { backgroundColor: "transparent" },
@@ -58,7 +58,7 @@ export default function RootLayout() {
         }}
       >
         <Stack.Screen name="index" options={{ headerShown: false }} />
-        <Stack.Screen name="onboarding" options={{ headerShown: false, contentStyle: { backgroundColor: "white" } }} />
+        <Stack.Screen name="onboarding" options={{ headerShown: false, contentStyle: { backgroundColor: Colors.background } }} />
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       </Stack>
     </View>

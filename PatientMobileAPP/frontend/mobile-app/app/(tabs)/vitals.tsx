@@ -25,7 +25,7 @@ import {
   type BiometricSeries,
 } from "../../providers/MockHealthKit";
 import { Colors } from "../../constants/Colors";
-import { Fonts } from "../../constants/Typography";
+import { Fonts, TypeScale } from "../../constants/Typography";
 
 const METRICS = getMockBiometrics();
 
@@ -45,7 +45,7 @@ const METRIC_ICONS: Record<string, Parameters<typeof AppIcon>[0]["name"]> = {
 
 type MetricIconName = Parameters<typeof AppIcon>[0]["name"];
 
-function PulsingAlertBadge({ text }: { text: string }) {
+function PulsingAlertBadge() {
   const glow = useSharedValue(0.3);
 
   useEffect(() => {
@@ -60,14 +60,14 @@ function PulsingAlertBadge({ text }: { text: string }) {
   }, []);
 
   const glowStyle = useAnimatedStyle(() => ({
-    borderColor: `rgba(34,197,94,${0.14 + glow.value * 0.12})`,
-    shadowOpacity: 0.03 + glow.value * 0.06,
+    borderColor: `rgba(226,92,92,${glow.value * 0.6})`,
+    shadowOpacity: glow.value * 0.4,
   }));
 
   return (
     <Animated.View style={[styles.alertBadge, glowStyle]}>
       <View style={styles.alertIconWrap}>
-        <AppIcon name="warning" size={18} color={Colors.accent} />
+        <AppIcon name="warning" size={20} color={Colors.semantic.error} />
       </View>
       <View style={styles.alertTextWrap}>
         <Text style={styles.alertTitle}>{text}</Text>
@@ -164,7 +164,7 @@ export default function VitalsScreen() {
       active.data.map((d) => ({
         value: d.value,
         label: d.date.split(" ")[1],
-        dataPointColor: d.flag ? Colors.accent : "#16A34A",
+        dataPointColor: d.flag ? Colors.semantic.error : Colors.brand,
         dataPointRadius: d.flag ? 7 : 4,
         customDataPoint: d.flag ? () => <PulsingDataPoint /> : undefined,
       })),
@@ -225,7 +225,34 @@ export default function VitalsScreen() {
                   isActive={m.key === activeKey}
                   underlineValue={underlineWidths[m.key]}
                   onPress={() => setActiveKey(m.key)}
-                />
+                  style={styles.pillOuter}
+                >
+                  {isActive ? (
+                    <LinearGradient
+                      colors={[Colors.brandLight, Colors.brand]}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 1 }}
+                      style={styles.pill}
+                    >
+                      <AppIcon name={iconName} size={14} color="#fff" />
+                      <Text style={[styles.pillText, styles.pillTextActive]}>
+                        {m.shortLabel}
+                      </Text>
+                    </LinearGradient>
+                  ) : (
+                    <View style={[styles.pill, styles.pillInactive]}>
+                      <AppIcon
+                        name={iconName}
+                        size={14}
+                        color={Colors.text.secondary}
+                      />
+                      <Text style={styles.pillText}>{m.shortLabel}</Text>
+                    </View>
+                  )}
+                  <View style={styles.underlineTrack}>
+                    <Animated.View style={[styles.underlineFill, ulStyle]} />
+                  </View>
+                </Pressable>
               );
             })}
           </ScrollView>
@@ -269,14 +296,14 @@ export default function VitalsScreen() {
                   height={chartHeight}
                   curved
                   areaChart
-                  color={Colors.accent}
+                  color={Colors.brand}
                   thickness={3}
-                  startFillColor="rgba(34,197,94,0.12)"
-                  endFillColor="rgba(34,197,94,0.01)"
-                  startOpacity={0.5}
+                  startFillColor="rgba(68, 173, 79, 0.25)"
+                  endFillColor="rgba(255,255,255,0)"
+                  startOpacity={0.4}
                   endOpacity={0}
                   hideDataPoints={false}
-                  dataPointsColor="#16A34A"
+                  dataPointsColor={Colors.brand}
                   dataPointsHeight={8}
                   dataPointsWidth={8}
                   xAxisColor="#E4E7EC"
@@ -334,7 +361,7 @@ export default function VitalsScreen() {
                 <Text
                   style={[
                     styles.deltaValue,
-                    isAnomaly && styles.deltaValueAccent,
+                    { color: isAnomaly ? Colors.semantic.error : Colors.semantic.success },
                   ]}
                 >
                   {deltaSign}
@@ -345,7 +372,7 @@ export default function VitalsScreen() {
             </View>
 
             {isAnomaly && (
-              <PulsingAlertBadge text="Clinically significant deviation" />
+              <PulsingAlertBadge />
             )}
           </View>
         </Animated.View>
@@ -431,25 +458,16 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 6,
     paddingHorizontal: 16,
-    paddingVertical: 11,
-    borderRadius: 18,
-  },
-  pillActive: {
-    backgroundColor: Colors.accent,
+    paddingVertical: 10,
+    borderRadius: 16,
   },
   pillInactive: {
-    backgroundColor: "#FFFFFF",
+    backgroundColor: "rgba(68, 173, 79, 0.06)",
     borderWidth: 1,
-    borderColor: "#E4E7EC",
+    borderColor: "rgba(68, 173, 79, 0.12)",
   },
-  pillText: {
-    fontSize: 14,
-    fontFamily: Fonts.semiBold,
-    color: TEXT_PRIMARY,
-  },
-  pillTextActive: {
-    color: "#fff",
-  },
+  pillText: { fontSize: 14, fontWeight: "600", color: Colors.text.secondary },
+  pillTextActive: { color: "#fff" },
   underlineTrack: {
     height: 3,
     width: "58%",
@@ -459,62 +477,24 @@ const styles = StyleSheet.create({
     backgroundColor: "transparent",
   },
   underlineFill: {
-    height: 3,
-    backgroundColor: Colors.accent,
-    borderRadius: 999,
-  },
-  chartHeader: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    justifyContent: "space-between",
-    gap: 12,
-    marginBottom: 18,
-  },
-  cardEyebrow: {
-    fontSize: 11,
-    fontFamily: Fonts.bold,
-    color: TEXT_SECONDARY,
-    letterSpacing: 1.4,
-    marginBottom: 6,
+    height: 2.5,
+    backgroundColor: Colors.brand,
+    borderRadius: 2,
   },
   chartTitle: {
-    fontSize: 20,
+    ...TypeScale.subheading,
     fontFamily: Fonts.bold,
-    color: TEXT_PRIMARY,
-    letterSpacing: -0.3,
+    color: Colors.text.primary,
+    marginBottom: 16,
   },
-  chartValuePill: {
-    paddingHorizontal: 14,
-    paddingVertical: 9,
-    borderRadius: 999,
-    backgroundColor: "rgba(34, 197, 94, 0.10)",
-  },
-  chartValue: {
-    fontSize: 16,
-    fontFamily: Fonts.bold,
-    color: Colors.accent,
-    letterSpacing: -0.2,
-  },
-  chartUnit: {
-    fontFamily: Fonts.medium,
-    color: TEXT_SECONDARY,
-  },
-  riskZoneWrap: {
-    position: "relative",
-    marginBottom: 10,
-  },
-  chartWrap: {
-    marginLeft: -6,
-  },
-  axisText: {
-    fontSize: 11,
-    color: TEXT_SECONDARY,
-  },
+  riskZoneWrap: { position: "relative", marginBottom: 8 },
+  chartWrap: { marginLeft: -8 },
+  axisText: { fontSize: 11, color: Colors.text.muted },
   spikeOuter: {
     width: 16,
     height: 16,
     borderRadius: 8,
-    backgroundColor: "rgba(34,197,94,0.20)",
+    backgroundColor: "rgba(226, 92, 92, 0.20)",
     alignItems: "center",
     justifyContent: "center",
   },
@@ -522,7 +502,7 @@ const styles = StyleSheet.create({
     width: 10,
     height: 10,
     borderRadius: 5,
-    backgroundColor: Colors.accent,
+    backgroundColor: Colors.semantic.error,
     borderWidth: 2,
     borderColor: "#fff",
   },
@@ -544,11 +524,12 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: TEXT_SECONDARY,
   },
+  legendLabel: { ...TypeScale.caption, color: Colors.text.muted },
   riskLegend: {
     width: 16,
     height: 8,
     borderRadius: 2,
-    backgroundColor: "rgba(239,68,68,0.18)",
+    backgroundColor: "rgba(226,92,92,0.2)",
     marginLeft: 8,
   },
   deltaRow: {
@@ -563,35 +544,25 @@ const styles = StyleSheet.create({
     alignItems: "flex-end",
   },
   deltaDivider: {
-    width: StyleSheet.hairlineWidth,
-    height: 42,
-    backgroundColor: DIVIDER,
+    width: 1,
+    height: 40,
+    backgroundColor: "rgba(200, 230, 210, 0.4)",
     marginHorizontal: 16,
   },
   deltaMetric: {
-    fontSize: 30,
-    fontFamily: Fonts.bold,
-    color: TEXT_PRIMARY,
-    letterSpacing: -0.5,
+    ...TypeScale.title,
+    fontWeight: "800",
+    color: Colors.text.primary,
   },
   deltaUnit: {
     fontSize: 15,
-    fontFamily: Fonts.medium,
-    color: TEXT_SECONDARY,
+    fontWeight: "500",
+    color: Colors.text.muted,
   },
   deltaLabel: {
-    fontSize: 12,
-    color: TEXT_SECONDARY,
-    marginTop: 3,
-  },
-  deltaValue: {
-    fontSize: 22,
-    fontFamily: Fonts.bold,
-    color: TEXT_PRIMARY,
-    letterSpacing: -0.3,
-  },
-  deltaValueAccent: {
-    color: Colors.accent,
+    ...TypeScale.caption,
+    color: Colors.text.muted,
+    marginTop: 2,
   },
   alertBadge: {
     flexDirection: "row",
@@ -601,32 +572,30 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 12,
     borderRadius: 16,
-    borderWidth: 1,
-    backgroundColor: "#FAFCFA",
-    shadowColor: Colors.accent,
-    shadowOffset: { width: 0, height: 8 },
-    shadowRadius: 18,
-    elevation: 2,
+    borderWidth: 1.5,
+    borderColor: "rgba(226, 92, 92, 0.3)",
+    backgroundColor: Colors.semantic.errorBg,
+    shadowColor: Colors.semantic.error,
+    shadowOffset: { width: 0, height: 0 },
+    shadowRadius: 12,
   },
   alertIconWrap: {
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: "rgba(34, 197, 94, 0.10)",
+    backgroundColor: "rgba(226, 92, 92, 0.10)",
     alignItems: "center",
     justifyContent: "center",
   },
-  alertTextWrap: {
-    flex: 1,
-  },
+  alertTextWrap: { flex: 1 },
   alertTitle: {
     fontSize: 13,
-    fontFamily: Fonts.bold,
-    color: TEXT_PRIMARY,
+    fontWeight: "700",
+    color: Colors.semantic.error,
   },
   alertSub: {
-    fontSize: 12,
-    color: TEXT_SECONDARY,
-    marginTop: 3,
+    ...TypeScale.caption,
+    color: Colors.text.secondary,
+    marginTop: 2,
   },
 });

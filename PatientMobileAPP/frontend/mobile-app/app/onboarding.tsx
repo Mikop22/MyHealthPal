@@ -345,12 +345,12 @@ export default function OnboardingScreen() {
               >
                 <View style={inputStyles.inputContainer}>
                   <View style={inputStyles.iconWrap}>
-                    <AppIcon name="mail" size={20} color={Colors.forest[500]} />
+                    <AppIcon name="mail" size={20} color={Colors.text.muted} />
                   </View>
                   <TextInput
                     style={inputStyles.input}
                     placeholder={step.inputPlaceholder}
-                    placeholderTextColor={Colors.forest[400]}
+                    placeholderTextColor={Colors.text.muted}
                     value={(selections.email as string) ?? ""}
                     onChangeText={handleEmailChange}
                     keyboardType="email-address"
@@ -420,7 +420,7 @@ export default function OnboardingScreen() {
           ]}
         >
           <LinearGradient
-            colors={["#00C8B4", "#22C55E"]}
+            colors={[Colors.brandLight, Colors.brand]}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 0 }}
             style={[
@@ -475,13 +475,13 @@ const inputStyles = StyleSheet.create({
     flex: 1,
     fontSize: 17,
     fontFamily: Fonts.medium,
-    color: Colors.forest[800],
+    color: Colors.text.primary,
     letterSpacing: -0.1,
   },
   hint: {
     fontSize: 12,
     fontFamily: Fonts.regular,
-    color: Colors.forest[400],
+    color: Colors.text.muted,
     textAlign: "center",
     marginTop: 14,
     letterSpacing: 0.2,
@@ -510,7 +510,7 @@ const styles = StyleSheet.create({
   headerStepLabel: {
     fontFamily: Fonts.medium,
     fontSize: 13,
-    color: Colors.forest[500],
+    color: Colors.text.muted,
     letterSpacing: 0.3,
   },
 });

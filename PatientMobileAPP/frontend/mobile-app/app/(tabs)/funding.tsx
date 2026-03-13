@@ -210,7 +210,7 @@ function ProfileAvatar({ size = 72 }: { size?: number }) {
           { width: size, height: size, borderRadius: size / 2 },
         ]}
       >
-        <AppIcon name="person" size={size * 0.45} color={TEXT_PRIMARY} />
+        <AppIcon name="person" size={size * 0.45} color={Colors.text.muted} />
       </View>
     </View>
   );
@@ -298,7 +298,7 @@ export default function FundingScreen() {
 
             <View style={s.sectionBlock}>
               <View style={s.sectionLabelRow}>
-                <AppIcon name="person" size={14} color={Colors.accent} />
+                <AppIcon name="person" size={14} color={Colors.text.muted} />
                 <Text style={s.sectionLabel}>ABOUT ME</Text>
               </View>
               <TextInput
@@ -314,7 +314,7 @@ export default function FundingScreen() {
 
             <View style={s.sectionBlockLast}>
               <View style={s.sectionLabelRow}>
-                <AppIcon name="medical" size={14} color={Colors.accent} />
+                <AppIcon name="medical" size={14} color={Colors.text.muted} />
                 <Text style={s.sectionLabel}>CASE DESCRIPTION</Text>
               </View>
               <TextInput
@@ -333,9 +333,12 @@ export default function FundingScreen() {
         <Animated.View entering={getFirstTouchEntering(2)}>
           <View style={s.surfaceCard}>
             <View style={s.campaignHeader}>
-              <View style={s.campaignIconCapsule}>
-                <AppIcon name="medical" size={22} color={Colors.accent} />
-              </View>
+              <LinearGradient
+                colors={["rgba(134,239,172,0.25)", "rgba(22,163,74,0.12)"]}
+                style={s.campaignIconCapsule}
+              >
+                <AppIcon name="medical" size={22} color={Colors.brand} />
+              </LinearGradient>
               <View style={{ flex: 1 }}>
                 <Text style={s.campaignTitle}>MRI Diagnostic Imaging</Text>
                 <Text style={s.campaignSub}>
@@ -385,7 +388,7 @@ export default function FundingScreen() {
         <Animated.View entering={getFirstTouchEntering(3)}>
           <View style={s.surfaceCard}>
             <View style={s.sectionLabelRow}>
-              <AppIcon name="heart" size={13} color={Colors.accent} />
+              <AppIcon name="heart" size={13} color={Colors.text.muted} />
               <Text style={s.sectionLabel}>RECENT SUPPORTERS</Text>
             </View>
             {MOCK_DONORS.map((d, idx) => (
@@ -476,14 +479,14 @@ const s = StyleSheet.create({
   pageHeaderTitle: {
     fontSize: 32,
     fontFamily: Fonts.bold,
-    color: TEXT_PRIMARY,
-    letterSpacing: -0.8,
+    color: Colors.text.primary,
+    letterSpacing: -0.5,
   },
   pageHeaderSub: {
     fontSize: 15,
     fontFamily: Fonts.regular,
-    color: TEXT_SECONDARY,
-    marginTop: 4,
+    color: Colors.text.muted,
+    marginTop: 2,
     letterSpacing: 0.1,
   },
   createCampaignBtn: {
@@ -518,14 +521,14 @@ const s = StyleSheet.create({
   profileName: {
     fontSize: 19,
     fontFamily: Fonts.bold,
-    color: TEXT_PRIMARY,
+    color: Colors.text.primary,
     letterSpacing: -0.2,
   },
   profileHint: {
     fontSize: 14,
     fontFamily: Fonts.regular,
-    color: TEXT_SECONDARY,
-    marginTop: 4,
+    color: Colors.text.muted,
+    marginTop: 3,
     letterSpacing: 0.1,
   },
   avatarOuter: {
@@ -536,7 +539,7 @@ const s = StyleSheet.create({
     position: "absolute",
   },
   avatarInner: {
-    backgroundColor: "#FFFFFF",
+    backgroundColor: "rgba(68, 173, 79, 0.06)",
     alignItems: "center",
     justifyContent: "center",
     shadowColor: "#101828",
@@ -560,7 +563,7 @@ const s = StyleSheet.create({
   sectionLabel: {
     fontSize: 11,
     fontFamily: Fonts.bold,
-    color: TEXT_SECONDARY,
+    color: Colors.text.muted,
     letterSpacing: 1.4,
   },
   bioInput: {
@@ -572,7 +575,7 @@ const s = StyleSheet.create({
     paddingVertical: 14,
     fontSize: 15,
     fontFamily: Fonts.regular,
-    color: TEXT_PRIMARY,
+    color: Colors.text.primary,
     lineHeight: 22,
     minHeight: 76,
   },
@@ -596,14 +599,14 @@ const s = StyleSheet.create({
   campaignTitle: {
     fontSize: 18,
     fontFamily: Fonts.bold,
-    color: TEXT_PRIMARY,
+    color: Colors.text.primary,
     letterSpacing: -0.2,
   },
   campaignSub: {
     fontSize: 13,
     fontFamily: Fonts.regular,
-    color: TEXT_SECONDARY,
-    marginTop: 4,
+    color: Colors.text.muted,
+    marginTop: 3,
     letterSpacing: 0.1,
   },
   statsRow: {
@@ -619,17 +622,14 @@ const s = StyleSheet.create({
   statValue: {
     fontSize: 21,
     fontFamily: Fonts.bold,
-    color: TEXT_PRIMARY,
-    letterSpacing: -0.4,
-  },
-  statValueAccent: {
-    color: Colors.accent,
+    color: Colors.text.primary,
+    letterSpacing: -0.3,
   },
   statCaption: {
     fontSize: 11,
     fontFamily: Fonts.medium,
-    color: TEXT_SECONDARY,
-    marginTop: 4,
+    color: Colors.text.muted,
+    marginTop: 2,
     letterSpacing: 0.5,
     textTransform: "uppercase",
   },
@@ -687,7 +687,7 @@ const s = StyleSheet.create({
   fillBtnText: {
     fontSize: 14,
     fontFamily: Fonts.semiBold,
-    color: TEXT_PRIMARY,
+    color: Colors.text.secondary,
     letterSpacing: 0.1,
   },
   donorRow: {
@@ -715,26 +715,26 @@ const s = StyleSheet.create({
   donorInitials: {
     fontSize: 13,
     fontFamily: Fonts.bold,
-    color: TEXT_PRIMARY,
+    color: Colors.text.secondary,
     letterSpacing: 0.5,
   },
   donorName: {
     fontSize: 15,
     fontFamily: Fonts.medium,
-    color: TEXT_PRIMARY,
+    color: Colors.text.primary,
     letterSpacing: 0.1,
   },
   donorAmount: {
     fontSize: 16,
     fontFamily: Fonts.bold,
-    color: Colors.accent,
+    color: Colors.brand,
     letterSpacing: -0.2,
   },
   donorTime: {
     fontSize: 12,
     fontFamily: Fonts.regular,
-    color: TEXT_SECONDARY,
-    marginTop: 2,
+    color: Colors.text.muted,
+    marginTop: 1,
     letterSpacing: 0.2,
   },
   qrCard: {
@@ -764,13 +764,13 @@ const s = StyleSheet.create({
   qrTitle: {
     fontSize: 22,
     fontFamily: Fonts.bold,
-    color: TEXT_PRIMARY,
+    color: Colors.text.primary,
     letterSpacing: -0.3,
   },
   qrSub: {
     fontSize: 14,
     fontFamily: Fonts.regular,
-    color: TEXT_SECONDARY,
+    color: Colors.text.secondary,
     textAlign: "center",
     lineHeight: 21,
     marginBottom: 24,
@@ -795,7 +795,7 @@ const s = StyleSheet.create({
   qrRef: {
     fontSize: 12,
     fontFamily: Fonts.bold,
-    color: TEXT_TERTIARY,
+    color: Colors.text.muted,
     letterSpacing: 2,
   },
 });

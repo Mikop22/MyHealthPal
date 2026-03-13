@@ -132,7 +132,7 @@ function AboutMeModal({
                   <Text style={styles.modalNameSub}>Community Member</Text>
                 </View>
                 <Pressable onPress={onClose} style={styles.modalClose}>
-                  <AppIcon name="close" size={18} color={TEXT_PRIMARY} />
+                  <AppIcon name="close" size={18} color={Colors.text.muted} />
                 </Pressable>
               </View>
 
@@ -144,7 +144,7 @@ function AboutMeModal({
                 style={styles.modalScroll}
               >
                 <View style={styles.modalLabelRow}>
-                  <AppIcon name="person" size={13} color={Colors.accent} />
+                  <AppIcon name="person" size={13} color={Colors.text.muted} />
                   <Text style={styles.modalLabel}>ABOUT ME</Text>
                 </View>
                 <Text style={styles.modalBody}>{aboutMe}</Text>
@@ -197,12 +197,12 @@ function RequestCard({
             </View>
             {fulfilled ? (
               <View style={styles.fulfilledChip}>
-                <AppIcon name="checkmark" size={10} color={Colors.accent} />
+                <AppIcon name="checkmark" size={10} color={Colors.brand} />
                 <Text style={styles.fulfilledChipText}>Funded</Text>
               </View>
             ) : (
               <View style={styles.categoryChip}>
-                <AppIcon name={iconName} size={12} color={Colors.accent} />
+                <AppIcon name={iconName} size={12} color={Colors.text.muted} />
               </View>
             )}
           </View>
@@ -309,14 +309,14 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 32,
     fontFamily: Fonts.bold,
-    color: TEXT_PRIMARY,
-    letterSpacing: -0.8,
+    color: Colors.text.primary,
+    letterSpacing: -0.5,
   },
   headerSub: {
     fontSize: 15,
     fontFamily: Fonts.regular,
-    color: TEXT_SECONDARY,
-    marginTop: 4,
+    color: Colors.text.muted,
+    marginTop: 2,
     letterSpacing: 0.1,
   },
   card: {
@@ -353,7 +353,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: "rgba(68, 173, 79, 0.06)",
     alignItems: "center",
     justifyContent: "center",
     shadowColor: "#101828",
@@ -365,20 +365,20 @@ const styles = StyleSheet.create({
   avatarInitials: {
     fontSize: 14,
     fontFamily: Fonts.bold,
-    color: TEXT_PRIMARY,
+    color: Colors.text.secondary,
     letterSpacing: 0.3,
   },
   requester: {
     fontSize: 15,
     fontFamily: Fonts.semiBold,
-    color: TEXT_PRIMARY,
+    color: Colors.text.primary,
     letterSpacing: -0.1,
   },
   timeAgo: {
     fontSize: 12,
     fontFamily: Fonts.regular,
-    color: TEXT_SECONDARY,
-    marginTop: 2,
+    color: Colors.text.muted,
+    marginTop: 1,
     letterSpacing: 0.1,
   },
   fulfilledChip: {
@@ -393,7 +393,7 @@ const styles = StyleSheet.create({
   fulfilledChipText: {
     fontSize: 11,
     fontFamily: Fonts.bold,
-    color: Colors.accent,
+    color: Colors.brand,
     letterSpacing: 0.3,
   },
   categoryChip: {
@@ -407,17 +407,17 @@ const styles = StyleSheet.create({
   cardTitle: {
     fontSize: 17,
     fontFamily: Fonts.semiBold,
-    lineHeight: 23,
-    color: TEXT_PRIMARY,
-    letterSpacing: -0.2,
-    marginBottom: 8,
+    lineHeight: 22,
+    color: Colors.text.primary,
+    letterSpacing: -0.1,
+    marginBottom: 6,
   },
   cardDescription: {
     fontSize: 14,
     fontFamily: Fonts.regular,
-    lineHeight: 21,
-    color: TEXT_SECONDARY,
-    marginBottom: 18,
+    lineHeight: 19,
+    color: Colors.text.muted,
+    marginBottom: 16,
     letterSpacing: 0.1,
   },
   progressRow: {
@@ -442,12 +442,12 @@ const styles = StyleSheet.create({
   progressLabel: {
     fontSize: 14,
     fontFamily: Fonts.bold,
-    color: Colors.accent,
+    color: Colors.text.primary,
     letterSpacing: -0.2,
   },
   progressLabelMuted: {
     fontFamily: Fonts.regular,
-    color: TEXT_TERTIARY,
+    color: Colors.text.muted,
   },
   donateBtn: {
     flexDirection: "row",
@@ -508,30 +508,30 @@ const styles = StyleSheet.create({
     marginBottom: 18,
   },
   modalAvatar: {
-    width: 54,
-    height: 54,
-    borderRadius: 27,
-    backgroundColor: "rgba(34, 197, 94, 0.10)",
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    backgroundColor: "rgba(68, 173, 79, 0.06)",
     alignItems: "center",
     justifyContent: "center",
   },
   modalAvatarText: {
     fontSize: 18,
     fontFamily: Fonts.bold,
-    color: TEXT_PRIMARY,
+    color: Colors.text.secondary,
     letterSpacing: 0.5,
   },
   modalName: {
     fontSize: 18,
     fontFamily: Fonts.bold,
-    color: TEXT_PRIMARY,
+    color: Colors.text.primary,
     letterSpacing: -0.2,
   },
   modalNameSub: {
     fontSize: 12,
     fontFamily: Fonts.regular,
-    color: TEXT_SECONDARY,
-    marginTop: 3,
+    color: Colors.text.muted,
+    marginTop: 2,
     letterSpacing: 0.2,
   },
   modalClose: {
@@ -556,13 +556,13 @@ const styles = StyleSheet.create({
   modalLabel: {
     fontSize: 11,
     fontFamily: Fonts.bold,
-    color: TEXT_SECONDARY,
+    color: Colors.text.muted,
     letterSpacing: 1.4,
   },
   modalBody: {
     fontSize: 15,
     fontFamily: Fonts.regular,
-    color: "#344054",
+    color: Colors.text.secondary,
     lineHeight: 23,
     letterSpacing: 0.1,
   },
