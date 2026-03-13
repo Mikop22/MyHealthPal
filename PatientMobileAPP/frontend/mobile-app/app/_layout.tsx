@@ -33,11 +33,12 @@ export default function RootLayout() {
 
   const pathname = usePathname();
   const isOnboarding = pathname.includes("onboarding");
+  const isScanner = pathname.includes("scanner");
 
   return (
     <View style={{ flex: 1, backgroundColor: isOnboarding ? "white" : "transparent" }}>
       {!isOnboarding && <GlassCanvas />}
-      <StatusBar style="dark" />
+      <StatusBar style={isScanner ? "light" : "dark"} />
       <Stack
         screenOptions={{
           headerStyle: {

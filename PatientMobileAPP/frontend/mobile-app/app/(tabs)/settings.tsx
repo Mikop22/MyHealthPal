@@ -1,14 +1,19 @@
 import React from "react";
-import { View, Text, StyleSheet, ScrollView } from "react-native";
+import { ScrollView, StyleSheet, Text, View } from "react-native";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { LinearGradient } from "expo-linear-gradient";
 import { AppIcon, type AppIconName } from "../../components/AppIcon";
-import { UniversalLiquidCard } from "../../components/UniversalLiquidCard";
 import { Colors } from "../../constants/Colors";
 import { Fonts } from "../../constants/Typography";
 import { usePatientStore } from "../../store/patientStore";
 
 const FALLBACK = "Not specified";
+const SCREEN_BG = "#F6F8F6";
+const CARD_BG = "#FFFFFF";
+const TEXT_PRIMARY = "#101828";
+const TEXT_SECONDARY = "#667085";
+const TEXT_TERTIARY = "#98A2B3";
+const DIVIDER = "rgba(15, 23, 42, 0.08)";
 
 function formatSex(sex: string | null): string {
   if (!sex) return FALLBACK;
@@ -50,16 +55,15 @@ function formatLanguage(lang: string | null): string {
   if (!lang) return FALLBACK;
   const labels: Record<string, string> = {
     en: "English",
-    fr: "Français",
-    es: "Español",
-    ar: "العربية",
-    zh: "中文",
+    fr: "Francais",
+    es: "Espanol",
+    ar: "Arabic",
+    zh: "Chinese",
     other: "Other",
   };
   return labels[lang] ?? lang;
 }
 
-/* ── Premium list item for settings display ── */
 function SettingsRow({
   icon,
   label,
@@ -74,18 +78,17 @@ function SettingsRow({
   return (
     <View style={[s.settingsRow, !isLast && s.settingsRowBorder]}>
       <View style={s.settingsIconWrap}>
-        <AppIcon name={icon} size={18} color={Colors.forest[500]} />
+        <AppIcon name={icon} size={18} color={Colors.accent} />
       </View>
       <View style={s.settingsTextWrap}>
         <Text style={s.settingsLabel}>{label}</Text>
         <Text style={s.settingsValue}>{value}</Text>
       </View>
-      <AppIcon name="chevron-forward" size={16} color={Colors.forest[300]} />
+      <AppIcon name="chevron-forward" size={16} color={TEXT_TERTIARY} />
     </View>
   );
 }
 
-/* ── Profile header with avatar ── */
 function ProfileHeader() {
   const { demographics } = usePatientStore();
 
@@ -93,11 +96,11 @@ function ProfileHeader() {
     <View style={s.profileHeader}>
       <View style={s.avatarOuter}>
         <LinearGradient
-          colors={["rgba(134,239,172,0.35)", "rgba(22,163,74,0.12)"]}
+          colors={["rgba(134,239,172,0.34)", "rgba(22,163,74,0.10)"]}
           style={s.avatarGradientRing}
         />
         <View style={s.avatarInner}>
-          <AppIcon name="person" size={36} color={Colors.forest[400]} />
+          <AppIcon name="person" size={36} color={TEXT_PRIMARY} />
         </View>
       </View>
       <Text style={s.profileName}>Patient Profile</Text>
@@ -120,24 +123,21 @@ export default function SettingsScreen() {
         contentContainerStyle={s.content}
         showsVerticalScrollIndicator={false}
       >
-        {/* ── Page Header ── */}
         <Animated.View entering={FadeInDown.duration(500).delay(50)}>
           <Text style={s.pageTitle}>Profile</Text>
           <Text style={s.pageSub}>Your health information</Text>
         </Animated.View>
 
-        {/* ── Avatar Card ── */}
         <Animated.View entering={FadeInDown.duration(500).delay(100)}>
-          <UniversalLiquidCard variant="elevated" style={s.profileCard}>
+          <View style={s.surfaceCard}>
             <ProfileHeader />
-          </UniversalLiquidCard>
+          </View>
         </Animated.View>
 
-        {/* ── Demographics Card ── */}
         <Animated.View entering={FadeInDown.duration(500).delay(200)}>
-          <UniversalLiquidCard variant="default" style={s.demographicsCard}>
+          <View style={s.surfaceCard}>
             <View style={s.cardLabelRow}>
-              <AppIcon name="clipboard" size={14} color={Colors.forest[500]} />
+              <AppIcon name="clipboard" size={14} color={Colors.accent} />
               <Text style={s.cardLabel}>DEMOGRAPHICS</Text>
             </View>
 
@@ -167,14 +167,17 @@ export default function SettingsScreen() {
               value={demographics.email ?? FALLBACK}
               isLast
             />
-          </UniversalLiquidCard>
+          </View>
         </Animated.View>
 
-        {/* ── Health Summary Card ── */}
         <Animated.View entering={FadeInDown.duration(500).delay(300)}>
-          <UniversalLiquidCard variant="default" style={s.demographicsCard}>
+          <View style={s.surfaceCard}>
             <View style={s.cardLabelRow}>
-              <AppIcon name="shield-checkmark" size={14} color={Colors.forest[500]} />
+              <AppIcon
+                name="shield-checkmark"
+                size={14}
+                color={Colors.accent}
+              />
               <Text style={s.cardLabel}>APP INFO</Text>
             </View>
 
@@ -194,18 +197,21 @@ export default function SettingsScreen() {
               value="View"
               isLast
             />
-          </UniversalLiquidCard>
+          </View>
         </Animated.View>
 
-        {/* ── Completion Status ── */}
         <Animated.View entering={FadeInDown.duration(500).delay(400)}>
-          <UniversalLiquidCard variant="subtle" style={s.statusCard}>
+          <View style={[s.surfaceCard, s.statusCard]}>
             <View style={s.statusRow}>
               <View style={s.statusBadge}>
                 <AppIcon
-                  name={demographics.completedAt ? "checkmark-circle" : "alert-circle"}
+                  name={
+                    demographics.completedAt
+                      ? "checkmark-circle"
+                      : "alert-circle"
+                  }
                   size={20}
-                  color={demographics.completedAt ? Colors.accent : Colors.forest[400]}
+                  color={demographics.completedAt ? Colors.accent : TEXT_SECONDARY}
                 />
               </View>
               <View style={{ flex: 1 }}>
@@ -221,40 +227,56 @@ export default function SettingsScreen() {
                 </Text>
               </View>
             </View>
-          </UniversalLiquidCard>
+          </View>
         </Animated.View>
 
-        <View style={{ height: 32 }} />
+        <View style={{ height: 24 }} />
       </ScrollView>
     </View>
   );
 }
 
 const s = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "transparent" },
-  scroll: { flex: 1 },
-  content: { paddingHorizontal: 24, paddingTop: 16, paddingBottom: 40 },
-
-  /* ── Page Header ── */
+  container: {
+    flex: 1,
+    backgroundColor: SCREEN_BG,
+  },
+  scroll: {
+    flex: 1,
+  },
+  content: {
+    paddingHorizontal: 24,
+    paddingTop: 18,
+    paddingBottom: 96,
+  },
+  surfaceCard: {
+    backgroundColor: CARD_BG,
+    borderRadius: 20,
+    padding: 24,
+    marginBottom: 16,
+    shadowColor: "#101828",
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.05,
+    shadowRadius: 24,
+    elevation: 3,
+  },
   pageTitle: {
-    fontSize: 28,
+    fontSize: 32,
     fontFamily: Fonts.bold,
-    color: Colors.primary,
-    letterSpacing: -0.5,
-    marginTop: 4,
+    color: TEXT_PRIMARY,
+    letterSpacing: -0.8,
   },
   pageSub: {
-    fontSize: 14,
+    fontSize: 15,
     fontFamily: Fonts.regular,
-    color: Colors.forest[500],
-    marginTop: 2,
+    color: TEXT_SECONDARY,
+    marginTop: 4,
     marginBottom: 24,
     letterSpacing: 0.1,
   },
-
-  /* ── Profile Card ── */
-  profileCard: { padding: 32, marginBottom: 16, alignItems: "center" },
-  profileHeader: { alignItems: "center" },
+  profileHeader: {
+    alignItems: "center",
+  },
   avatarOuter: {
     width: 86,
     height: 86,
@@ -273,103 +295,101 @@ const s = StyleSheet.create({
     width: 78,
     height: 78,
     borderRadius: 39,
-    backgroundColor: Colors.forest[50],
+    backgroundColor: "#FFFFFF",
     alignItems: "center",
     justifyContent: "center",
-    borderWidth: 2.5,
-    borderColor: "#fff",
+    shadowColor: "#101828",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.05,
+    shadowRadius: 12,
+    elevation: 2,
   },
   profileName: {
     fontSize: 20,
     fontFamily: Fonts.bold,
-    color: Colors.primary,
+    color: TEXT_PRIMARY,
     letterSpacing: -0.2,
   },
   profileSub: {
     fontSize: 13,
     fontFamily: Fonts.regular,
-    color: Colors.forest[500],
+    color: TEXT_SECONDARY,
     marginTop: 4,
     letterSpacing: 0.2,
   },
-
-  /* ── Demographics Card ── */
-  demographicsCard: { padding: 24, marginBottom: 16 },
   cardLabelRow: {
     flexDirection: "row",
     alignItems: "center",
     gap: 7,
-    marginBottom: 18,
+    marginBottom: 14,
   },
   cardLabel: {
     fontSize: 11,
     fontFamily: Fonts.bold,
-    color: Colors.forest[500],
+    color: TEXT_SECONDARY,
     letterSpacing: 1.4,
   },
-
-  /* ── Settings Row ── */
   settingsRow: {
     flexDirection: "row",
     alignItems: "center",
-    paddingVertical: 14,
+    paddingVertical: 15,
     gap: 14,
   },
   settingsRowBorder: {
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: "rgba(187, 247, 208, 0.3)",
+    borderBottomColor: DIVIDER,
   },
   settingsIconWrap: {
-    width: 38,
-    height: 38,
+    width: 40,
+    height: 40,
     borderRadius: 12,
-    backgroundColor: "rgba(240, 253, 244, 0.6)",
-    borderWidth: StyleSheet.hairlineWidth * 2,
-    borderColor: "rgba(187, 247, 208, 0.35)",
+    backgroundColor: "#F4F7F5",
     alignItems: "center",
     justifyContent: "center",
   },
-  settingsTextWrap: { flex: 1 },
+  settingsTextWrap: {
+    flex: 1,
+  },
   settingsLabel: {
     fontSize: 12,
     fontFamily: Fonts.medium,
-    color: Colors.forest[500],
+    color: TEXT_SECONDARY,
     letterSpacing: 0.3,
-    marginBottom: 2,
+    marginBottom: 3,
   },
   settingsValue: {
     fontSize: 16,
     fontFamily: Fonts.semiBold,
-    color: Colors.forest[800],
+    color: TEXT_PRIMARY,
     letterSpacing: -0.1,
   },
-
-  /* ── Status Card ── */
-  statusCard: { padding: 24, marginBottom: 16 },
+  statusCard: {
+    paddingVertical: 22,
+  },
   statusRow: {
     flexDirection: "row",
     alignItems: "center",
     gap: 14,
   },
   statusBadge: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
-    backgroundColor: "rgba(240, 253, 244, 0.5)",
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: "rgba(34, 197, 94, 0.10)",
     alignItems: "center",
     justifyContent: "center",
   },
   statusTitle: {
     fontSize: 16,
     fontFamily: Fonts.semiBold,
-    color: Colors.forest[800],
+    color: TEXT_PRIMARY,
     letterSpacing: -0.1,
   },
   statusSub: {
     fontSize: 13,
     fontFamily: Fonts.regular,
-    color: Colors.forest[500],
-    marginTop: 2,
+    color: TEXT_SECONDARY,
+    marginTop: 3,
     letterSpacing: 0.1,
     lineHeight: 19,
   },

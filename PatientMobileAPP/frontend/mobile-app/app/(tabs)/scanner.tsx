@@ -1,49 +1,51 @@
 import React, { useRef, useState, useCallback } from "react";
 import {
-  View,
-  Text,
-  Pressable,
-  StyleSheet,
-  useWindowDimensions,
-  ScrollView,
   ActivityIndicator,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+  useWindowDimensions,
 } from "react-native";
 import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withSpring,
   SlideInDown,
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
 } from "react-native-reanimated";
+import * as ImagePicker from "expo-image-picker";
 import { AppIcon } from "../../components/AppIcon";
 import {
   UniversalCamera,
   type CameraHandle,
 } from "../../components/UniversalCamera";
-import { UniversalLiquidCard } from "../../components/UniversalLiquidCard";
-import { Colors } from "../../constants/Colors";
 import { postTranslate, type TranslateResult } from "../../services/api";
-import * as ImagePicker from "expo-image-picker";
+import { Colors } from "../../constants/Colors";
+import { Fonts } from "../../constants/Typography";
 
 const BRACKET_SIZE = 52;
 const BRACKET_WEIGHT = 3.5;
 const FRAME_RATIO = 0.72;
 
+const TEXT_PRIMARY = "#101828";
+const TEXT_SECONDARY = "#667085";
+const DARK_OVERLAY = "rgba(4, 8, 15, 0.44)";
+
 export default function ScannerScreen() {
   const cameraRef = useRef<CameraHandle>(null);
   const { width, height } = useWindowDimensions();
   const [capturedUri, setCapturedUri] = useState<string | null>(null);
-
-  // API state
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<TranslateResult | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const shutterScale = useSharedValue(1);
 
-  const frameW = width * FRAME_RATIO;
-  const frameH = frameW * 1.35;
-  const frameTop = (height - frameH) / 2 - 30;
-  const frameLeft = (width - frameW) / 2;
+  const frameW = Math.round(width * FRAME_RATIO);
+  const frameH = Math.round(frameW * 1.35);
+  const frameTop = Math.round((height - frameH) / 2 - 30);
+  const frameLeft = Math.round((width - frameW) / 2);
 
   const handleCapture = useCallback(async (uri: string) => {
     setCapturedUri(uri);
@@ -71,14 +73,18 @@ export default function ScannerScreen() {
 
   const handlePickImage = useCallback(async () => {
     try {
-      const result = await ImagePicker.launchImageLibraryAsync({
+      const resultPicker = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
         allowsEditing: false,
         quality: 1,
       });
 
-      if (!result.canceled && result.assets && result.assets.length > 0) {
-        handleCapture(result.assets[0].uri);
+      if (
+        !resultPicker.canceled &&
+        resultPicker.assets &&
+        resultPicker.assets.length > 0
+      ) {
+        handleCapture(resultPicker.assets[0].uri);
       }
     } catch (e) {
       console.log("Image picker error:", e);
@@ -101,30 +107,27 @@ export default function ScannerScreen() {
 
   return (
     <View style={styles.container}>
-      {/* ─── Live Camera Feed ─── */}
       <UniversalCamera
         ref={cameraRef}
         onCapture={handleCapture}
         isActive={true}
       />
 
-      {/* ─── Viewfinder Overlay ─── */}
       {!capturedUri && (
         <View style={StyleSheet.absoluteFill} pointerEvents="none">
-          {/* Instruction */}
           <View style={styles.instructionWrap}>
             <View style={styles.instructionPill}>
-              <AppIcon name="scan-outline" size={16} color="#fff" />
+              <AppIcon name="scan-outline" size={16} color="#FFFFFF" />
               <Text style={styles.instructionText}>
                 Align document within frame
               </Text>
             </View>
           </View>
 
-          {/* Bracket: Top-Left */}
           <View
             style={[
               styles.bracket,
+              styles.bracketTopLeft,
               {
                 top: frameTop,
                 left: frameLeft,
@@ -133,10 +136,10 @@ export default function ScannerScreen() {
               },
             ]}
           />
-          {/* Bracket: Top-Right */}
           <View
             style={[
               styles.bracket,
+              styles.bracketTopRight,
               {
                 top: frameTop,
                 right: frameLeft,
@@ -145,10 +148,10 @@ export default function ScannerScreen() {
               },
             ]}
           />
-          {/* Bracket: Bottom-Left */}
           <View
             style={[
               styles.bracket,
+              styles.bracketBottomLeft,
               {
                 top: frameTop + frameH - BRACKET_SIZE,
                 left: frameLeft,
@@ -157,10 +160,10 @@ export default function ScannerScreen() {
               },
             ]}
           />
-          {/* Bracket: Bottom-Right */}
           <View
             style={[
               styles.bracket,
+              styles.bracketBottomRight,
               {
                 top: frameTop + frameH - BRACKET_SIZE,
                 right: frameLeft,
@@ -172,12 +175,10 @@ export default function ScannerScreen() {
         </View>
       )}
 
-      {/* ─── Shutter Button ─── */}
       {!capturedUri && (
         <View style={styles.shutterWrap}>
-          {/* Gallery Button */}
           <Pressable onPress={handlePickImage} style={styles.galleryBtn}>
-            <AppIcon name="images" size={24} color="#fff" />
+            <AppIcon name="images" size={22} color="#FFFFFF" />
           </Pressable>
 
           <Animated.View style={shutterAnim}>
@@ -186,146 +187,149 @@ export default function ScannerScreen() {
             </Pressable>
           </Animated.View>
 
-          {/* Spacer to balance the gallery button */}
           <View style={styles.spacerBtn} />
         </View>
       )}
 
-      {/* ─── Results Modal ─── */}
       {capturedUri && (
         <Animated.View
           entering={SlideInDown.springify().damping(20).stiffness(180)}
           style={styles.modalWrap}
         >
-          <UniversalLiquidCard
-            variant="elevated"
-            style={styles.modalCard}
-          >
-            {/* Drag handle */}
+          <View style={styles.modalCard}>
             <View style={styles.handle} />
 
-            {/* Header row */}
             <View style={styles.headerRow}>
-              <AppIcon
-                name={error ? "alert-circle" : "checkmark-circle"}
-                size={28}
-                color={error ? Colors.forest[600] : Colors.accent}
-              />
+              <View style={styles.headerIconWrap}>
+                <AppIcon
+                  name={error ? "alert-circle" : "checkmark-circle"}
+                  size={22}
+                  color={error ? TEXT_SECONDARY : Colors.accent}
+                />
+              </View>
               <Text style={styles.headerTitle}>
-                {loading ? "Analyzing…" : error ? "Scan Failed" : "Scan Complete"}
+                {loading ? "Analyzing..." : error ? "Scan Failed" : "Scan Complete"}
               </Text>
               <Pressable onPress={handleDismiss} style={styles.closeBtn}>
-                <AppIcon name="close" size={20} color={Colors.forest[700]} />
+                <AppIcon name="close" size={18} color={TEXT_PRIMARY} />
               </Pressable>
             </View>
 
-            {/* ─── Loading State ─── */}
             {loading && (
               <View style={styles.loadingWrap}>
                 <ActivityIndicator size="large" color={Colors.accent} />
                 <Text style={styles.loadingText}>
-                  MedGemma is reading your document…
+                  MedGemma is reading your document...
                 </Text>
               </View>
             )}
 
-            {/* ─── Error State ─── */}
             {error && !loading && (
               <View style={styles.errorWrap}>
-                <AppIcon name="alert-circle" size={40} color={Colors.forest[400]} />
+                <View style={styles.headerIconWrap}>
+                  <AppIcon name="alert-circle" size={22} color={Colors.accent} />
+                </View>
                 <Text style={styles.errorText}>{error}</Text>
                 <Pressable onPress={handleRetry} style={styles.retryBtn}>
-                  <AppIcon name="checkmark" size={18} color="#fff" />
+                  <AppIcon name="refresh" size={16} color="#fff" />
                   <Text style={styles.retryBtnText}>Retry</Text>
                 </Pressable>
               </View>
             )}
 
-            {/* ─── Success State ─── */}
             {result && !loading && (
               <ScrollView
                 showsVerticalScrollIndicator={false}
                 style={styles.scroll}
               >
-                {/* Section label */}
-                <Text style={styles.sectionLabel}>AI Summary</Text>
+                <Text style={styles.sectionLabel}>AI SUMMARY</Text>
 
-                {/* Dynamic bullets */}
                 {result.summaryBullets.map((bullet, i) => {
                   const icons = ["medical", "alert-circle", "fitness"] as const;
                   return (
                     <View key={i} style={styles.bulletRow}>
-                      <AppIcon
-                        name={icons[i % icons.length]}
-                        size={20}
-                        color={Colors.forest[600]}
-                        style={styles.bulletIcon}
-                      />
+                      <View style={styles.bulletIconWrap}>
+                        <AppIcon
+                          name={icons[i % icons.length]}
+                          size={18}
+                          color={Colors.accent}
+                        />
+                      </View>
                       <Text style={styles.bulletText}>{bullet}</Text>
                     </View>
                   );
                 })}
 
-                {/* ─── Nutritional Swap Accent ─── */}
                 <View style={styles.swapCard}>
                   <View style={styles.swapHeader}>
-                    <AppIcon name="nutrition" size={22} color="#fff" />
+                    <AppIcon name="nutrition" size={20} color="#fff" />
                     <Text style={styles.swapTitle}>Nutritional Swap</Text>
                   </View>
-                  <Text style={styles.swapBody}>
-                    {result.nutritionalSwap}
-                  </Text>
+                  <Text style={styles.swapBody}>{result.nutritionalSwap}</Text>
                 </View>
               </ScrollView>
             )}
-          </UniversalLiquidCard>
+          </View>
         </Animated.View>
       )}
     </View>
   );
 }
 
-/* ────────────────────── Styles ────────────────────── */
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#000",
+    backgroundColor: "#000000",
   },
-
-  /* Instruction pill */
   instructionWrap: {
     position: "absolute",
-    top: 56,
+    top: 60,
     left: 0,
     right: 0,
     alignItems: "center",
   },
   instructionPill: {
+    minHeight: 44,
     flexDirection: "row",
     alignItems: "center",
-    gap: 6,
-    backgroundColor: "rgba(0,0,0,0.45)",
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
+    justifyContent: "center",
+    gap: 8,
+    backgroundColor: DARK_OVERLAY,
+    paddingHorizontal: 18,
+    paddingVertical: 10,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.10)",
   },
   instructionText: {
-    color: "rgba(255,255,255,0.9)",
+    color: "rgba(255,255,255,0.96)",
     fontSize: 14,
-    fontWeight: "600",
+    fontFamily: Fonts.semiBold,
+    textAlign: "center",
+    letterSpacing: 0.1,
   },
-
-  /* Alignment brackets */
   bracket: {
     position: "absolute",
     width: BRACKET_SIZE,
     height: BRACKET_SIZE,
     borderColor: "#FFFFFF",
-    borderRadius: 6,
+    shadowColor: "#FFFFFF",
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.22,
+    shadowRadius: 8,
   },
-
-  /* Shutter */
+  bracketTopLeft: {
+    borderTopLeftRadius: 10,
+  },
+  bracketTopRight: {
+    borderTopRightRadius: 10,
+  },
+  bracketBottomLeft: {
+    borderBottomLeftRadius: 10,
+  },
+  bracketBottomRight: {
+    borderBottomRightRadius: 10,
+  },
   shutterWrap: {
     position: "absolute",
     bottom: 32,
@@ -337,25 +341,28 @@ const styles = StyleSheet.create({
     paddingHorizontal: 40,
   },
   galleryBtn: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
-    backgroundColor: "rgba(0,0,0,0.45)",
+    width: 54,
+    height: 54,
+    borderRadius: 27,
+    backgroundColor: DARK_OVERLAY,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.12)",
     alignItems: "center",
     justifyContent: "center",
   },
   spacerBtn: {
-    width: 52,
-    height: 52,
+    width: 54,
+    height: 54,
   },
   shutterRing: {
-    width: 76,
-    height: 76,
-    borderRadius: 38,
-    borderWidth: 4,
-    borderColor: "#FFFFFF",
+    width: 78,
+    height: 78,
+    borderRadius: 39,
+    borderWidth: 3,
+    borderColor: "rgba(255,255,255,0.88)",
     alignItems: "center",
     justifyContent: "center",
+    backgroundColor: "rgba(255,255,255,0.08)",
   },
   shutterDisc: {
     width: 62,
@@ -363,54 +370,63 @@ const styles = StyleSheet.create({
     borderRadius: 31,
     backgroundColor: "#FFFFFF",
   },
-
-  /* Results modal */
   modalWrap: {
     position: "absolute",
     bottom: 0,
     left: 0,
     right: 0,
-    maxHeight: "85%",
+    maxHeight: "86%",
   },
   modalCard: {
-    borderBottomLeftRadius: 0,
-    borderBottomRightRadius: 0,
+    backgroundColor: "#FFFFFF",
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
     paddingHorizontal: 24,
     paddingTop: 12,
     paddingBottom: 44,
+    shadowColor: "#101828",
+    shadowOffset: { width: 0, height: -6 },
+    shadowOpacity: 0.08,
+    shadowRadius: 24,
+    elevation: 10,
   },
   handle: {
-    width: 40,
+    width: 42,
     height: 4,
-    borderRadius: 2,
-    backgroundColor: Colors.forest[300],
+    borderRadius: 999,
+    backgroundColor: "#D0D5DD",
     alignSelf: "center",
-    marginBottom: 16,
+    marginBottom: 18,
   },
-
-  /* Header */
   headerRow: {
     flexDirection: "row",
     alignItems: "center",
     marginBottom: 20,
   },
-  headerTitle: {
-    flex: 1,
-    marginLeft: 10,
-    fontSize: 22,
-    fontWeight: "700",
-    color: Colors.primary,
-  },
-  closeBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: Colors.forest[100],
+  headerIconWrap: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    backgroundColor: "rgba(34, 197, 94, 0.10)",
     alignItems: "center",
     justifyContent: "center",
   },
-
-  /* Loading */
+  headerTitle: {
+    flex: 1,
+    marginLeft: 12,
+    fontSize: 22,
+    fontFamily: Fonts.bold,
+    color: TEXT_PRIMARY,
+    letterSpacing: -0.4,
+  },
+  closeBtn: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: "#F2F4F7",
+    alignItems: "center",
+    justifyContent: "center",
+  },
   loadingWrap: {
     alignItems: "center",
     paddingVertical: 40,
@@ -418,50 +434,52 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     fontSize: 15,
-    fontWeight: "500",
-    color: Colors.forest[600],
+    fontFamily: Fonts.medium,
+    color: TEXT_SECONDARY,
+    textAlign: "center",
   },
-
-  /* Error */
   errorWrap: {
     alignItems: "center",
     paddingVertical: 32,
-    gap: 12,
+    gap: 14,
   },
   errorText: {
     fontSize: 15,
-    color: Colors.forest[700],
+    fontFamily: Fonts.regular,
+    color: TEXT_PRIMARY,
     textAlign: "center",
-    paddingHorizontal: 16,
+    lineHeight: 22,
+    paddingHorizontal: 12,
   },
   retryBtn: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 6,
+    gap: 8,
     backgroundColor: Colors.accent,
     paddingHorizontal: 24,
-    paddingVertical: 12,
+    paddingVertical: 14,
     borderRadius: 16,
     marginTop: 4,
+    shadowColor: Colors.accent,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.16,
+    shadowRadius: 18,
+    elevation: 3,
   },
   retryBtnText: {
     color: "#fff",
     fontSize: 15,
-    fontWeight: "700",
+    fontFamily: Fonts.semiBold,
   },
-
-  /* Scroll */
   scroll: {
     flexGrow: 0,
   },
-
-  /* Bullets */
   sectionLabel: {
-    fontSize: 12,
-    fontWeight: "700",
-    color: Colors.forest[600],
+    fontSize: 11,
+    fontFamily: Fonts.bold,
+    color: TEXT_SECONDARY,
     textTransform: "uppercase",
-    letterSpacing: 1.2,
+    letterSpacing: 1.3,
     marginBottom: 14,
   },
   bulletRow: {
@@ -469,23 +487,32 @@ const styles = StyleSheet.create({
     alignItems: "flex-start",
     marginBottom: 16,
   },
-  bulletIcon: {
+  bulletIconWrap: {
+    width: 36,
+    height: 36,
+    borderRadius: 12,
+    backgroundColor: "#F4F7F5",
+    alignItems: "center",
+    justifyContent: "center",
     marginRight: 12,
-    marginTop: 2,
   },
   bulletText: {
     flex: 1,
-    fontSize: 16,
-    lineHeight: 24,
-    color: Colors.forest[800],
+    fontSize: 15,
+    lineHeight: 23,
+    color: TEXT_PRIMARY,
+    fontFamily: Fonts.regular,
   },
-
-  /* Nutritional swap accent */
   swapCard: {
     backgroundColor: Colors.accent,
     borderRadius: 20,
     padding: 20,
-    marginTop: 8,
+    marginTop: 10,
+    shadowColor: Colors.accent,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.16,
+    shadowRadius: 18,
+    elevation: 3,
   },
   swapHeader: {
     flexDirection: "row",
@@ -495,12 +522,13 @@ const styles = StyleSheet.create({
   },
   swapTitle: {
     fontSize: 18,
-    fontWeight: "700",
+    fontFamily: Fonts.bold,
     color: "#FFFFFF",
   },
   swapBody: {
     fontSize: 15,
     lineHeight: 22,
-    color: "rgba(255,255,255,0.92)",
+    color: "rgba(255,255,255,0.94)",
+    fontFamily: Fonts.regular,
   },
 });

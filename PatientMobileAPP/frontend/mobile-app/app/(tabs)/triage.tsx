@@ -1,36 +1,40 @@
 import React, { useState, useCallback, useRef, useEffect } from "react";
 import {
-  View,
-  Text,
-  TextInput,
-  Pressable,
-  StyleSheet,
-  ScrollView,
-  useWindowDimensions,
   ActivityIndicator,
   Keyboard,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+  useWindowDimensions,
 } from "react-native";
 import Animated, {
-  useSharedValue,
+  Extrapolation,
+  interpolate,
+  runOnJS,
   useAnimatedStyle,
+  useSharedValue,
+  withDelay,
   withSpring,
   withTiming,
-  withDelay,
-  interpolate,
-  Extrapolation,
-  runOnJS,
 } from "react-native-reanimated";
 import { LinearGradient } from "expo-linear-gradient";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import { AppIcon } from "../../components/AppIcon";
-import { UniversalLiquidCard } from "../../components/UniversalLiquidCard";
 import { ClinicMapView, type ClinicPin } from "../../components/MapView";
 import { usePatientStore } from "../../store/patientStore";
 import { postTriageExtract, type TriageSymptomCard } from "../../services/api";
 import { Colors } from "../../constants/Colors";
 import { Fonts } from "../../constants/Typography";
 
-/* ───────────────── Static Data ───────────────── */
+const SCREEN_BG = "#F6F8F6";
+const CARD_BG = "#FFFFFF";
+const TEXT_PRIMARY = "#101828";
+const TEXT_SECONDARY = "#667085";
+const TEXT_TERTIARY = "#98A2B3";
+const SURFACE_LINE = "rgba(15, 23, 42, 0.08)";
 
 const LONDON_CLINICS: ClinicPin[] = [
   {
@@ -57,10 +61,15 @@ const LONDON_CLINICS: ClinicPin[] = [
 ];
 
 const PLACEHOLDER_TEXT =
-  "e.g. I've been having bad headaches for the past week, especially behind my eyes. I also feel dizzy when I stand up and I'm more tired than usual…";
+  "e.g. I've been having bad headaches for the past week, especially behind my eyes. I also feel dizzy when I stand up and I'm more tired than usual...";
 
-/* ── Severity capsule with staggered animation ── */
-function SeverityCapsule({ severity, animate }: { severity: number; animate: boolean }) {
+function SeverityCapsule({
+  severity,
+  animate,
+}: {
+  severity: number;
+  animate: boolean;
+}) {
   const dots = [1, 2, 3, 4, 5];
   const op0 = useSharedValue(0);
   const op1 = useSharedValue(0);
@@ -81,7 +90,9 @@ function SeverityCapsule({ severity, animate }: { severity: number; animate: boo
   return (
     <View style={styles.capsuleWrap}>
       {dots.map((n, i) => {
-        const animStyle = useAnimatedStyle(() => ({ opacity: n <= severity ? opacities[i].value : 1 }));
+        const animStyle = useAnimatedStyle(() => ({
+          opacity: n <= severity ? opacities[i].value : 1,
+        }));
         return (
           <Animated.View key={n} style={[styles.capsuleSegment, animStyle]}>
             {n <= severity ? (
@@ -105,18 +116,23 @@ function SeverityCapsule({ severity, animate }: { severity: number; animate: boo
   );
 }
 
-/* ───────────────── Screen ───────────────── */
+function SurfaceCard({
+  children,
+  style,
+}: {
+  children: React.ReactNode;
+  style?: object;
+}) {
+  return <View style={[styles.surfaceCard, style]}>{children}</View>;
+}
 
 export default function TriageScreen() {
   const { width } = useWindowDimensions();
   const addSymptom = usePatientStore((s) => s.addSymptom);
 
-  /* ── Text input ── */
   const [inputText, setInputText] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  /* ── Dynamic symptom cards from MedGemma ── */
   const [symptoms, setSymptoms] = useState<TriageSymptomCard[]>([]);
   const [cardIdx, setCardIdx] = useState(0);
   const translateX = useSharedValue(0);
@@ -150,12 +166,13 @@ export default function TriageScreen() {
     setInputText("");
   }, []);
 
-  /* ── Symptom card deck ── */
   const triggerHaptic = useCallback(() => {
     try {
       const { Vibration } = require("react-native");
       Vibration.vibrate(40);
-    } catch { /* noop on web */ }
+    } catch {
+      // noop on web
+    }
   }, []);
 
   const onSwipe = useCallback(
@@ -163,7 +180,12 @@ export default function TriageScreen() {
       const idx = cardIdxRef.current;
       if (idx >= symptoms.length) return;
       const sym = symptoms[idx];
-      addSymptom({ id: sym.id, label: sym.label, severity: sym.severity, confirmed });
+      addSymptom({
+        id: sym.id,
+        label: sym.label,
+        severity: sym.severity,
+        confirmed,
+      });
       setCardIdx(idx + 1);
       translateX.value = 0;
     },
@@ -200,23 +222,38 @@ export default function TriageScreen() {
   const cardAnimStyle = useAnimatedStyle(() => ({
     transform: [
       { translateX: translateX.value },
-      { rotate: `${interpolate(translateX.value, [-width, 0, width], [-12, 0, 12])}deg` },
+      {
+        rotate: `${interpolate(
+          translateX.value,
+          [-width, 0, width],
+          [-12, 0, 12],
+        )}deg`,
+      },
     ],
   }));
 
   const confirmLabelStyle = useAnimatedStyle(() => ({
-    opacity: interpolate(translateX.value, [0, width * 0.22], [0, 1], Extrapolation.CLAMP),
+    opacity: interpolate(
+      translateX.value,
+      [0, width * 0.22],
+      [0, 1],
+      Extrapolation.CLAMP,
+    ),
   }));
 
   const dismissLabelStyle = useAnimatedStyle(() => ({
-    opacity: interpolate(translateX.value, [-width * 0.22, 0], [1, 0], Extrapolation.CLAMP),
+    opacity: interpolate(
+      translateX.value,
+      [-width * 0.22, 0],
+      [1, 0],
+      Extrapolation.CLAMP,
+    ),
   }));
 
   const visibleSymptoms = symptoms.slice(cardIdx, cardIdx + 3);
   const allReviewed = symptoms.length > 0 && cardIdx >= symptoms.length;
   const hasCards = symptoms.length > 0;
 
-  /* ── Render ── */
   return (
     <View style={styles.container}>
       <ScrollView
@@ -225,81 +262,74 @@ export default function TriageScreen() {
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
-        {/* ────── Section 1: Symptom Input ────── */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Describe Your Symptoms</Text>
-          <Text style={styles.sectionSub}>
+          <Text style={styles.heroTitle}>Describe Your Symptoms</Text>
+          <Text style={styles.heroSub}>
             Tell us how you're feeling in your own words
           </Text>
 
-          <UniversalLiquidCard variant="subtle" style={styles.inputCard}>
+          <SurfaceCard style={styles.inputCard}>
             <TextInput
               style={styles.textInput}
               placeholder={PLACEHOLDER_TEXT}
-              placeholderTextColor={Colors.forest[400]}
+              placeholderTextColor={TEXT_TERTIARY}
               multiline
-              numberOfLines={4}
+              numberOfLines={5}
               textAlignVertical="top"
               value={inputText}
               onChangeText={setInputText}
               editable={!loading && !hasCards}
             />
-          </UniversalLiquidCard>
+          </SurfaceCard>
 
-          {/* Analyze / Reset buttons */}
           {!hasCards && !loading && (
             <Pressable
               onPress={handleAnalyze}
-              style={[styles.analyzeBtn, !inputText.trim() && styles.analyzeBtnDisabled]}
+              style={[
+                styles.primaryBtn,
+                !inputText.trim() && styles.primaryBtnDisabled,
+              ]}
               disabled={!inputText.trim()}
             >
-              <LinearGradient
-                colors={inputText.trim() ? ["#22C55E", "#16A34A"] : [Colors.forest[200], Colors.forest[200]]}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-                style={styles.analyzeBtnGradient}
-              >
-                <AppIcon name="sparkles" size={20} color={inputText.trim() ? "#fff" : Colors.forest[500]} />
-                <Text style={[styles.analyzeBtnText, !inputText.trim() && styles.analyzeBtnTextDisabled]}>
-                  Analyze with MedGemma
-                </Text>
-              </LinearGradient>
+              <AppIcon name="sparkles" size={18} color="#fff" />
+              <Text style={styles.primaryBtnText}>Analyze with MedGemma</Text>
             </Pressable>
           )}
 
           {hasCards && (
             <Pressable onPress={handleReset} style={styles.resetBtn}>
-              <AppIcon name="refresh" size={16} color={Colors.forest[700]} />
+              <AppIcon name="refresh" size={16} color={TEXT_SECONDARY} />
               <Text style={styles.resetBtnText}>Start over</Text>
             </Pressable>
           )}
 
-          {/* Loading state */}
           {loading && (
-            <View style={styles.loadingWrap}>
+            <SurfaceCard style={styles.feedbackCard}>
               <ActivityIndicator size="large" color={Colors.accent} />
-              <Text style={styles.loadingText}>MedGemma is analyzing your symptoms…</Text>
-            </View>
+              <Text style={styles.loadingText}>
+                MedGemma is analyzing your symptoms...
+              </Text>
+            </SurfaceCard>
           )}
 
-          {/* Error state */}
           {error && !loading && (
-            <View style={styles.errorWrap}>
-              <AppIcon name="alert-circle" size={32} color={Colors.forest[400]} />
+            <SurfaceCard style={styles.feedbackCard}>
+              <View style={styles.errorIconWrap}>
+                <AppIcon name="alert-circle" size={24} color={Colors.accent} />
+              </View>
               <Text style={styles.errorText}>{error}</Text>
               <Pressable onPress={handleAnalyze} style={styles.retryBtn}>
                 <Text style={styles.retryBtnText}>Retry</Text>
               </Pressable>
-            </View>
+            </SurfaceCard>
           )}
         </View>
 
-        {/* ────── Section 2: Symptom Confirmation ────── */}
         {hasCards && (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Symptom Confirmation</Text>
             <Text style={styles.sectionSub}>
-              Swipe right to confirm · left to dismiss
+              Swipe right to confirm | left to dismiss
             </Text>
 
             <View style={styles.deckWrap}>
@@ -318,29 +348,48 @@ export default function TriageScreen() {
                           transform: isTop
                             ? undefined
                             : [
-                              { scale: 1 - stackOffset * 0.045 },
-                              { translateY: stackOffset * 10 },
-                            ],
+                                { scale: 1 - stackOffset * 0.045 },
+                                { translateY: stackOffset * 10 },
+                              ],
                         },
                         isTop && cardAnimStyle,
                       ]}
                     >
                       {isTop && (
                         <>
-                          <Animated.View style={[styles.swipeBadge, styles.confirmBadge, confirmLabelStyle]}>
-                            <AppIcon name="checkmark-circle" size={18} color="#fff" />
+                          <Animated.View
+                            style={[
+                              styles.swipeBadge,
+                              styles.confirmBadge,
+                              confirmLabelStyle,
+                            ]}
+                          >
+                            <AppIcon
+                              name="checkmark-circle"
+                              size={18}
+                              color="#fff"
+                            />
                             <Text style={styles.swipeBadgeText}>CONFIRM</Text>
                           </Animated.View>
-                          <Animated.View style={[styles.swipeBadge, styles.dismissBadge, dismissLabelStyle]}>
-                            <AppIcon name="close-circle" size={18} color="#fff" />
+                          <Animated.View
+                            style={[
+                              styles.swipeBadge,
+                              styles.dismissBadge,
+                              dismissLabelStyle,
+                            ]}
+                          >
+                            <AppIcon
+                              name="close-circle"
+                              size={18}
+                              color="#fff"
+                            />
                             <Text style={styles.swipeBadgeText}>DISMISS</Text>
                           </Animated.View>
                         </>
                       )}
 
-                      <UniversalLiquidCard
-                        variant="elevated"
-                        style={isTop ? styles.topSymptomCard : undefined}
+                      <SurfaceCard
+                        style={[styles.symptomCard, isTop && styles.topSymptomCard]}
                       >
                         <View style={styles.symptomInner}>
                           <View style={styles.symptomTopRow}>
@@ -353,11 +402,16 @@ export default function TriageScreen() {
                           </View>
                           <Text style={styles.symptomLabel}>{sym.label}</Text>
                           {sym.explanation ? (
-                            <Text style={styles.symptomExplanation}>{sym.explanation}</Text>
+                            <Text style={styles.symptomExplanation}>
+                              {sym.explanation}
+                            </Text>
                           ) : null}
-                          <SeverityCapsule severity={sym.severity} animate={isTop} />
+                          <SeverityCapsule
+                            severity={sym.severity}
+                            animate={isTop}
+                          />
                         </View>
-                      </UniversalLiquidCard>
+                      </SurfaceCard>
                     </Animated.View>
                   );
 
@@ -371,86 +425,76 @@ export default function TriageScreen() {
                   return cardEl;
                 })
               ) : (
-                <UniversalLiquidCard
-                  variant="elevated"
-                  style={[styles.doneCard, styles.doneCardAccent] as any}
-                >
+                <SurfaceCard style={styles.doneCard}>
                   <View style={styles.doneInner}>
-                    <AppIcon name="checkmark-done-circle" size={44} color={Colors.accent} />
+                    <View style={styles.doneIconWrap}>
+                      <AppIcon
+                        name="checkmark-done-circle"
+                        size={36}
+                        color={Colors.accent}
+                      />
+                    </View>
                     <Text style={styles.doneTitle}>All Symptoms Reviewed</Text>
                     <Text style={styles.doneSub}>
                       {symptoms.length} symptoms processed and saved
                     </Text>
                   </View>
-                </UniversalLiquidCard>
+                </SurfaceCard>
               )}
             </View>
 
             {!allReviewed && (
               <View style={styles.btnRow}>
                 <Pressable
-                  onPress={() => { triggerHaptic(); onSwipe(false); }}
-                  style={styles.actionBtn}
+                  onPress={() => {
+                    triggerHaptic();
+                    onSwipe(false);
+                  }}
+                  style={[styles.secondaryBtn, styles.actionBtn]}
                 >
-                  <LinearGradient
-                    colors={["rgba(240, 253, 244, 0.4)", "rgba(220, 252, 231, 0.2)"]}
-                    style={[styles.actionBtnGradient, styles.dismissBtnBorder]}
-                  >
-                    <AppIcon name="close" size={20} color={Colors.forest[700]} />
-                    <Text style={styles.dismissBtnText}>Dismiss</Text>
-                  </LinearGradient>
+                  <AppIcon name="close" size={18} color={TEXT_PRIMARY} />
+                  <Text style={styles.secondaryBtnText}>Dismiss</Text>
                 </Pressable>
                 <Pressable
-                  onPress={() => { triggerHaptic(); onSwipe(true); }}
-                  style={styles.actionBtn}
+                  onPress={() => {
+                    triggerHaptic();
+                    onSwipe(true);
+                  }}
+                  style={[styles.primaryBtn, styles.actionBtn]}
                 >
-                  <LinearGradient
-                    colors={["#22C55E", "#16A34A"]}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 0 }}
-                    style={styles.actionBtnGradient}
-                  >
-                    <AppIcon name="checkmark" size={20} color="#fff" />
-                    <Text style={styles.confirmBtnText}>Confirm</Text>
-                  </LinearGradient>
+                  <AppIcon name="checkmark" size={18} color="#fff" />
+                  <Text style={styles.primaryBtnText}>Confirm</Text>
                 </Pressable>
               </View>
             )}
           </View>
         )}
 
-        {/* ────── Section 3: Nearby Clinics ────── */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Nearest Clinics</Text>
           <Text style={styles.sectionSub}>London, Ontario</Text>
 
-          <View style={styles.mapContainer}>
-            <ClinicMapView clinics={LONDON_CLINICS} height={220} />
+          <View style={styles.mapShell}>
+            <View style={styles.mapContainer}>
+              <ClinicMapView clinics={LONDON_CLINICS} height={220} />
+            </View>
           </View>
 
-          {LONDON_CLINICS.map((c) => (
-            <UniversalLiquidCard
-              key={c.name}
-              variant="default"
-              pressable
-              style={styles.clinicCard}
-            >
+          {LONDON_CLINICS.map((clinic) => (
+            <Pressable key={clinic.name} style={styles.clinicCard}>
               <View style={styles.clinicRow}>
-                <LinearGradient
-                  colors={["rgba(74,222,128,0.25)", "rgba(34,197,94,0.12)"]}
-                  style={styles.clinicIconPill}
-                >
+                <View style={styles.clinicIconPill}>
                   <AppIcon name="location" size={20} color={Colors.accent} />
-                </LinearGradient>
+                </View>
                 <View style={styles.clinicInfo}>
-                  <Text style={styles.clinicName}>{c.name}</Text>
-                  <Text style={styles.clinicAddr}>{c.address}</Text>
+                  <Text style={styles.clinicName}>{clinic.name}</Text>
+                  <Text style={styles.clinicAddr}>{clinic.address}</Text>
                 </View>
                 <View style={styles.distBadge}>
-                  <Text style={styles.distText}>{c.distance}</Text>
+                  <Text style={styles.distText}>{clinic.distance}</Text>
                 </View>
               </View>
-            </UniversalLiquidCard>
+            </Pressable>
           ))}
         </View>
       </ScrollView>
@@ -458,186 +502,373 @@ export default function TriageScreen() {
   );
 }
 
-/* ───────────────── Styles ───────────────── */
-
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "transparent" },
-  scroll: { flex: 1 },
-  content: { paddingHorizontal: 20, paddingTop: 16, paddingBottom: 60 },
-
-  /* ── Section chrome ── */
-  section: { marginBottom: 36 },
-  sectionTitle: {
-    fontSize: 22,
+  container: {
+    flex: 1,
+    backgroundColor: SCREEN_BG,
+  },
+  scroll: {
+    flex: 1,
+  },
+  content: {
+    paddingHorizontal: 24,
+    paddingTop: 18,
+    paddingBottom: 96,
+  },
+  section: {
+    marginBottom: 36,
+  },
+  heroTitle: {
+    fontSize: 32,
     fontFamily: Fonts.bold,
-    color: Colors.primary,
+    color: TEXT_PRIMARY,
+    letterSpacing: -0.8,
+    marginBottom: 4,
+  },
+  heroSub: {
+    fontSize: 15,
+    fontFamily: Fonts.regular,
+    color: TEXT_SECONDARY,
+    lineHeight: 22,
+    marginBottom: 20,
+  },
+  sectionTitle: {
+    fontSize: 24,
+    fontFamily: Fonts.bold,
+    color: TEXT_PRIMARY,
+    letterSpacing: -0.4,
     marginBottom: 4,
   },
   sectionSub: {
     fontSize: 14,
     fontFamily: Fonts.regular,
-    color: Colors.forest[600],
+    color: TEXT_SECONDARY,
     marginBottom: 18,
   },
-
-  /* ── Text input ── */
-  inputCard: { padding: 4, marginBottom: 16 },
+  surfaceCard: {
+    backgroundColor: CARD_BG,
+    borderRadius: 20,
+    shadowColor: "#101828",
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.05,
+    shadowRadius: 24,
+    elevation: 3,
+  },
+  inputCard: {
+    paddingHorizontal: 18,
+    paddingVertical: 16,
+    marginBottom: 16,
+  },
   textInput: {
     fontSize: 15,
-    lineHeight: 22,
-    color: Colors.forest[800],
-    padding: 12,
-    minHeight: 120,
+    lineHeight: 23,
+    color: TEXT_PRIMARY,
+    minHeight: 124,
     fontFamily: Fonts.regular,
   },
-  analyzeBtn: { borderRadius: 16, overflow: "hidden" },
-  analyzeBtnDisabled: { opacity: 0.6 },
-  analyzeBtnGradient: {
+  primaryBtn: {
+    minHeight: 56,
+    borderRadius: 16,
+    backgroundColor: Colors.accent,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     gap: 8,
-    paddingVertical: 16,
-    borderRadius: 16,
+    shadowColor: Colors.accent,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.16,
+    shadowRadius: 18,
+    elevation: 3,
   },
-  analyzeBtnText: { fontSize: 16, fontWeight: "700", color: "#fff" },
-  analyzeBtnTextDisabled: { color: Colors.forest[500] },
+  primaryBtnDisabled: {
+    opacity: 0.45,
+    shadowOpacity: 0,
+  },
+  primaryBtnText: {
+    fontSize: 15,
+    fontFamily: Fonts.semiBold,
+    color: "#FFFFFF",
+    letterSpacing: 0.1,
+  },
+  secondaryBtn: {
+    minHeight: 56,
+    borderRadius: 16,
+    backgroundColor: "#FFFFFF",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    borderWidth: 1,
+    borderColor: "#E4E7EC",
+    shadowColor: "#101828",
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.04,
+    shadowRadius: 18,
+    elevation: 2,
+  },
+  secondaryBtnText: {
+    fontSize: 15,
+    fontFamily: Fonts.semiBold,
+    color: TEXT_PRIMARY,
+  },
   resetBtn: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     gap: 6,
-    paddingVertical: 12,
+    paddingVertical: 10,
   },
-  resetBtnText: { fontSize: 14, fontWeight: "600", color: Colors.forest[700] },
-
-  /* ── Loading ── */
-  loadingWrap: { alignItems: "center", paddingVertical: 32, gap: 14 },
-  loadingText: { fontSize: 15, fontWeight: "500", color: Colors.forest[600] },
-
-  /* ── Error ── */
-  errorWrap: { alignItems: "center", paddingVertical: 24, gap: 10 },
-  errorText: { fontSize: 14, color: Colors.forest[700], textAlign: "center", paddingHorizontal: 16 },
+  resetBtnText: {
+    fontSize: 14,
+    fontFamily: Fonts.semiBold,
+    color: TEXT_SECONDARY,
+  },
+  feedbackCard: {
+    alignItems: "center",
+    paddingHorizontal: 24,
+    paddingVertical: 26,
+    gap: 14,
+  },
+  loadingText: {
+    fontSize: 15,
+    fontFamily: Fonts.medium,
+    color: TEXT_SECONDARY,
+    textAlign: "center",
+  },
+  errorIconWrap: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: "rgba(34, 197, 94, 0.10)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  errorText: {
+    fontSize: 14,
+    color: TEXT_PRIMARY,
+    fontFamily: Fonts.regular,
+    textAlign: "center",
+    lineHeight: 21,
+  },
   retryBtn: {
     backgroundColor: Colors.accent,
-    paddingHorizontal: 24,
-    paddingVertical: 10,
+    paddingHorizontal: 22,
+    paddingVertical: 12,
     borderRadius: 14,
-    marginTop: 4,
+    marginTop: 2,
+    shadowColor: Colors.accent,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.16,
+    shadowRadius: 18,
+    elevation: 3,
   },
-  retryBtnText: { color: "#fff", fontSize: 14, fontWeight: "700" },
-
-  /* ── Card Deck ── */
-  deckWrap: { height: 220, marginBottom: 12 },
-  deckCard: { position: "absolute", left: 0, right: 0, top: 0 },
-  topSymptomCard: { borderWidth: 1.5, borderColor: "rgba(0,0,0,0.15)" },
-  symptomInner: { padding: 20 },
+  retryBtnText: {
+    color: "#fff",
+    fontSize: 14,
+    fontFamily: Fonts.semiBold,
+  },
+  deckWrap: {
+    height: 236,
+    marginBottom: 14,
+  },
+  deckCard: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    top: 0,
+  },
+  symptomCard: {
+    minHeight: 210,
+  },
+  topSymptomCard: {
+    shadowOpacity: 0.07,
+  },
+  symptomInner: {
+    padding: 22,
+  },
   symptomTopRow: {
     flexDirection: "row",
     alignItems: "center",
     gap: 10,
-    marginBottom: 10,
+    marginBottom: 12,
   },
   severityBadge: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: 34,
+    height: 34,
+    borderRadius: 17,
     backgroundColor: Colors.accent,
     alignItems: "center",
     justifyContent: "center",
   },
-  severityNum: { color: "#fff", fontWeight: "800", fontSize: 15 },
-  severityLabel: { fontSize: 13, fontWeight: "600", color: Colors.forest[600] },
+  severityNum: {
+    color: "#fff",
+    fontFamily: Fonts.bold,
+    fontSize: 15,
+  },
+  severityLabel: {
+    fontSize: 13,
+    fontFamily: Fonts.semiBold,
+    color: TEXT_SECONDARY,
+  },
   symptomLabel: {
-    fontSize: 17,
-    fontWeight: "600",
-    lineHeight: 24,
-    color: Colors.primary,
-    marginBottom: 6,
+    fontSize: 18,
+    fontFamily: Fonts.semiBold,
+    lineHeight: 25,
+    color: TEXT_PRIMARY,
+    marginBottom: 8,
+    letterSpacing: -0.2,
   },
   symptomExplanation: {
     fontSize: 14,
-    lineHeight: 20,
-    color: Colors.forest[600],
-    marginBottom: 12,
+    lineHeight: 21,
+    color: TEXT_SECONDARY,
+    marginBottom: 14,
   },
-
-  /* Severity capsule */
-  capsuleWrap: { flexDirection: "row", gap: 4 },
+  capsuleWrap: {
+    flexDirection: "row",
+    gap: 5,
+  },
   capsuleSegment: {
     flex: 1,
     height: 8,
-    borderRadius: 4,
+    borderRadius: 999,
     overflow: "hidden",
-    backgroundColor: Colors.forest[100],
+    backgroundColor: "#E7ECE8",
   },
-  capsuleSegmentInner: { flex: 1 },
-  capsuleSegmentEmpty: { backgroundColor: Colors.forest[100] },
-
-  /* Swipe overlays */
+  capsuleSegmentInner: {
+    flex: 1,
+  },
+  capsuleSegmentEmpty: {
+    backgroundColor: "#E7ECE8",
+  },
   swipeBadge: {
     position: "absolute",
     top: 16,
     zIndex: 20,
     flexDirection: "row",
     alignItems: "center",
-    gap: 4,
+    gap: 5,
     paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 14,
+    paddingVertical: 7,
+    borderRadius: 999,
   },
-  confirmBadge: { right: 16, backgroundColor: Colors.accent },
-  dismissBadge: { left: 16, backgroundColor: Colors.forest[700] },
-  swipeBadgeText: { color: "#fff", fontSize: 12, fontWeight: "700", letterSpacing: 0.8 },
-
-  /* Button fallbacks */
-  btnRow: { flexDirection: "row", gap: 12, justifyContent: "center" },
-  actionBtn: { flex: 1, borderRadius: 16, overflow: "hidden" },
-  actionBtnGradient: {
+  confirmBadge: {
+    right: 16,
+    backgroundColor: Colors.accent,
+  },
+  dismissBadge: {
+    left: 16,
+    backgroundColor: "#344054",
+  },
+  swipeBadgeText: {
+    color: "#fff",
+    fontSize: 12,
+    fontFamily: Fonts.bold,
+    letterSpacing: 0.8,
+  },
+  btnRow: {
     flexDirection: "row",
+    gap: 12,
+    justifyContent: "center",
+  },
+  actionBtn: {
+    flex: 1,
+  },
+  doneCard: {
+    minHeight: 212,
+    justifyContent: "center",
+  },
+  doneInner: {
+    alignItems: "center",
+    paddingHorizontal: 24,
+    paddingVertical: 32,
+  },
+  doneIconWrap: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: "rgba(34, 197, 94, 0.10)",
     alignItems: "center",
     justifyContent: "center",
-    gap: 8,
-    paddingVertical: 14,
-    borderRadius: 16,
+    marginBottom: 14,
   },
-  dismissBtnBorder: { borderWidth: 1.5, borderColor: "rgba(0,0,0,0.1)" },
-  dismissBtnText: { fontSize: 15, fontWeight: "700", color: Colors.forest[700] },
-  confirmBtnText: { fontSize: 15, fontWeight: "700", color: "#fff" },
-
-  /* Done state */
-  doneCard: { padding: 0 },
-  doneCardAccent: { borderWidth: 1.5, borderColor: "rgba(0, 0, 0, 0.15)" },
-  doneInner: { alignItems: "center", padding: 32 },
-  doneTitle: { fontSize: 18, fontWeight: "700", color: Colors.primary, marginTop: 12 },
-  doneSub: { fontSize: 14, color: Colors.forest[600], marginTop: 4 },
-
-  /* ── Clinics ── */
-  mapContainer: { marginBottom: 14, borderRadius: 20, overflow: "hidden" },
-  clinicCard: { marginBottom: 10, padding: 0 },
+  doneTitle: {
+    fontSize: 19,
+    fontFamily: Fonts.bold,
+    color: TEXT_PRIMARY,
+    marginBottom: 6,
+  },
+  doneSub: {
+    fontSize: 14,
+    fontFamily: Fonts.regular,
+    color: TEXT_SECONDARY,
+    textAlign: "center",
+  },
+  mapShell: {
+    backgroundColor: CARD_BG,
+    borderRadius: 20,
+    padding: 8,
+    marginBottom: 14,
+    shadowColor: "#101828",
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.05,
+    shadowRadius: 24,
+    elevation: 3,
+  },
+  mapContainer: {
+    borderRadius: 16,
+    overflow: "hidden",
+  },
+  clinicCard: {
+    backgroundColor: CARD_BG,
+    borderRadius: 20,
+    marginBottom: 12,
+    shadowColor: "#101828",
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.05,
+    shadowRadius: 24,
+    elevation: 3,
+  },
   clinicRow: {
     flexDirection: "row",
     alignItems: "center",
-    padding: 16,
+    paddingHorizontal: 18,
+    paddingVertical: 18,
     gap: 12,
   },
   clinicIconPill: {
-    width: 44,
-    height: 44,
+    width: 46,
+    height: 46,
     borderRadius: 14,
     alignItems: "center",
     justifyContent: "center",
-    borderWidth: 1,
-    borderColor: "rgba(74,222,128,0.3)",
+    backgroundColor: "#F4F7F5",
   },
-  clinicInfo: { flex: 1 },
-  clinicName: { fontSize: 15, fontWeight: "600", color: Colors.primary },
-  clinicAddr: { fontSize: 13, color: Colors.forest[600], marginTop: 2 },
+  clinicInfo: {
+    flex: 1,
+  },
+  clinicName: {
+    fontSize: 15,
+    fontFamily: Fonts.semiBold,
+    color: TEXT_PRIMARY,
+    letterSpacing: -0.1,
+  },
+  clinicAddr: {
+    fontSize: 13,
+    fontFamily: Fonts.regular,
+    color: TEXT_SECONDARY,
+    marginTop: 3,
+    lineHeight: 18,
+  },
   distBadge: {
-    backgroundColor: Colors.forest[100],
+    backgroundColor: "rgba(34, 197, 94, 0.10)",
     paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 10,
+    paddingVertical: 6,
+    borderRadius: 999,
   },
-  distText: { fontSize: 12, fontWeight: "700", color: Colors.forest[700] },
+  distText: {
+    fontSize: 12,
+    fontFamily: Fonts.bold,
+    color: Colors.accent,
+  },
 });

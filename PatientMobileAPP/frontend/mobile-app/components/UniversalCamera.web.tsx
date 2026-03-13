@@ -1,9 +1,9 @@
 import React, {
-  useRef,
-  useEffect,
-  useState,
   forwardRef,
+  useEffect,
   useImperativeHandle,
+  useRef,
+  useState,
 } from "react";
 
 export interface CameraHandle {
@@ -15,17 +15,72 @@ interface UniversalCameraProps {
   isActive: boolean;
 }
 
-/**
- * Web camera implementation using the HTML5 MediaDevices API.
- * Renders a native <video> element for zero-dependency browser compatibility.
- */
+const PAGE_BG = "#030712";
+const ACCENT = "#22C55E";
+
+const panelStyle: React.CSSProperties = {
+  position: "absolute",
+  inset: 0,
+  display: "flex",
+  flexDirection: "column",
+  alignItems: "center",
+  justifyContent: "center",
+  backgroundColor: PAGE_BG,
+  padding: "24px",
+};
+
+const titleStyle: React.CSSProperties = {
+  color: "#FFFFFF",
+  fontSize: "24px",
+  fontWeight: 700,
+  lineHeight: 1.2,
+  textAlign: "center",
+  margin: "0 0 8px",
+  letterSpacing: "-0.02em",
+};
+
+const bodyStyle: React.CSSProperties = {
+  color: "rgba(255,255,255,0.74)",
+  fontSize: "15px",
+  lineHeight: 1.5,
+  textAlign: "center",
+  margin: 0,
+  maxWidth: "320px",
+};
+
+const primaryButtonStyle: React.CSSProperties = {
+  minWidth: "220px",
+  minHeight: "54px",
+  padding: "0 24px",
+  backgroundColor: ACCENT,
+  color: "#FFFFFF",
+  border: "none",
+  borderRadius: "16px",
+  fontSize: "15px",
+  fontWeight: 600,
+  cursor: "pointer",
+  marginTop: "24px",
+  boxShadow: "0 8px 24px rgba(34,197,94,0.18)",
+};
+
+const iconWrapStyle: React.CSSProperties = {
+  width: "56px",
+  height: "56px",
+  borderRadius: "28px",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  backgroundColor: "rgba(34, 197, 94, 0.20)",
+  marginBottom: "18px",
+};
+
 export const UniversalCamera = forwardRef<CameraHandle, UniversalCameraProps>(
   function UniversalCamera({ onCapture, isActive }, ref) {
     const videoRef = useRef<HTMLVideoElement>(null);
     const streamRef = useRef<MediaStream | null>(null);
-    const [status, setStatus] = useState<"initial" | "pending" | "granted" | "denied">(
-      "initial",
-    );
+    const [status, setStatus] = useState<
+      "initial" | "pending" | "granted" | "denied"
+    >("initial");
     const [errorMsg, setErrorMsg] = useState<string>("");
 
     useImperativeHandle(
@@ -78,57 +133,40 @@ export const UniversalCamera = forwardRef<CameraHandle, UniversalCameraProps>(
     };
 
     useEffect(() => {
-      // If component unmounts or becomes inactive, stop the stream
       if (!isActive) {
-        streamRef.current?.getTracks().forEach((t) => t.stop());
+        streamRef.current?.getTracks().forEach((track) => track.stop());
         streamRef.current = null;
       }
 
       return () => {
-        streamRef.current?.getTracks().forEach((t) => t.stop());
+        streamRef.current?.getTracks().forEach((track) => track.stop());
         streamRef.current = null;
       };
     }, [isActive]);
 
-    if (status === "initial") {
+    if (status === "initial" || status === "pending") {
       return (
-        <div
-          style={{
-            position: "absolute",
-            inset: 0,
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            justifyContent: "center",
-            backgroundColor: "#052E16",
-            gap: 16,
-          }}
-        >
-          <p
-            style={{
-              color: "#DCFCE7",
-              fontSize: 16,
-              textAlign: "center",
-              padding: "0 32px",
-              lineHeight: 1.5,
-              margin: 0,
-            }}
-          >
-            Camera permission is required to scan documents
+        <div style={panelStyle}>
+          <div style={iconWrapStyle}>
+            <svg
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="#FFFFFF"
+              strokeWidth="1.8"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M14.5 4h-5L8 6H5a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-3l-1.5-2Z" />
+              <circle cx="12" cy="12" r="3.5" />
+            </svg>
+          </div>
+          <p style={titleStyle}>Camera permission is required</p>
+          <p style={bodyStyle}>
+            Enable camera access to scan documents inside the frame.
           </p>
-          <button
-            onClick={requestAccess}
-            style={{
-              padding: "12px 24px",
-              backgroundColor: "#10B981",
-              color: "white",
-              border: "none",
-              borderRadius: "8px",
-              fontSize: "16px",
-              fontWeight: 600,
-              cursor: "pointer",
-            }}
-          >
+          <button onClick={requestAccess} style={primaryButtonStyle}>
             Grant Permission
           </button>
         </div>
@@ -137,59 +175,29 @@ export const UniversalCamera = forwardRef<CameraHandle, UniversalCameraProps>(
 
     if (status === "denied") {
       return (
-        <div
-          style={{
-            position: "absolute",
-            inset: 0,
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            justifyContent: "center",
-            backgroundColor: "#052E16",
-            gap: 12,
-          }}
-        >
-          <svg
-            width="48"
-            height="48"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="#86EFAC"
-            strokeWidth="1.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <path d="M16.5 7.5h.01M2 9V6.5C2 4.01 4.01 2 6.5 2H9m6 0h2.5C19.99 2 22 4.01 22 6.5V9m0 6v2.5c0 2.49-2.01 4.5-4.5 4.5H15m-6 0H6.5C4.01 22 2 19.99 2 17.5V15" />
-            <circle cx="12" cy="13" r="3" />
-          </svg>
-          <p
-            style={{
-              color: "#DCFCE7",
-              fontSize: 16,
-              textAlign: "center",
-              padding: "0 32px",
-              lineHeight: 1.5,
-              margin: 0,
-            }}
-          >
-            Camera access was denied.
-            <br />
-            {errorMsg ? <span style={{ opacity: 0.8, fontSize: 13 }}>({errorMsg})</span> : "Please allow camera permissions in your browser settings."}
+        <div style={panelStyle}>
+          <div style={iconWrapStyle}>
+            <svg
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="#FFFFFF"
+              strokeWidth="1.8"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M21 21 3 3" />
+              <path d="M10 4h4l1.5 2H19a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-9" />
+              <path d="M5 6h.5L7 4h1.6" />
+            </svg>
+          </div>
+          <p style={titleStyle}>Camera permission is required</p>
+          <p style={bodyStyle}>
+            {errorMsg || "Please allow camera permissions in your browser settings."}
           </p>
-          <button
-            onClick={requestAccess}
-            style={{
-              marginTop: 12,
-              padding: "8px 16px",
-              backgroundColor: "transparent",
-              color: "#86EFAC",
-              border: "1px solid #86EFAC",
-              borderRadius: "6px",
-              fontSize: "14px",
-              cursor: "pointer",
-            }}
-          >
-            Try Again
+          <button onClick={requestAccess} style={primaryButtonStyle}>
+            Grant Permission
           </button>
         </div>
       );
@@ -201,7 +209,7 @@ export const UniversalCamera = forwardRef<CameraHandle, UniversalCameraProps>(
           position: "absolute",
           inset: 0,
           overflow: "hidden",
-          backgroundColor: "#000",
+          backgroundColor: "#000000",
         }}
       >
         <video
