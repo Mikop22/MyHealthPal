@@ -22,7 +22,7 @@ import logging
 from datetime import datetime, timezone
 from typing import Optional
 
-from fastapi import APIRouter, BackgroundTasks, HTTPException, Request
+from fastapi import APIRouter, HTTPException, Request
 
 from app.models.prep_episode import (
     CheckinPayload,
@@ -329,7 +329,7 @@ async def save_health_data(token: str, body: HealthDataPayload, request: Request
 # ---------------------------------------------------------------------------
 
 @router.post("/{token}/submit", response_model=SubmitResponse)
-async def submit_prep(token: str, request: Request, background_tasks: BackgroundTasks):
+async def submit_prep(token: str, request: Request):
     """Finalise the prep package.
 
     Steps:
