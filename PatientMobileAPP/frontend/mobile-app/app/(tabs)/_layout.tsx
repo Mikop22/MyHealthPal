@@ -24,6 +24,7 @@ const TABS: TabDefinition[] = [
   { name: "vitals", title: "Vitals", icon: "vitals" },
   { name: "funding", title: "Funding", icon: "funding" },
   { name: "community", title: "Community", icon: "community" },
+  { name: "settings", title: "Profile", icon: "settings" },
 ];
 
 /* ── Animated tab icon with spring scale + underline ── */
@@ -57,7 +58,7 @@ function TabIcon({ name, focused }: { name: AppIconName; focused: boolean }) {
       <Animated.View style={iconStyle}>
         <AppIcon
           name={name}
-          size={22}
+          size={20}
           color={focused ? Colors.tabBar.active : Colors.tabBar.inactive}
         />
       </Animated.View>
@@ -89,8 +90,9 @@ export default function TabsLayout() {
           paddingBottom: Platform.OS === "web" ? 8 : undefined,
         },
         tabBarLabelStyle: {
-          fontSize: 11,
+          fontSize: 10,
           fontWeight: "600",
+          letterSpacing: 0.1,
         },
         tabBarBackground: () =>
           Platform.OS !== "web" ? (

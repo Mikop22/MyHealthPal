@@ -5,6 +5,7 @@ import {
   Pressable,
   StyleSheet,
   ScrollView,
+  TextInput,
 } from "react-native";
 import Animated, {
   useSharedValue,
@@ -14,6 +15,7 @@ import Animated, {
   withSequence,
   Easing,
   FadeIn,
+  FadeInDown,
   useDerivedValue,
   type SharedValue,
 } from "react-native-reanimated";
@@ -23,16 +25,17 @@ import { AppIcon } from "../../components/AppIcon";
 import { UniversalLiquidCard } from "../../components/UniversalLiquidCard";
 import { Colors } from "../../constants/Colors";
 import { Fonts } from "../../constants/Typography";
+import { usePatientStore } from "../../store/patientStore";
 
 const GOAL = 2000;
 const INITIAL_RAISED = 1240;
 
 const MOCK_DONORS = [
-  { id: "d1", amount: 50, timeAgo: "2 h ago" },
-  { id: "d2", amount: 25, timeAgo: "5 h ago" },
-  { id: "d3", amount: 100, timeAgo: "1 d ago" },
-  { id: "d4", amount: 15, timeAgo: "2 d ago" },
-  { id: "d5", amount: 75, timeAgo: "3 d ago" },
+  { id: "d1", initials: "AK", amount: 50, timeAgo: "2 h ago" },
+  { id: "d2", initials: "RS", amount: 25, timeAgo: "5 h ago" },
+  { id: "d3", initials: "JM", amount: 100, timeAgo: "1 d ago" },
+  { id: "d4", initials: "LP", amount: 15, timeAgo: "2 d ago" },
+  { id: "d5", initials: "NK", amount: 75, timeAgo: "3 d ago" },
 ];
 
 /* ───────── Deterministic QR Code ───────── */
@@ -103,7 +106,6 @@ function CountUpText({
     prevRef.current = value;
   }, [value]);
 
-  // Use derived value + JS state for display
   const [display, setDisplay] = useState(value);
   const derived = useDerivedValue(() => Math.round(anim.value));
 
@@ -120,7 +122,7 @@ function CountUpText({
 /* ── Gradient shimmer progress bar ── */
 function ShimmerBar({
   progress,
-  height = 14,
+  height = 10,
   onLayout,
   barWidth,
 }: {
@@ -134,7 +136,7 @@ function ShimmerBar({
   useEffect(() => {
     shimmer.value = withRepeat(
       withSequence(
-        withTiming(1, { duration: 1400, easing: Easing.inOut(Easing.quad) }),
+        withTiming(1, { duration: 1800, easing: Easing.inOut(Easing.quad) }),
         withTiming(0, { duration: 0 }),
       ),
       -1,
@@ -148,29 +150,60 @@ function ShimmerBar({
 
   const shimmerStyle = useAnimatedStyle(() => ({
     left: shimmer.value * (barWidth * (progress.value || 0) - 60),
-    opacity: shimmer.value < 0.85 ? shimmer.value * 0.5 : (1 - shimmer.value) * 4,
+    opacity: shimmer.value < 0.85 ? shimmer.value * 0.35 : (1 - shimmer.value) * 3,
   }));
 
   return (
     <View
-      style={[styles.barTrack, { height }]}
+      style={[s.barTrack, { height, borderRadius: height / 2 }]}
       onLayout={(e) => onLayout?.(e.nativeEvent.layout.width)}
     >
-      <Animated.View style={[StyleSheet.absoluteFill, fillStyle, { overflow: "hidden" }]}>
+      <Animated.View style={[StyleSheet.absoluteFill, fillStyle, { overflow: "hidden", borderRadius: height / 2 }]}>
         <LinearGradient
-          colors={["#4ADE80", "#22C55E", "#16A34A"]}
+          colors={["#86EFAC", "#22C55E", "#16A34A"]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 0 }}
           style={StyleSheet.absoluteFill}
         />
-        {/* Shimmer strip */}
-        <Animated.View style={[styles.shimmer, shimmerStyle]} />
+        <Animated.View style={[s.shimmer, shimmerStyle]} />
       </Animated.View>
+    </View>
+  );
+}
 
-      {/* 50% milestone marker */}
-      <View style={[styles.milestone, { left: `50%` as any }]}>
-        <View style={styles.milestoneTick} />
+/* ── Profile Avatar ── */
+function ProfileAvatar({ size = 72 }: { size?: number }) {
+  return (
+    <View
+      style={[
+        s.avatarOuter,
+        { width: size + 6, height: size + 6, borderRadius: (size + 6) / 2 },
+      ]}
+    >
+      <LinearGradient
+        colors={["rgba(134,239,172,0.4)", "rgba(22,163,74,0.15)"]}
+        style={[
+          s.avatarGradientRing,
+          { width: size + 6, height: size + 6, borderRadius: (size + 6) / 2 },
+        ]}
+      />
+      <View
+        style={[
+          s.avatarInner,
+          { width: size, height: size, borderRadius: size / 2 },
+        ]}
+      >
+        <AppIcon name="person" size={size * 0.45} color={Colors.forest[400]} />
       </View>
+    </View>
+  );
+}
+
+/* ── Donor avatar with initials ── */
+function DonorBadge({ initials }: { initials: string }) {
+  return (
+    <View style={s.donorAvatar}>
+      <Text style={s.donorInitials}>{initials}</Text>
     </View>
   );
 }
@@ -182,6 +215,8 @@ export default function FundingScreen() {
   const [barWidth, setBarWidth] = useState(0);
   const progress = useSharedValue(INITIAL_RAISED / GOAL);
   const isFunded = raised >= GOAL;
+
+  const { fundingProfile, setAboutMe, setCaseDescription } = usePatientStore();
 
   useEffect(() => {
     progress.value = withTiming(Math.min(raised / GOAL, 1), {
@@ -201,167 +236,364 @@ export default function FundingScreen() {
   const pct = Math.min(Math.round((raised / GOAL) * 100), 100);
 
   return (
-    <View style={styles.container}>
+    <View style={s.container}>
       <ScrollView
-        style={styles.scroll}
-        contentContainerStyle={styles.content}
+        style={s.scroll}
+        contentContainerStyle={s.content}
         showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
       >
         {/* ── Page Header ── */}
-        <View style={styles.pageHeaderRow}>
-          <Text style={styles.pageHeaderTitle}>Active Campaigns</Text>
-          <Pressable style={styles.createCampaignBtn}>
+        <Animated.View entering={FadeInDown.duration(500).delay(50)} style={s.pageHeaderRow}>
+          <View>
+            <Text style={s.pageHeaderTitle}>Funding</Text>
+            <Text style={s.pageHeaderSub}>Your active campaigns</Text>
+          </View>
+          <Pressable style={s.createCampaignBtn}>
             <AppIcon name="add" size={14} color="#fff" />
-            <Text style={styles.createCampaignBtnText}>Create</Text>
+            <Text style={s.createCampaignBtnText}>New</Text>
           </Pressable>
-        </View>
+        </Animated.View>
 
-        {/* ── Campaign Card ── */}
-        <UniversalLiquidCard variant="elevated" style={styles.campaignCard}>
-          {/* Gradient capsule icon */}
-          <View style={styles.campaignHeader}>
-            <LinearGradient
-              colors={["rgba(74,222,128,0.3)", "rgba(22,163,74,0.2)"]}
-              style={styles.campaignIconCapsule}
-            >
-              <AppIcon name="medical" size={24} color={Colors.accent} />
-            </LinearGradient>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.campaignTitle}>MRI Diagnostic Imaging</Text>
-              <Text style={styles.campaignSub}>
-                Pelvic MRI to evaluate suspected endometriosis
-              </Text>
+        {/* ── Patient Profile Card ── */}
+        <Animated.View entering={FadeInDown.duration(500).delay(100)}>
+          <UniversalLiquidCard variant="elevated" style={s.profileCard}>
+            <View style={s.profileRow}>
+              <ProfileAvatar size={68} />
+              <View style={s.profileInfo}>
+                <Text style={s.profileName}>Your Campaign Profile</Text>
+                <Text style={s.profileHint}>
+                  Help donors connect with your story
+                </Text>
+              </View>
             </View>
-          </View>
 
-          {/* Gradient shimmer progress bar */}
-          <ShimmerBar
-            progress={progress}
-            barWidth={barWidth}
-            onLayout={setBarWidth}
-            height={14}
-          />
-
-          <View style={styles.barMeta}>
-            <Text style={styles.barAmount}>
-              <CountUpText
-                value={raised}
-                prefix="$"
-                style={styles.barRaised}
-              />{" "}
-              of ${GOAL.toLocaleString()}
-            </Text>
-            <Text style={styles.barPct}>{pct}%</Text>
-          </View>
-
-          {!isFunded && (
-            <View style={styles.btnRow}>
-              <Pressable onPress={simulateDonation} style={styles.donateBtn}>
-                <AppIcon name="heart" size={18} color="#fff" />
-                <Text style={styles.donateBtnText}>Simulate Donation</Text>
-              </Pressable>
-              <Pressable onPress={fillToGoal} style={styles.fillBtn}>
-                <Text style={styles.fillBtnText}>Fill to 100%</Text>
-              </Pressable>
+            {/* About Me */}
+            <View style={s.sectionBlock}>
+              <View style={s.sectionLabelRow}>
+                <AppIcon name="person" size={14} color={Colors.forest[500]} />
+                <Text style={s.sectionLabel}>ABOUT ME</Text>
+              </View>
+              <TextInput
+                style={s.bioInput}
+                placeholder="Share a brief introduction about yourself..."
+                placeholderTextColor={Colors.forest[400]}
+                multiline
+                value={fundingProfile.aboutMe}
+                onChangeText={setAboutMe}
+                textAlignVertical="top"
+              />
             </View>
-          )}
-        </UniversalLiquidCard>
+
+            {/* Case Description */}
+            <View style={s.sectionBlock}>
+              <View style={s.sectionLabelRow}>
+                <AppIcon name="medical" size={14} color={Colors.forest[500]} />
+                <Text style={s.sectionLabel}>CASE DESCRIPTION</Text>
+              </View>
+              <TextInput
+                style={[s.bioInput, { minHeight: 100 }]}
+                placeholder="Describe your medical situation and why you need funding support..."
+                placeholderTextColor={Colors.forest[400]}
+                multiline
+                value={fundingProfile.caseDescription}
+                onChangeText={setCaseDescription}
+                textAlignVertical="top"
+              />
+            </View>
+          </UniversalLiquidCard>
+        </Animated.View>
+
+        {/* ── Campaign Progress Card ── */}
+        <Animated.View entering={FadeInDown.duration(500).delay(200)}>
+          <UniversalLiquidCard variant="elevated" style={s.campaignCard}>
+            <View style={s.campaignHeader}>
+              <LinearGradient
+                colors={["rgba(134,239,172,0.25)", "rgba(22,163,74,0.12)"]}
+                style={s.campaignIconCapsule}
+              >
+                <AppIcon name="medical" size={22} color={Colors.accent} />
+              </LinearGradient>
+              <View style={{ flex: 1 }}>
+                <Text style={s.campaignTitle}>MRI Diagnostic Imaging</Text>
+                <Text style={s.campaignSub}>
+                  Pelvic MRI · Suspected endometriosis
+                </Text>
+              </View>
+            </View>
+
+            <View style={s.statsRow}>
+              <View style={s.statItem}>
+                <CountUpText value={raised} prefix="$" style={s.statValue} />
+                <Text style={s.statCaption}>raised</Text>
+              </View>
+              <View style={s.statDivider} />
+              <View style={s.statItem}>
+                <Text style={s.statValue}>${GOAL.toLocaleString()}</Text>
+                <Text style={s.statCaption}>goal</Text>
+              </View>
+              <View style={s.statDivider} />
+              <View style={s.statItem}>
+                <Text style={s.statValue}>{pct}%</Text>
+                <Text style={s.statCaption}>funded</Text>
+              </View>
+            </View>
+
+            <ShimmerBar
+              progress={progress}
+              barWidth={barWidth}
+              onLayout={setBarWidth}
+              height={10}
+            />
+
+            {!isFunded && (
+              <View style={s.btnRow}>
+                <Pressable onPress={simulateDonation} style={s.donateBtn}>
+                  <AppIcon name="heart" size={16} color="#fff" />
+                  <Text style={s.donateBtnText}>Simulate Donation</Text>
+                </Pressable>
+                <Pressable onPress={fillToGoal} style={s.fillBtn}>
+                  <Text style={s.fillBtnText}>Fill 100%</Text>
+                </Pressable>
+              </View>
+            )}
+          </UniversalLiquidCard>
+        </Animated.View>
 
         {/* ── Recent Donors ── */}
-        <UniversalLiquidCard variant="default" style={styles.donorsCard}>
-          <Text style={styles.sectionLabel}>RECENT DONORS</Text>
-          {MOCK_DONORS.map((d) => (
-            <View key={d.id} style={styles.donorRow}>
-              <View style={styles.donorAvatar}>
-                <AppIcon name="person" size={16} color={Colors.forest[500]} />
-              </View>
-              <Text style={styles.donorName}>Anonymous</Text>
-              <Text style={styles.donorAmount}>${d.amount}</Text>
-              <Text style={styles.donorTime}>{d.timeAgo}</Text>
+        <Animated.View entering={FadeInDown.duration(500).delay(300)}>
+          <UniversalLiquidCard variant="default" style={s.donorsCard}>
+            <View style={s.sectionLabelRow}>
+              <AppIcon name="heart" size={13} color={Colors.forest[500]} />
+              <Text style={s.sectionLabel}>RECENT SUPPORTERS</Text>
             </View>
-          ))}
-        </UniversalLiquidCard>
+            {MOCK_DONORS.map((d, idx) => (
+              <View
+                key={d.id}
+                style={[
+                  s.donorRow,
+                  idx === MOCK_DONORS.length - 1 && { marginBottom: 0 },
+                ]}
+              >
+                <DonorBadge initials={d.initials} />
+                <View style={{ flex: 1 }}>
+                  <Text style={s.donorName}>Anonymous Supporter</Text>
+                  <Text style={s.donorTime}>{d.timeAgo}</Text>
+                </View>
+                <Text style={s.donorAmount}>+${d.amount}</Text>
+              </View>
+            ))}
+          </UniversalLiquidCard>
+        </Animated.View>
 
         {/* ── QR Code (visible when fully funded) ── */}
         {isFunded && (
           <Animated.View entering={FadeIn.duration(600)}>
-            <UniversalLiquidCard variant="active" style={styles.qrCard}>
-              <View style={styles.qrHeader}>
-                <AppIcon name="shield-checkmark" size={22} color={Colors.accent} />
-                <Text style={styles.qrTitle}>Secure Payment Code</Text>
+            <UniversalLiquidCard variant="active" style={s.qrCard}>
+              <View style={s.qrTitleRow}>
+                <View style={s.qrBadge}>
+                  <AppIcon name="shield-checkmark" size={18} color="#fff" />
+                </View>
+                <Text style={s.qrTitle}>Fully Funded</Text>
               </View>
-              <Text style={styles.qrSub}>
-                Present this QR code at the imaging centre to redeem your funded
-                diagnostic.
+              <Text style={s.qrSub}>
+                Present this QR code at the imaging centre to redeem your funded diagnostic.
               </Text>
-
-              <View style={styles.qrFrame}>
-                <MockQRCode size={180} />
+              <View style={s.qrFrame}>
+                <MockQRCode size={170} />
               </View>
-
-              <Text style={styles.qrRef}>REF: MHP-2026-4821-ENDO</Text>
+              <Text style={s.qrRef}>REF: MHP-2026-4821-ENDO</Text>
             </UniversalLiquidCard>
           </Animated.View>
         )}
+
+        <View style={{ height: 32 }} />
       </ScrollView>
-    </View >
+    </View>
   );
 }
 
-const styles = StyleSheet.create({
+const s = StyleSheet.create({
   container: { flex: 1, backgroundColor: "transparent" },
   scroll: { flex: 1 },
-  content: { paddingHorizontal: 20, paddingTop: 12, paddingBottom: 60 },
+  content: { paddingHorizontal: 24, paddingTop: 16, paddingBottom: 40 },
 
-  /* Header */
+  /* ── Header ── */
   pageHeaderRow: {
     flexDirection: "row",
-    alignItems: "center",
+    alignItems: "flex-end",
     justifyContent: "space-between",
-    marginBottom: 20,
-    marginTop: 8,
+    marginBottom: 24,
+    marginTop: 4,
   },
   pageHeaderTitle: {
-    fontSize: 22,
+    fontSize: 28,
     fontFamily: Fonts.bold,
     color: Colors.primary,
+    letterSpacing: -0.5,
+  },
+  pageHeaderSub: {
+    fontSize: 14,
+    fontFamily: Fonts.regular,
+    color: Colors.forest[500],
+    marginTop: 2,
+    letterSpacing: 0.1,
   },
   createCampaignBtn: {
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: Colors.accent,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 20,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 24,
     gap: 6,
+    shadowColor: Colors.accent,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 12,
+    elevation: 4,
   },
   createCampaignBtnText: {
     color: "#fff",
-    fontFamily: Fonts.bold,
-    fontSize: 13,
+    fontFamily: Fonts.semiBold,
+    fontSize: 14,
+    letterSpacing: 0.2,
   },
 
-  /* Campaign */
-  campaignCard: { padding: 24, marginBottom: 14 },
-  campaignHeader: { flexDirection: "row", alignItems: "center", gap: 14, marginBottom: 20 },
+  /* ── Profile Card ── */
+  profileCard: { padding: 28, marginBottom: 16 },
+  profileRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 18,
+    marginBottom: 24,
+  },
+  profileInfo: { flex: 1 },
+  profileName: {
+    fontSize: 18,
+    fontFamily: Fonts.bold,
+    color: Colors.primary,
+    letterSpacing: -0.2,
+  },
+  profileHint: {
+    fontSize: 13,
+    fontFamily: Fonts.regular,
+    color: Colors.forest[500],
+    marginTop: 3,
+    letterSpacing: 0.1,
+  },
+
+  /* ── Avatar ── */
+  avatarOuter: {
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  avatarGradientRing: {
+    position: "absolute",
+  },
+  avatarInner: {
+    backgroundColor: Colors.forest[50],
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 2.5,
+    borderColor: "#fff",
+  },
+
+  /* ── Sections ── */
+  sectionBlock: { marginBottom: 20 },
+  sectionLabelRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 7,
+    marginBottom: 10,
+  },
+  sectionLabel: {
+    fontSize: 11,
+    fontFamily: Fonts.bold,
+    color: Colors.forest[500],
+    letterSpacing: 1.4,
+  },
+  bioInput: {
+    backgroundColor: "rgba(240, 253, 244, 0.5)",
+    borderRadius: 16,
+    borderWidth: StyleSheet.hairlineWidth * 2,
+    borderColor: "rgba(187, 247, 208, 0.4)",
+    paddingHorizontal: 18,
+    paddingVertical: 14,
+    fontSize: 15,
+    fontFamily: Fonts.regular,
+    color: Colors.forest[800],
+    lineHeight: 22,
+    minHeight: 72,
+  },
+
+  /* ── Campaign ── */
+  campaignCard: { padding: 28, marginBottom: 16 },
+  campaignHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 16,
+    marginBottom: 24,
+  },
   campaignIconCapsule: {
-    width: 52,
-    height: 52,
+    width: 50,
+    height: 50,
     borderRadius: 16,
     alignItems: "center",
     justifyContent: "center",
-    borderWidth: 1,
-    borderColor: "rgba(74,222,128,0.3)",
+    borderWidth: StyleSheet.hairlineWidth * 2,
+    borderColor: "rgba(134,239,172,0.3)",
   },
-  campaignTitle: { fontSize: 18, fontFamily: Fonts.bold, color: Colors.primary },
-  campaignSub: { fontSize: 13, fontFamily: Fonts.regular, color: Colors.forest[600], marginTop: 2 },
+  campaignTitle: {
+    fontSize: 17,
+    fontFamily: Fonts.bold,
+    color: Colors.primary,
+    letterSpacing: -0.2,
+  },
+  campaignSub: {
+    fontSize: 13,
+    fontFamily: Fonts.regular,
+    color: Colors.forest[500],
+    marginTop: 3,
+    letterSpacing: 0.1,
+  },
 
-  /* Progress bar */
+  /* ── Stats Row ── */
+  statsRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-around",
+    marginBottom: 20,
+    paddingVertical: 16,
+    backgroundColor: "rgba(240, 253, 244, 0.35)",
+    borderRadius: 16,
+  },
+  statItem: { alignItems: "center" },
+  statValue: {
+    fontSize: 20,
+    fontFamily: Fonts.bold,
+    color: Colors.primary,
+    letterSpacing: -0.3,
+  },
+  statCaption: {
+    fontSize: 11,
+    fontFamily: Fonts.medium,
+    color: Colors.forest[500],
+    marginTop: 2,
+    letterSpacing: 0.5,
+    textTransform: "uppercase",
+  },
+  statDivider: {
+    width: StyleSheet.hairlineWidth * 2,
+    height: 32,
+    backgroundColor: "rgba(187, 247, 208, 0.5)",
+  },
+
+  /* ── Progress bar ── */
   barTrack: {
-    borderRadius: 7,
-    backgroundColor: Colors.forest[50],
+    backgroundColor: "rgba(240, 253, 244, 0.6)",
     overflow: "hidden",
-    marginBottom: 8,
+    marginBottom: 20,
     position: "relative",
   },
   shimmer: {
@@ -369,107 +601,154 @@ const styles = StyleSheet.create({
     top: 0,
     bottom: 0,
     width: 60,
-    backgroundColor: "rgba(255,255,255,0.45)",
+    backgroundColor: "rgba(255,255,255,0.35)",
     borderRadius: 4,
   },
-  milestone: {
-    position: "absolute",
-    top: 0,
-    bottom: 0,
-    alignItems: "center",
-    justifyContent: "flex-start",
-    width: 2,
-    marginLeft: -1,
-  },
-  milestoneTick: {
-    width: 2,
-    height: 6,
-    backgroundColor: "rgba(255,255,255,0.8)",
-    borderRadius: 1,
-  },
 
-  barMeta: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 18 },
-  barAmount: { fontSize: 14, color: Colors.forest[600] },
-  barRaised: { fontWeight: "700", color: Colors.primary },
-  barPct: { fontSize: 14, fontWeight: "700", color: Colors.accent },
-
-  /* Buttons */
+  /* ── Buttons ── */
   btnRow: { flexDirection: "row", gap: 10 },
   donateBtn: {
     flex: 1,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: 6,
+    gap: 8,
     backgroundColor: Colors.accent,
     paddingVertical: 14,
-    borderRadius: 16,
+    borderRadius: 20,
+    shadowColor: Colors.accent,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 10,
+    elevation: 3,
   },
-  donateBtnText: { color: "#fff", fontWeight: "700", fontSize: 15 },
+  donateBtnText: {
+    color: "#fff",
+    fontFamily: Fonts.semiBold,
+    fontSize: 15,
+    letterSpacing: 0.1,
+  },
   fillBtn: {
-    paddingHorizontal: 18,
+    paddingHorizontal: 20,
     paddingVertical: 14,
-    borderRadius: 16,
-    backgroundColor: Colors.forest[100],
+    borderRadius: 20,
+    backgroundColor: "rgba(240, 253, 244, 0.6)",
+    borderWidth: StyleSheet.hairlineWidth * 2,
+    borderColor: "rgba(187, 247, 208, 0.5)",
     justifyContent: "center",
   },
-  fillBtnText: { fontSize: 14, fontWeight: "600", color: Colors.forest[700] },
-
-  /* Donors */
-  donorsCard: { padding: 20, marginBottom: 14 },
-  sectionLabel: {
-    fontSize: 11,
-    fontWeight: "700",
-    color: Colors.forest[600],
-    letterSpacing: 1.2,
-    marginBottom: 14,
+  fillBtnText: {
+    fontSize: 14,
+    fontFamily: Fonts.semiBold,
+    color: Colors.forest[700],
+    letterSpacing: 0.1,
   },
-  donorRow: { flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 12 },
+
+  /* ── Donors ── */
+  donorsCard: { padding: 28, marginBottom: 16 },
+  donorRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 14,
+    marginBottom: 16,
+    paddingBottom: 16,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: "rgba(187, 247, 208, 0.3)",
+  },
   donorAvatar: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: Colors.forest[50],
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "rgba(240, 253, 244, 0.7)",
+    borderWidth: StyleSheet.hairlineWidth * 2,
+    borderColor: "rgba(187, 247, 208, 0.4)",
     alignItems: "center",
     justifyContent: "center",
   },
-  donorName: { flex: 1, fontSize: 14, fontWeight: "500", color: Colors.forest[800] },
-  donorAmount: { fontSize: 14, fontWeight: "700", color: Colors.primary },
-  donorTime: { fontSize: 12, color: Colors.forest[500], width: 52, textAlign: "right" },
+  donorInitials: {
+    fontSize: 13,
+    fontFamily: Fonts.bold,
+    color: Colors.forest[600],
+    letterSpacing: 0.5,
+  },
+  donorName: {
+    fontSize: 15,
+    fontFamily: Fonts.medium,
+    color: Colors.forest[800],
+    letterSpacing: 0.1,
+  },
+  donorAmount: {
+    fontSize: 16,
+    fontFamily: Fonts.bold,
+    color: Colors.accent,
+    letterSpacing: -0.2,
+  },
+  donorTime: {
+    fontSize: 12,
+    fontFamily: Fonts.regular,
+    color: Colors.forest[400],
+    marginTop: 1,
+    letterSpacing: 0.2,
+  },
 
-  /* QR Code */
-  qrCard: { padding: 24, alignItems: "center" },
-  qrHeader: {
+  /* ── QR Code ── */
+  qrCard: { padding: 32, alignItems: "center" },
+  qrTitleRow: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: 8,
-    marginBottom: 8,
     width: "100%",
+    gap: 10,
+    marginBottom: 10,
   },
-  qrTitle: { fontSize: 18, fontWeight: "700", color: Colors.primary },
-  qrSub: {
-    fontSize: 14,
-    color: Colors.forest[600],
-    textAlign: "center",
-    lineHeight: 20,
-    marginBottom: 20,
-    width: "100%",
-  },
-  qrFrame: {
-    padding: 16,
-    backgroundColor: "#fff",
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: Colors.forest[200],
-    marginBottom: 14,
+  qrBadge: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: Colors.accent,
     alignItems: "center",
     justifyContent: "center",
+    shadowColor: Colors.accent,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  qrTitle: {
+    fontSize: 22,
+    fontFamily: Fonts.bold,
+    color: Colors.primary,
+    letterSpacing: -0.3,
+  },
+  qrSub: {
+    fontSize: 14,
+    fontFamily: Fonts.regular,
+    color: Colors.forest[600],
+    textAlign: "center",
+    lineHeight: 21,
+    marginBottom: 24,
+    paddingHorizontal: 8,
+    letterSpacing: 0.1,
+  },
+  qrFrame: {
+    padding: 20,
+    backgroundColor: "#fff",
+    borderRadius: 20,
+    borderWidth: StyleSheet.hairlineWidth * 2,
+    borderColor: "rgba(187, 247, 208, 0.35)",
+    marginBottom: 16,
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: "rgba(22, 101, 52, 0.08)",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 1,
+    shadowRadius: 16,
+    elevation: 3,
   },
   qrRef: {
     fontSize: 12,
-    fontWeight: "700",
+    fontFamily: Fonts.bold,
     color: Colors.forest[400],
-    letterSpacing: 1.5,
+    letterSpacing: 2,
   },
 });

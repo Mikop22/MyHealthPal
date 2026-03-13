@@ -44,7 +44,12 @@ export type AppIconName =
     | "images"
     | "clipboard"
     | "sparkles"
-    | "refresh";
+    | "refresh"
+    | "settings"
+    | "calendar"
+    | "globe"
+    | "chevron-forward"
+    | "mail";
 
 interface AppIconProps {
     name: AppIconName;
@@ -383,6 +388,59 @@ export function AppIcon({ name, size = 24, color = "#166534", style }: AppIconPr
                 <Svg width={s} height={s} viewBox="0 0 24 24" fill="none" style={style as any}>
                     <Path d="M1 4v6h6" stroke={c} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
                     <Path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" stroke={c} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
+                </Svg>
+            );
+
+        /* ── Settings gear ── */
+        case "settings":
+            return (
+                <Svg width={s} height={s} viewBox="0 0 24 24" fill="none" style={style as any}>
+                    <Circle cx={12} cy={12} r={3} stroke={c} strokeWidth={1.8} />
+                    <Path
+                        d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"
+                        stroke={c}
+                        strokeWidth={1.8}
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                    />
+                </Svg>
+            );
+
+        /* ── Calendar ── */
+        case "calendar":
+            return (
+                <Svg width={s} height={s} viewBox="0 0 24 24" fill="none" style={style as any}>
+                    <Rect x={3} y={4} width={18} height={18} rx={2} stroke={c} strokeWidth={1.8} />
+                    <Line x1={16} y1={2} x2={16} y2={6} stroke={c} strokeWidth={1.8} strokeLinecap="round" />
+                    <Line x1={8} y1={2} x2={8} y2={6} stroke={c} strokeWidth={1.8} strokeLinecap="round" />
+                    <Line x1={3} y1={10} x2={21} y2={10} stroke={c} strokeWidth={1.8} />
+                </Svg>
+            );
+
+        /* ── Globe ── */
+        case "globe":
+            return (
+                <Svg width={s} height={s} viewBox="0 0 24 24" fill="none" style={style as any}>
+                    <Circle cx={12} cy={12} r={10} stroke={c} strokeWidth={1.8} />
+                    <Line x1={2} y1={12} x2={22} y2={12} stroke={c} strokeWidth={1.4} />
+                    <Path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10A15.3 15.3 0 0 1 12 2z" stroke={c} strokeWidth={1.4} />
+                </Svg>
+            );
+
+        /* ── Chevron forward ── */
+        case "chevron-forward":
+            return (
+                <Svg width={s} height={s} viewBox="0 0 24 24" fill="none" style={style as any}>
+                    <Path d="M9 18l6-6-6-6" stroke={c} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
+                </Svg>
+            );
+
+        /* ── Mail envelope ── */
+        case "mail":
+            return (
+                <Svg width={s} height={s} viewBox="0 0 24 24" fill="none" style={style as any}>
+                    <Rect x={2} y={4} width={20} height={16} rx={2} stroke={c} strokeWidth={1.8} />
+                    <Path d="M22 4L12 13 2 4" stroke={c} strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" />
                 </Svg>
             );
 

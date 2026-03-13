@@ -2,6 +2,7 @@ import { useState, useCallback } from "react";
 import {
   View,
   Text,
+  TextInput,
   useWindowDimensions,
   Pressable,
   ScrollView,
@@ -15,6 +16,7 @@ import Animated, {
   SlideOutLeft,
   SlideInLeft,
   SlideOutRight,
+  LinearTransition,
   useSharedValue,
   useAnimatedStyle,
   withSpring,
@@ -22,12 +24,13 @@ import Animated, {
 import { Ionicons } from "@expo/vector-icons";
 import { UniversalLiquidCard } from "../components/UniversalLiquidCard";
 import { OnboardingOptionButton } from "../components/OnboardingOptionButton";
-import { LogoBreathing } from "../components/LogoBreathing";
+import { AppIcon } from "../components/AppIcon";
 import {
   usePatientStore,
   type BiologicalSex,
 } from "../store/patientStore";
 import { Fonts } from "../constants/Typography";
+import { Colors } from "../constants/Colors";
 
 /* ───────────── Step Definitions ───────────── */
 
@@ -38,11 +41,13 @@ interface StepOption {
 }
 
 interface StepDef {
-  key: "age" | "sex" | "language" | "ethnicity";
+  key: "age" | "sex" | "language" | "ethnicity" | "email";
   question: string;
   description: string;
-  options: StepOption[];
+  options?: StepOption[];
   multiSelect?: boolean;
+  inputType?: "email";
+  inputPlaceholder?: string;
 }
 
 const STEPS: StepDef[] = [
@@ -105,10 +110,29 @@ const STEPS: StepDef[] = [
       { label: "Prefer not to say", value: "prefer_not_to_say" },
     ],
   },
+  {
+    key: "email",
+    question: "What's your email?",
+    description:
+      "We'll use this to send you appointment reminders and health updates.",
+    inputType: "email",
+    inputPlaceholder: "your.name@email.com",
+  },
 ];
 
-/* ───────────── Spring config ───────────── */
-const CARD_SPRING = { damping: 20, stiffness: 200, mass: 1 };
+/* ───────────── Animation config (premium slide + fade) ───────────── */
+const ENTER_SPRING = { damping: 20, stiffness: 90 };
+
+const stepContainerStyle = {
+  position: "absolute" as const,
+  top: 0,
+  left: 0,
+  right: 0,
+  bottom: 0,
+  width: "100%" as const,
+  height: "100%" as const,
+  alignItems: "center" as const,
+};
 
 type SelectionValue = string | number | (string | number)[];
 type Selections = Record<string, SelectionValue>;
@@ -118,8 +142,14 @@ type Selections = Record<string, SelectionValue>;
 export default function OnboardingScreen() {
   const router = useRouter();
   const { width } = useWindowDimensions();
-  const { setAge, setSex, setLanguage, setEthnicity, completeDemographics } =
-    usePatientStore();
+  const {
+    setAge,
+    setSex,
+    setLanguage,
+    setEthnicity,
+    setEmail,
+    completeDemographics,
+  } = usePatientStore();
 
   const [stepIndex, setStepIndex] = useState(0);
   const [selections, setSelections] = useState<Selections>({});
@@ -133,14 +163,16 @@ export default function OnboardingScreen() {
 
   const step = STEPS[stepIndex];
   const isLastStep = stepIndex === STEPS.length - 1;
-  const progress = (stepIndex + 1) / STEPS.length;
+  const isInputStep = step.inputType === "email";
 
   const currentSelection: SelectionValue | null =
     selections[step.key] ?? (step.multiSelect ? [] : null);
 
-  const hasSelection = step.multiSelect
-    ? Array.isArray(currentSelection) && currentSelection.length > 0
-    : currentSelection != null;
+  const hasSelection = isInputStep
+    ? typeof currentSelection === "string" && currentSelection.trim().length > 0
+    : step.multiSelect
+      ? Array.isArray(currentSelection) && currentSelection.length > 0
+      : currentSelection != null;
 
   const isOptionSelected = useCallback(
     (value: string | number): boolean => {
@@ -185,6 +217,13 @@ export default function OnboardingScreen() {
     [isTransitioning, step.key, step.multiSelect],
   );
 
+  const handleEmailChange = useCallback(
+    (text: string) => {
+      setSelections((prev) => ({ ...prev, email: text }));
+    },
+    [],
+  );
+
   const commitStep = useCallback(
     (stepKey: string, value: SelectionValue) => {
       switch (stepKey) {
@@ -200,9 +239,12 @@ export default function OnboardingScreen() {
         case "ethnicity":
           setEthnicity(value as string[]);
           break;
+        case "email":
+          setEmail(value as string);
+          break;
       }
     },
-    [setAge, setSex, setLanguage, setEthnicity],
+    [setAge, setSex, setLanguage, setEthnicity, setEmail],
   );
 
   const handleBack = useCallback(() => {
@@ -248,26 +290,20 @@ export default function OnboardingScreen() {
   const entering =
     direction === 1
       ? SlideInRight.springify()
-        .damping(CARD_SPRING.damping)
-        .stiffness(CARD_SPRING.stiffness)
-        .mass(CARD_SPRING.mass)
+          .damping(ENTER_SPRING.damping)
+          .stiffness(ENTER_SPRING.stiffness)
+          .withInitialValues({ opacity: 0 })
       : SlideInLeft.springify()
-        .damping(CARD_SPRING.damping)
-        .stiffness(CARD_SPRING.stiffness)
-        .mass(CARD_SPRING.mass);
+          .damping(ENTER_SPRING.damping)
+          .stiffness(ENTER_SPRING.stiffness)
+          .withInitialValues({ opacity: 0 });
 
   const exiting =
     direction === 1
-      ? SlideOutLeft.springify()
-        .damping(CARD_SPRING.damping)
-        .stiffness(CARD_SPRING.stiffness)
-        .mass(CARD_SPRING.mass)
-      : SlideOutRight.springify()
-        .damping(CARD_SPRING.damping)
-        .stiffness(CARD_SPRING.stiffness)
-        .mass(CARD_SPRING.mass);
+      ? SlideOutLeft.duration(300)
+      : SlideOutRight.duration(300);
 
-  const optionsList = step.options.map((opt, _idx) => (
+  const optionsList = step.options?.map((opt) => (
     <OnboardingOptionButton
       key={String(opt.value)}
       label={opt.label}
@@ -279,9 +315,7 @@ export default function OnboardingScreen() {
 
   return (
     <View className="flex-1 bg-white">
-      {/* Watermark logo removed per user request */}
-
-      {/* Top bar: Back button + step indicator */}
+      {/* Top bar: Back button */}
       <View className="flex-row items-center justify-between px-6 pt-16 pb-2">
         {stepIndex > 0 ? (
           <Pressable
@@ -298,20 +332,17 @@ export default function OnboardingScreen() {
         )}
       </View>
 
-
-      <View className="flex-1 w-full items-center">
+      <View
+        className="flex-1 w-full items-center"
+        style={{ overflow: "hidden" }}
+      >
         <Animated.View
           key={step.key}
           entering={entering}
           exiting={exiting}
-          style={{
-            position: 'absolute',
-            width: '100%',
-            height: '100%',
-            alignItems: 'center',
-          }}
+          layout={LinearTransition.springify().damping(20).stiffness(90)}
+          style={stepContainerStyle}
         >
-          {/* Master width-lock + vertical anchor */}
           <View className="w-[90%] max-w-[400px] mt-16">
             {/* Top Card: Question & Description */}
             <UniversalLiquidCard
@@ -334,8 +365,35 @@ export default function OnboardingScreen() {
               </View>
             </UniversalLiquidCard>
 
-            {/* Options List — individual glass pills */}
-            {step.multiSelect ? (
+            {/* Email TextInput step */}
+            {isInputStep && (
+              <View style={{ marginTop: 24 }}>
+                <View style={inputStyles.inputContainer}>
+                  <View style={inputStyles.iconWrap}>
+                    <AppIcon name="mail" size={20} color={Colors.forest[500]} />
+                  </View>
+                  <TextInput
+                    style={inputStyles.input}
+                    placeholder={step.inputPlaceholder}
+                    placeholderTextColor={Colors.forest[400]}
+                    value={(selections.email as string) ?? ""}
+                    onChangeText={handleEmailChange}
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                    autoComplete="email"
+                    returnKeyType="done"
+                    onSubmitEditing={handleNext}
+                  />
+                </View>
+                <Text style={inputStyles.hint}>
+                  Your email is kept private and never shared.
+                </Text>
+              </View>
+            )}
+
+            {/* Options List — for non-input steps */}
+            {!isInputStep && step.multiSelect ? (
               <ScrollView
                 style={{ marginTop: 24, maxHeight: 360 }}
                 showsVerticalScrollIndicator={false}
@@ -344,11 +402,11 @@ export default function OnboardingScreen() {
               >
                 {optionsList}
               </ScrollView>
-            ) : (
+            ) : !isInputStep ? (
               <View style={{ marginTop: 24, gap: 8 }}>
                 {optionsList}
               </View>
-            )}
+            ) : null}
           </View>
         </Animated.View>
       </View>
@@ -376,14 +434,12 @@ export default function OnboardingScreen() {
             hasSelection && Platform.OS === "web" && (ctaStyles.btnWebActive as object),
           ]}
         >
-          {/* Gradient fill */}
           <LinearGradient
             colors={["#00C8B4", "#22C55E"]}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 0 }}
             style={[StyleSheet.absoluteFill, { opacity: hasSelection ? 0.45 : 0.15 }]}
           />
-          {/* Label */}
           <Text
             style={{
               fontFamily: Fonts.bold,
@@ -400,6 +456,50 @@ export default function OnboardingScreen() {
   );
 }
 
+const inputStyles = StyleSheet.create({
+  inputContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "rgba(255,255,255,0.65)",
+    borderRadius: 20,
+    borderWidth: StyleSheet.hairlineWidth * 2,
+    borderColor: "rgba(187, 247, 208, 0.45)",
+    paddingHorizontal: 18,
+    height: 60,
+    shadowColor: "rgba(22, 101, 52, 0.06)",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 1,
+    shadowRadius: 12,
+    elevation: 2,
+  },
+  iconWrap: {
+    width: 38,
+    height: 38,
+    borderRadius: 12,
+    backgroundColor: "rgba(240, 253, 244, 0.7)",
+    borderWidth: StyleSheet.hairlineWidth * 2,
+    borderColor: "rgba(187, 247, 208, 0.35)",
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 14,
+  },
+  input: {
+    flex: 1,
+    fontSize: 17,
+    fontFamily: Fonts.medium,
+    color: Colors.forest[800],
+    letterSpacing: -0.1,
+  },
+  hint: {
+    fontSize: 12,
+    fontFamily: Fonts.regular,
+    color: Colors.forest[400],
+    textAlign: "center",
+    marginTop: 14,
+    letterSpacing: 0.2,
+  },
+});
+
 const ctaStyles = StyleSheet.create({
   btn: {
     height: 56,
@@ -411,13 +511,10 @@ const ctaStyles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  // Web-only properties applied via Platform check
   btnWeb: {
     // @ts-expect-error web-only
     backdropFilter: "blur(24px) saturate(160%)",
     WebkitBackdropFilter: "blur(24px) saturate(160%)",
   },
-  btnWebActive: {
-    // Removed glowing box-shadow per user request
-  },
+  btnWebActive: {},
 });

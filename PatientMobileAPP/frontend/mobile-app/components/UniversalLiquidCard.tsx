@@ -23,26 +23,24 @@ interface UniversalLiquidCardProps {
   style?: ViewStyle;
 }
 
-/* ───────────── Variant style maps ───────────── */
-
 const VARIANT_FILL: Record<GlassVariant, ViewStyle> = {
   default: {
-    backgroundColor: "rgba(255, 255, 255, 0.10)",
-    borderColor: "rgba(255, 255, 255, 0.28)",
-    borderWidth: 1,
+    backgroundColor: "rgba(255, 255, 255, 0.45)",
+    borderColor: "rgba(187, 247, 208, 0.35)",
+    borderWidth: StyleSheet.hairlineWidth * 2,
   },
   elevated: {
-    backgroundColor: "rgba(255, 255, 255, 0.18)",
-    borderColor: "rgba(255, 255, 255, 0.40)",
-    borderWidth: 1,
+    backgroundColor: "rgba(255, 255, 255, 0.55)",
+    borderColor: "rgba(187, 247, 208, 0.40)",
+    borderWidth: StyleSheet.hairlineWidth * 2,
   },
   active: {
-    backgroundColor: "rgba(220, 252, 231, 0.08)",
-    borderColor: "rgba(74, 222, 128, 0.55)",
-    borderWidth: 1.5,
+    backgroundColor: "rgba(240, 253, 244, 0.50)",
+    borderColor: "rgba(74, 222, 128, 0.35)",
+    borderWidth: StyleSheet.hairlineWidth * 3,
   },
   subtle: {
-    backgroundColor: "rgba(255, 255, 255, 0.06)",
+    backgroundColor: "rgba(255, 255, 255, 0.25)",
     borderColor: "transparent",
     borderWidth: 0,
   },
@@ -50,24 +48,15 @@ const VARIANT_FILL: Record<GlassVariant, ViewStyle> = {
 
 const WEB_SHADOW: Record<GlassVariant, string> = {
   default:
-    "0 8px 32px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.04), inset 0 1.5px 0 rgba(255,255,255,0.55), inset 0 -1px 0 rgba(0,0,0,0.04)",
+    "0 1px 2px rgba(22,101,52,0.03), 0 4px 12px rgba(22,101,52,0.04), 0 12px 36px rgba(22,101,52,0.05)",
   elevated:
-    "0 12px 40px rgba(0,0,0,0.12), 0 4px 12px rgba(0,0,0,0.08), inset 0 1.5px 0 rgba(255,255,255,0.65), inset 0 -1px 0 rgba(0,0,0,0.04)",
+    "0 1px 3px rgba(22,101,52,0.04), 0 6px 16px rgba(22,101,52,0.05), 0 16px 48px rgba(22,101,52,0.06), inset 0 0.5px 0 rgba(255,255,255,0.6)",
   active:
-    "0 4px 20px rgba(0,0,0,0.15), 0 2px 8px rgba(0,0,0,0.06), inset 0 1.5px 0 rgba(255,255,255,0.50), inset 0 -1px 0 rgba(0,0,0,0.04)",
+    "0 1px 2px rgba(34,197,94,0.06), 0 4px 14px rgba(34,197,94,0.08), 0 14px 40px rgba(34,197,94,0.06), inset 0 0.5px 0 rgba(255,255,255,0.5)",
   subtle:
-    "0 4px 16px rgba(0,0,0,0.05), inset 0 1px 0 rgba(255,255,255,0.30)",
+    "0 2px 8px rgba(22,101,52,0.03), 0 8px 24px rgba(22,101,52,0.03)",
 };
 
-/**
- * UniversalLiquidCard
- *
- * Platform-adaptive frosted-glass container.
- * - **Web:** CSS `backdrop-filter: blur()` + `boxShadow` (never crashes).
- * - **Native:** `expo-blur` BlurView + native shadow props.
- *
- * Accepts NativeWind `className` for outer layout utilities.
- */
 export function UniversalLiquidCard({
   children,
   variant = "default",
@@ -80,7 +69,7 @@ export function UniversalLiquidCard({
 
   const scaleStyle = useAnimatedStyle(() => ({
     transform: [
-      { scale: interpolate(pressed.value, [0, 1], [1, 0.965]) },
+      { scale: interpolate(pressed.value, [0, 1], [1, 0.975]) },
     ],
   }));
 
@@ -95,7 +84,6 @@ export function UniversalLiquidCard({
   const borderRadius = GlassRadius[radius];
   const variantFill = VARIANT_FILL[variant];
 
-  /* ──────────── WEB: CSS backdrop-filter ──────────── */
   if (Platform.OS === "web") {
     return (
       <Animated.View
@@ -109,23 +97,22 @@ export function UniversalLiquidCard({
             borderRadius,
             overflow: "hidden" as const,
             // @ts-expect-error — web-only CSS properties
-            backdropFilter: "blur(32px) saturate(180%)",
-            WebkitBackdropFilter: "blur(32px) saturate(180%)",
+            backdropFilter: "blur(40px) saturate(180%)",
+            WebkitBackdropFilter: "blur(40px) saturate(180%)",
             boxShadow: WEB_SHADOW[variant],
-            transition: "box-shadow 0.3s ease",
+            transition: "box-shadow 0.35s cubic-bezier(0.4,0,0.2,1), transform 0.2s ease",
           },
           style,
         ]}
         className={`relative ${className}`}
       >
-        {/* Specular inner glow — raw <div> bypasses RN Web style validation */}
         <div
           style={{
             position: "absolute",
             inset: 0,
             borderRadius,
             background:
-              "radial-gradient(ellipse at 50% 0%, rgba(255,255,255,0.25) 0%, transparent 60%)",
+              "linear-gradient(180deg, rgba(255,255,255,0.18) 0%, rgba(255,255,255,0.02) 50%, transparent 100%)",
             pointerEvents: "none",
           }}
         />
@@ -134,7 +121,6 @@ export function UniversalLiquidCard({
     );
   }
 
-  /* ──────────── NATIVE: expo-blur BlurView ──────────── */
   return (
     <Animated.View
       onTouchStart={onPressIn}
@@ -150,7 +136,7 @@ export function UniversalLiquidCard({
       className={`relative overflow-hidden ${className}`}
     >
       <BlurView
-        intensity={80}
+        intensity={90}
         tint="light"
         style={[StyleSheet.absoluteFill, { borderRadius }]}
       />
@@ -165,19 +151,19 @@ export function UniversalLiquidCard({
 
 const nativeStyles = StyleSheet.create({
   wrapper: {
-    shadowColor: Colors.shadow.greenTint,
-    shadowOffset: { width: 0, height: 8 },
+    shadowColor: "rgba(22, 101, 52, 0.12)",
+    shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 1,
-    shadowRadius: 32,
-    elevation: 12,
+    shadowRadius: 24,
+    elevation: 8,
   },
   innerGlow: {
     position: "absolute",
     top: 0,
     left: 0,
     right: 0,
-    bottom: "40%",
-    backgroundColor: "rgba(255, 255, 255, 0.14)",
+    height: "35%",
+    backgroundColor: "rgba(255, 255, 255, 0.12)",
   },
 });
 

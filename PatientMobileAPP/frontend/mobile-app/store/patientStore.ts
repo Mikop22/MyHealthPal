@@ -9,6 +9,7 @@ export interface DemographicPayload {
   sex: BiologicalSex | null;
   primaryLanguage: string | null;
   ethnicity: string[];
+  email: string | null;
   completedAt: string | null;
 }
 
@@ -27,17 +28,25 @@ export interface TranscribedAudio {
   languageCode: string;
 }
 
+export interface FundingProfile {
+  aboutMe: string;
+  caseDescription: string;
+  profileImageUri: string | null;
+}
+
 export interface PatientState {
   /* ── Slices ── */
   demographics: DemographicPayload;
   triageSymptoms: TriageSymptom[];
   transcribedAudio: TranscribedAudio | null;
+  fundingProfile: FundingProfile;
 
   /* ── Actions: Demographics ── */
   setAge: (age: number) => void;
   setSex: (sex: BiologicalSex) => void;
   setLanguage: (lang: string) => void;
   setEthnicity: (ethnicities: string[]) => void;
+  setEmail: (email: string) => void;
   completeDemographics: () => void;
 
   /* ── Actions: Triage ── */
@@ -48,6 +57,11 @@ export interface PatientState {
   /* ── Actions: Audio ── */
   setTranscription: (audio: TranscribedAudio) => void;
   clearTranscription: () => void;
+
+  /* ── Actions: Funding Profile ── */
+  setAboutMe: (text: string) => void;
+  setCaseDescription: (text: string) => void;
+  setProfileImageUri: (uri: string | null) => void;
 
   /* ── Global ── */
   resetAll: () => void;
@@ -60,7 +74,14 @@ const INITIAL_DEMOGRAPHICS: DemographicPayload = {
   sex: null,
   primaryLanguage: null,
   ethnicity: [],
+  email: null,
   completedAt: null,
+};
+
+const INITIAL_FUNDING_PROFILE: FundingProfile = {
+  aboutMe: "",
+  caseDescription: "",
+  profileImageUri: null,
 };
 
 /* ───────────── Store ───────────── */
@@ -69,6 +90,7 @@ export const usePatientStore = create<PatientState>()((set) => ({
   demographics: { ...INITIAL_DEMOGRAPHICS },
   triageSymptoms: [],
   transcribedAudio: null,
+  fundingProfile: { ...INITIAL_FUNDING_PROFILE },
 
   /* Demographics */
   setAge: (age) =>
@@ -86,6 +108,9 @@ export const usePatientStore = create<PatientState>()((set) => ({
     set((s) => ({
       demographics: { ...s.demographics, ethnicity: ethnicities },
     })),
+
+  setEmail: (email) =>
+    set((s) => ({ demographics: { ...s.demographics, email } })),
 
   completeDemographics: () =>
     set((s) => ({
@@ -117,11 +142,24 @@ export const usePatientStore = create<PatientState>()((set) => ({
   setTranscription: (audio) => set({ transcribedAudio: audio }),
   clearTranscription: () => set({ transcribedAudio: null }),
 
+  /* Funding Profile */
+  setAboutMe: (text) =>
+    set((s) => ({ fundingProfile: { ...s.fundingProfile, aboutMe: text } })),
+  setCaseDescription: (text) =>
+    set((s) => ({
+      fundingProfile: { ...s.fundingProfile, caseDescription: text },
+    })),
+  setProfileImageUri: (uri) =>
+    set((s) => ({
+      fundingProfile: { ...s.fundingProfile, profileImageUri: uri },
+    })),
+
   /* Reset */
   resetAll: () =>
     set({
       demographics: { ...INITIAL_DEMOGRAPHICS },
       triageSymptoms: [],
       transcribedAudio: null,
+      fundingProfile: { ...INITIAL_FUNDING_PROFILE },
     }),
 }));
