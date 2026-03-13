@@ -408,7 +408,7 @@ async def submit_prep(token: str, request: Request):
             }},
         )
     except Exception as exc:
-        logger.error("Analysis pipeline failed for token %s: %s", token, exc)
+        logger.exception("Analysis pipeline failed for token %s: %s", token, exc)
         # Mark status as submitted (analysis failed) so the summary is still
         # available and the prep can be retried or reviewed manually.
         final_status = PrepStatus.submitted.value
