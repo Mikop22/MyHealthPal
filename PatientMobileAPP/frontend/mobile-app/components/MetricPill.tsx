@@ -19,7 +19,12 @@ export function MetricPill({
   onPress,
 }: MetricPillProps) {
   return (
-    <Pressable onPress={onPress} style={styles.outer}>
+    <Pressable
+      onPress={onPress}
+      disabled={!onPress}
+      accessibilityRole={onPress ? "button" : undefined}
+      style={styles.outer}
+    >
       {active ? (
         <LinearGradient
           colors={[Colors.brand[400], Colors.brand[600]]}

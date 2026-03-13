@@ -14,9 +14,6 @@ import { Ionicons } from "@expo/vector-icons";
 import Animated, {
   FadeInDown,
   FadeOut,
-  useAnimatedStyle,
-  useSharedValue,
-  withSpring,
 } from "react-native-reanimated";
 
 import { AppIcon } from "../components/AppIcon";
@@ -138,11 +135,6 @@ export default function OnboardingScreen() {
   const [stepIndex, setStepIndex] = useState(0);
   const [selections, setSelections] = useState<Selections>({});
   const [isTransitioning, setIsTransitioning] = useState(false);
-
-  const pressScale = useSharedValue(1);
-  const ctaAnimStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: pressScale.value }],
-  }));
 
   const step = STEPS[stepIndex];
   const isLastStep = stepIndex === STEPS.length - 1;
@@ -401,16 +393,13 @@ export default function OnboardingScreen() {
         </Animated.View>
       </View>
 
-      <Animated.View
-        style={[
-          ctaAnimStyle,
-          {
-            width: "90%",
-            maxWidth: 400,
-            alignSelf: "center",
-            paddingBottom: 40,
-          },
-        ]}
+      <View
+        style={{
+          width: "90%",
+          maxWidth: 400,
+          alignSelf: "center",
+          paddingBottom: 40,
+        }}
       >
         <PrimaryButton
           onPress={handleNext}
@@ -425,7 +414,7 @@ export default function OnboardingScreen() {
               (ctaStyles.btnWebActive as object),
           ]}
         />
-      </Animated.View>
+      </View>
     </View>
   );
 }

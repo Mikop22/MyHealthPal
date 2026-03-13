@@ -3,14 +3,22 @@ import { Pressable, StyleSheet, Text, View } from "react-native";
 import { Colors } from "../constants/Colors";
 import { Typography } from "../constants/Typography";
 
-interface SectionHeaderProps {
+type SectionHeaderActionProps =
+  | {
+      actionLabel: string;
+      onActionPress: () => void;
+    }
+  | {
+      actionLabel?: undefined;
+      onActionPress?: undefined;
+    };
+
+type SectionHeaderProps = SectionHeaderActionProps & {
   eyebrow?: string;
   title: string;
   subtitle?: string;
-  actionLabel?: string;
-  onActionPress?: () => void;
   trailing?: React.ReactNode;
-}
+};
 
 export function SectionHeader({
   eyebrow,
@@ -30,7 +38,7 @@ export function SectionHeader({
 
       {trailing ? trailing : null}
 
-      {!trailing && actionLabel ? (
+      {!trailing && actionLabel && onActionPress ? (
         <Pressable onPress={onActionPress} hitSlop={8}>
           <Text style={styles.action}>{actionLabel}</Text>
         </Pressable>

@@ -7,7 +7,7 @@ import { SectionHeader } from "../../components/SectionHeader";
 import { StatusBadge } from "../../components/StatusBadge";
 import { UniversalLiquidCard } from "../../components/UniversalLiquidCard";
 import { Colors } from "../../constants/Colors";
-import { Fonts, Typography } from "../../constants/Typography";
+import { Typography } from "../../constants/Typography";
 import { usePatientStore } from "../../store/patientStore";
 
 const FALLBACK = "Not specified";
@@ -246,19 +246,6 @@ const s = StyleSheet.create({
   container: { flex: 1, backgroundColor: "transparent" },
   scroll: { flex: 1 },
   content: { paddingHorizontal: 24, paddingTop: 16, paddingBottom: 40 },
-
-  /* ── Page Header ── */
-  pageTitle: {
-    ...Typography.title,
-    color: Colors.text.primary,
-    marginTop: 4,
-  },
-  pageSub: {
-    ...Typography.caption,
-    color: Colors.text.secondary,
-    marginTop: 2,
-    marginBottom: 24,
-  },
 
   /* ── Profile Card ── */
   profileCard: { padding: 32, marginBottom: 16, alignItems: "center" },
