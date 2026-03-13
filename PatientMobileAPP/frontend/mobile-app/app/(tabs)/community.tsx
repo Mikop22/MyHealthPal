@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   View,
   Text,
@@ -24,8 +24,6 @@ import { UniversalLiquidCard } from "../../components/UniversalLiquidCard";
 import { Colors } from "../../constants/Colors";
 import { Fonts } from "../../constants/Typography";
 
-/* ───────── Mock Data ───────── */
-
 interface CommunityRequest {
   id: string;
   title: string;
@@ -44,8 +42,8 @@ const REQUESTS: CommunityRequest[] = [
   { id: "r02", title: "Heating pad for endometriosis flare", description: "Currently in a severe endo flare and the heat therapy is the only thing keeping me functional enough to work.", aboutMe: "I'm a 32-year-old graphic designer living with stage III endometriosis. It took 7 years to get my diagnosis. I advocate for other women going through the same struggle.", category: "Pain Mgmt", requester: "Keisha R.", initials: "KR", amount: 35, raised: 35, daysAgo: 1 },
   { id: "r03", title: "Prenatal vitamins (3-month supply)", description: "My OB recommended these specific prenatals but they're not covered by my insurance plan.", aboutMe: "I'm expecting my first child and want to give her the best start. I work part-time as a teacher's aide while finishing my degree.", category: "Supplements", requester: "Maria L.", initials: "ML", amount: 42, raised: 28, daysAgo: 5 },
   { id: "r04", title: "Blood glucose test strips", description: "I need to monitor my glucose levels 4x daily as directed by my endocrinologist, but the strips add up fast.", aboutMe: "I'm a 45-year-old grandmother managing Type 2 diabetes. I was diagnosed two years ago and I'm working hard to get my A1C under control.", category: "Monitoring", requester: "Denise W.", initials: "DW", amount: 22, raised: 12, daysAgo: 2 },
-  { id: "r05", title: "Compression socks for DVT prevention", description: "Post-surgery requirement to prevent blood clots during recovery. My surgeon says I need medical-grade compression.", aboutMe: "I'm a 38-year-old fitness instructor who just had knee surgery. The irony isn't lost on me — I help people stay healthy but need help recovering myself.", category: "Recovery", requester: "Tanya B.", initials: "TB", amount: 18, raised: 18, daysAgo: 7 },
-  { id: "r06", title: "Post-surgical wound care kit", description: "I need sterile bandages, antiseptic, and wound closure strips for at-home care after my laparoscopic procedure.", aboutMe: "I'm a 29-year-old social worker recovering from a laparoscopic procedure to remove ovarian cysts. Every day I help others — now I'm asking for a little help too.", category: "Recovery", requester: "Jasmine C.", initials: "JC", amount: 55, raised: 30, daysAgo: 4 },
+  { id: "r05", title: "Compression socks for DVT prevention", description: "Post-surgery requirement to prevent blood clots during recovery. My surgeon says I need medical-grade compression.", aboutMe: "I'm a 38-year-old fitness instructor who just had knee surgery. The irony isn't lost on me â€” I help people stay healthy but need help recovering myself.", category: "Recovery", requester: "Tanya B.", initials: "TB", amount: 18, raised: 18, daysAgo: 7 },
+  { id: "r06", title: "Post-surgical wound care kit", description: "I need sterile bandages, antiseptic, and wound closure strips for at-home care after my laparoscopic procedure.", aboutMe: "I'm a 29-year-old social worker recovering from a laparoscopic procedure to remove ovarian cysts. Every day I help others â€” now I'm asking for a little help too.", category: "Recovery", requester: "Jasmine C.", initials: "JC", amount: 55, raised: 30, daysAgo: 4 },
   { id: "r07", title: "Migraine cold therapy cap", description: "I suffer from chronic migraines 3-4 times a week and cold compression is one of the few things that provides relief.", aboutMe: "I'm a 34-year-old freelance writer dealing with chronic migraines since my teens. Some days I can barely look at a screen, which makes working incredibly challenging.", category: "Pain Mgmt", requester: "Lena P.", initials: "LP", amount: 32, raised: 8, daysAgo: 1 },
   { id: "r08", title: "Fiber supplement for GI management", description: "My gastroenterologist recommended daily fiber supplementation to manage IBS symptoms and reduce flare frequency.", aboutMe: "I'm a 26-year-old barista managing IBS-C. It affects every part of my life, from what I eat to whether I can make it through a full shift.", category: "Supplements", requester: "Fatima N.", initials: "FN", amount: 15, raised: 15, daysAgo: 6 },
   { id: "r09", title: "Pulse oximeter for home monitoring", description: "My pulmonologist wants me tracking my oxygen saturation daily at home following my asthma hospitalization.", aboutMe: "I'm a 41-year-old mom of three with severe asthma. After a scary ER visit last month, my doctor wants me monitoring at home so we can catch drops early.", category: "Monitoring", requester: "Sharon K.", initials: "SK", amount: 38, raised: 22, daysAgo: 2 },
@@ -61,7 +59,6 @@ const CATEGORY_ICONS: Record<string, CategoryIconName> = {
   Recovery: "fitness",
 };
 
-/* ── Gradient shimmer progress fill ── */
 function GradientProgressBar({ pct }: { pct: number }) {
   const shimmer = useSharedValue(0);
 
@@ -90,7 +87,6 @@ function GradientProgressBar({ pct }: { pct: number }) {
   );
 }
 
-/* ── Circular avatar with initials ── */
 function RequesterAvatar({
   initials,
   onPress,
@@ -111,7 +107,6 @@ function RequesterAvatar({
   );
 }
 
-/* ── About Me Modal ── */
 const { width: SCREEN_W, height: SCREEN_H } = Dimensions.get("window");
 
 function AboutMeModal({
@@ -142,7 +137,6 @@ function AboutMeModal({
         >
           <Animated.View entering={FadeIn.duration(300)}>
             <UniversalLiquidCard variant="elevated" style={styles.modalCard}>
-              {/* Header (non-scrolling) */}
               <View style={styles.modalHeader}>
                 <View style={styles.modalAvatar}>
                   <Text style={styles.modalAvatarText}>{initials}</Text>
@@ -158,7 +152,6 @@ function AboutMeModal({
 
               <View style={styles.modalDivider} />
 
-              {/* Scrollable body for long "About Me" text */}
               <ScrollView
                 showsVerticalScrollIndicator={false}
                 bounces={false}
@@ -178,9 +171,15 @@ function AboutMeModal({
   );
 }
 
-/* ───────── Card Component ───────── */
-
-function RequestCard({ item }: { item: CommunityRequest }) {
+function RequestCard({
+  item,
+  index,
+  shouldAnimate,
+}: {
+  item: CommunityRequest;
+  index: number;
+  shouldAnimate: boolean;
+}) {
   const pct = Math.round((item.raised / item.amount) * 100);
   const fulfilled = item.raised >= item.amount;
   const iconName = (CATEGORY_ICONS[item.category] ?? "heart") as CategoryIconName;
@@ -188,63 +187,69 @@ function RequestCard({ item }: { item: CommunityRequest }) {
 
   return (
     <>
-      <UniversalLiquidCard variant="default" style={styles.card}>
-        {/* Header */}
-        <View style={styles.cardHeader}>
-          <RequesterAvatar
-            initials={item.initials}
-            onPress={() => setShowAbout(true)}
-          />
-          <View style={{ flex: 1 }}>
-            <Text style={styles.requester}>{item.requester}</Text>
-            <Text style={styles.timeAgo}>
-              {item.daysAgo}d ago · {item.category}
+      <Animated.View
+        entering={
+          shouldAnimate
+            ? FadeInDown.delay((index + 2) * 150)
+                .springify()
+                .damping(18)
+                .stiffness(120)
+            : undefined
+        }
+      >
+        <UniversalLiquidCard variant="default" style={styles.card}>
+          <View style={styles.cardHeader}>
+            <RequesterAvatar
+              initials={item.initials}
+              onPress={() => setShowAbout(true)}
+            />
+            <View style={{ flex: 1 }}>
+              <Text style={styles.requester}>{item.requester}</Text>
+              <Text style={styles.timeAgo}>
+                {item.daysAgo}d ago Â· {item.category}
+              </Text>
+            </View>
+            {fulfilled ? (
+              <View style={styles.fulfilledChip}>
+                <AppIcon name="checkmark" size={10} color={Colors.accent} />
+                <Text style={styles.fulfilledChipText}>Funded</Text>
+              </View>
+            ) : (
+              <View style={styles.categoryChip}>
+                <AppIcon name={iconName} size={12} color={Colors.forest[500]} />
+              </View>
+            )}
+          </View>
+
+          <Text style={styles.cardTitle}>{item.title}</Text>
+
+          <Text style={styles.cardDescription} numberOfLines={2}>
+            {item.description}
+          </Text>
+
+          <View style={styles.progressRow}>
+            <GradientProgressBar pct={pct} />
+            <Text style={styles.progressLabel}>
+              ${item.raised}
+              <Text style={styles.progressLabelMuted}> / ${item.amount}</Text>
             </Text>
           </View>
-          {fulfilled ? (
-            <View style={styles.fulfilledChip}>
-              <AppIcon name="checkmark" size={10} color={Colors.accent} />
-              <Text style={styles.fulfilledChipText}>Funded</Text>
-            </View>
-          ) : (
-            <View style={styles.categoryChip}>
-              <AppIcon name={iconName} size={12} color={Colors.forest[500]} />
-            </View>
+
+          {!fulfilled && (
+            <Pressable style={styles.donateBtn}>
+              <LinearGradient
+                colors={["#22C55E", "#16A34A"]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={styles.donateBtnGradient}
+              >
+                <AppIcon name="heart" size={14} color="#fff" />
+                <Text style={styles.donateBtnText}>Contribute</Text>
+              </LinearGradient>
+            </Pressable>
           )}
-        </View>
-
-        {/* Title */}
-        <Text style={styles.cardTitle}>{item.title}</Text>
-
-        {/* Description snippet */}
-        <Text style={styles.cardDescription} numberOfLines={2}>
-          {item.description}
-        </Text>
-
-        {/* Progress */}
-        <View style={styles.progressRow}>
-          <GradientProgressBar pct={pct} />
-          <Text style={styles.progressLabel}>
-            ${item.raised}
-            <Text style={styles.progressLabelMuted}> / ${item.amount}</Text>
-          </Text>
-        </View>
-
-        {/* Action */}
-        {!fulfilled && (
-          <Pressable style={styles.donateBtn}>
-            <LinearGradient
-              colors={["#22C55E", "#16A34A"]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 0 }}
-              style={styles.donateBtnGradient}
-            >
-              <AppIcon name="heart" size={14} color="#fff" />
-              <Text style={styles.donateBtnText}>Contribute</Text>
-            </LinearGradient>
-          </Pressable>
-        )}
-      </UniversalLiquidCard>
+        </UniversalLiquidCard>
+      </Animated.View>
 
       <AboutMeModal
         visible={showAbout}
@@ -257,12 +262,23 @@ function RequestCard({ item }: { item: CommunityRequest }) {
   );
 }
 
-/* ───────── Screen ───────── */
-
 export default function CommunityScreen() {
+  const hasAnimated = useRef(false);
+  const shouldAnimateOnMount = !hasAnimated.current;
+
+  useEffect(() => {
+    hasAnimated.current = true;
+  }, []);
+
   const renderItem = useCallback(
-    ({ item }: { item: CommunityRequest }) => <RequestCard item={item} />,
-    [],
+    ({ item, index }: { item: CommunityRequest; index: number }) => (
+      <RequestCard
+        item={item}
+        index={index}
+        shouldAnimate={shouldAnimateOnMount}
+      />
+    ),
+    [shouldAnimateOnMount],
   );
 
   return (
@@ -272,10 +288,16 @@ export default function CommunityScreen() {
         renderItem={renderItem}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.listContent}
-        estimatedItemSize={260}
         ListHeaderComponent={
           <Animated.View
-            entering={FadeInDown.duration(500).delay(50)}
+            entering={
+              shouldAnimateOnMount
+                ? FadeInDown.delay(150)
+                    .springify()
+                    .damping(18)
+                    .stiffness(120)
+                : undefined
+            }
             style={styles.header}
           >
             <View>
@@ -295,8 +317,6 @@ export default function CommunityScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "transparent" },
   listContent: { paddingHorizontal: 24, paddingBottom: 60 },
-
-  /* Header */
   header: { paddingTop: 8, marginBottom: 20 },
   headerTitle: {
     fontSize: 28,
@@ -311,8 +331,6 @@ const styles = StyleSheet.create({
     marginTop: 2,
     letterSpacing: 0.1,
   },
-
-  /* Card */
   card: { padding: 22, marginBottom: 14 },
   cardHeader: {
     flexDirection: "row",
@@ -320,8 +338,6 @@ const styles = StyleSheet.create({
     gap: 12,
     marginBottom: 14,
   },
-
-  /* Avatar */
   avatarPressable: {
     width: 44,
     height: 44,
@@ -351,7 +367,6 @@ const styles = StyleSheet.create({
     color: Colors.forest[600],
     letterSpacing: 0.3,
   },
-
   requester: {
     fontSize: 15,
     fontFamily: Fonts.semiBold,
@@ -365,8 +380,6 @@ const styles = StyleSheet.create({
     marginTop: 1,
     letterSpacing: 0.1,
   },
-
-  /* Chips */
   fulfilledChip: {
     flexDirection: "row",
     alignItems: "center",
@@ -394,7 +407,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-
   cardTitle: {
     fontSize: 16,
     fontFamily: Fonts.semiBold,
@@ -411,8 +423,6 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     letterSpacing: 0.1,
   },
-
-  /* Progress */
   progressRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -442,8 +452,6 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.regular,
     color: Colors.forest[400],
   },
-
-  /* Donate btn */
   donateBtn: { borderRadius: 16, overflow: "hidden" },
   donateBtnGradient: {
     flexDirection: "row",
@@ -459,8 +467,6 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.semiBold,
     letterSpacing: 0.1,
   },
-
-  /* ── Modal ── */
   modalOverlay: {
     position: "absolute",
     top: 0,

@@ -14,7 +14,6 @@ import Animated, {
   withRepeat,
   withSequence,
   Easing,
-  FadeIn,
   FadeInDown,
   useDerivedValue,
   type SharedValue,
@@ -215,6 +214,7 @@ export default function FundingScreen() {
   const [barWidth, setBarWidth] = useState(0);
   const progress = useSharedValue(INITIAL_RAISED / GOAL);
   const isFunded = raised >= GOAL;
+  const hasAnimated = useRef(false);
 
   const { fundingProfile, setAboutMe, setCaseDescription } = usePatientStore();
 
@@ -235,6 +235,21 @@ export default function FundingScreen() {
 
   const pct = Math.min(Math.round((raised / GOAL) * 100), 100);
 
+  useEffect(() => {
+    hasAnimated.current = true;
+  }, []);
+
+  const getFirstTouchEntering = useCallback(
+    (index: number) =>
+      !hasAnimated.current
+        ? FadeInDown.delay((index + 1) * 150)
+            .springify()
+            .damping(18)
+            .stiffness(120)
+        : undefined,
+    [],
+  );
+
   return (
     <View style={s.container}>
       <ScrollView
@@ -244,7 +259,7 @@ export default function FundingScreen() {
         keyboardShouldPersistTaps="handled"
       >
         {/* ── Page Header ── */}
-        <Animated.View entering={FadeInDown.duration(500).delay(50)} style={s.pageHeaderRow}>
+        <Animated.View entering={getFirstTouchEntering(0)} style={s.pageHeaderRow}>
           <View>
             <Text style={s.pageHeaderTitle}>Funding</Text>
             <Text style={s.pageHeaderSub}>Your active campaigns</Text>
@@ -256,7 +271,7 @@ export default function FundingScreen() {
         </Animated.View>
 
         {/* ── Patient Profile Card ── */}
-        <Animated.View entering={FadeInDown.duration(500).delay(100)}>
+        <Animated.View entering={getFirstTouchEntering(1)}>
           <UniversalLiquidCard variant="elevated" style={s.profileCard}>
             <View style={s.profileRow}>
               <ProfileAvatar size={68} />
@@ -305,7 +320,7 @@ export default function FundingScreen() {
         </Animated.View>
 
         {/* ── Campaign Progress Card ── */}
-        <Animated.View entering={FadeInDown.duration(500).delay(200)}>
+        <Animated.View entering={getFirstTouchEntering(2)}>
           <UniversalLiquidCard variant="elevated" style={s.campaignCard}>
             <View style={s.campaignHeader}>
               <LinearGradient
@@ -361,7 +376,7 @@ export default function FundingScreen() {
         </Animated.View>
 
         {/* ── Recent Donors ── */}
-        <Animated.View entering={FadeInDown.duration(500).delay(300)}>
+        <Animated.View entering={getFirstTouchEntering(3)}>
           <UniversalLiquidCard variant="default" style={s.donorsCard}>
             <View style={s.sectionLabelRow}>
               <AppIcon name="heart" size={13} color={Colors.forest[500]} />
@@ -388,7 +403,16 @@ export default function FundingScreen() {
 
         {/* ── QR Code (visible when fully funded) ── */}
         {isFunded && (
-          <Animated.View entering={FadeIn.duration(600)}>
+          <Animated.View
+            entering={
+              !hasAnimated.current
+                ? FadeInDown.delay(750)
+                    .springify()
+                    .damping(18)
+                    .stiffness(120)
+                : undefined
+            }
+          >
             <UniversalLiquidCard variant="active" style={s.qrCard}>
               <View style={s.qrTitleRow}>
                 <View style={s.qrBadge}>
