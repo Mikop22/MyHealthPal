@@ -124,6 +124,15 @@ class TestResolveInvite:
         assert resp.status_code == 502
         assert "unreachable" in resp.json()["detail"].lower()
 
+    def test_502_on_other_request_errors(self, monkeypatch):
+        async def fake(*a, **kw):
+            raise httpx.ReadError("peer closed connection")
+
+        monkeypatch.setattr(prep_module, "_resolve_invite", fake)
+
+        resp = client.get("/prep/invite/tok_abc")
+        assert resp.status_code == 502
+
     def test_504_when_upstream_times_out(self, monkeypatch):
         async def fake(*a, **kw):
             raise httpx.ReadTimeout("timed out")
@@ -438,6 +447,10 @@ class TestClientHelpers:
 
     def test_base_url_from_env(self, monkeypatch):
         monkeypatch.setenv("DOCTORAPP_BASE_URL", "https://api.example.com")
+        assert client_module._base_url() == "https://api.example.com"
+
+    def test_base_url_strips_trailing_slash(self, monkeypatch):
+        monkeypatch.setenv("DOCTORAPP_BASE_URL", "https://api.example.com/")
         assert client_module._base_url() == "https://api.example.com"
 
     def test_timeout_defaults(self, monkeypatch):

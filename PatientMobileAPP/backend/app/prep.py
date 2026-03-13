@@ -26,6 +26,7 @@ from fastapi import APIRouter, HTTPException
 
 from app.doctorapp_client import (
     DoctorAppClientError,
+    close_client as _close_client,
     resolve_invite as _resolve_invite,
     start_prep as _start_prep,
     save_checkin as _save_checkin,
@@ -84,7 +85,7 @@ async def resolve_invite(token: str):
         raise _upstream_error(exc) from exc
     except httpx.TimeoutException as exc:
         raise _timeout_error() from exc
-    except httpx.ConnectError as exc:
+    except httpx.RequestError as exc:
         raise _network_error(exc) from exc
 
     return InviteResolutionResponse(**data)
@@ -103,7 +104,7 @@ async def start_prep(token: str):
         raise _upstream_error(exc) from exc
     except httpx.TimeoutException as exc:
         raise _timeout_error() from exc
-    except httpx.ConnectError as exc:
+    except httpx.RequestError as exc:
         raise _network_error(exc) from exc
 
     return StartPrepResponse(**data)
@@ -122,7 +123,7 @@ async def save_checkin(token: str, body: CheckinPayload):
         raise _upstream_error(exc) from exc
     except httpx.TimeoutException as exc:
         raise _timeout_error() from exc
-    except httpx.ConnectError as exc:
+    except httpx.RequestError as exc:
         raise _network_error(exc) from exc
 
     return SaveResponse(**data)
@@ -141,7 +142,7 @@ async def save_documents(token: str, body: DocumentsPayload):
         raise _upstream_error(exc) from exc
     except httpx.TimeoutException as exc:
         raise _timeout_error() from exc
-    except httpx.ConnectError as exc:
+    except httpx.RequestError as exc:
         raise _network_error(exc) from exc
 
     return SaveResponse(**data)
@@ -160,7 +161,7 @@ async def save_health_data(token: str, body: HealthDataPayload):
         raise _upstream_error(exc) from exc
     except httpx.TimeoutException as exc:
         raise _timeout_error() from exc
-    except httpx.ConnectError as exc:
+    except httpx.RequestError as exc:
         raise _network_error(exc) from exc
 
     return SaveResponse(**data)
@@ -179,7 +180,7 @@ async def submit_prep(token: str):
         raise _upstream_error(exc) from exc
     except httpx.TimeoutException as exc:
         raise _timeout_error() from exc
-    except httpx.ConnectError as exc:
+    except httpx.RequestError as exc:
         raise _network_error(exc) from exc
 
     return SubmitResponse(**data)
@@ -198,7 +199,7 @@ async def get_summary(token: str):
         raise _upstream_error(exc) from exc
     except httpx.TimeoutException as exc:
         raise _timeout_error() from exc
-    except httpx.ConnectError as exc:
+    except httpx.RequestError as exc:
         raise _network_error(exc) from exc
 
     return SummaryResponse(**data)
@@ -217,7 +218,7 @@ async def get_status(token: str):
         raise _upstream_error(exc) from exc
     except httpx.TimeoutException as exc:
         raise _timeout_error() from exc
-    except httpx.ConnectError as exc:
+    except httpx.RequestError as exc:
         raise _network_error(exc) from exc
 
     return PrepStatusResponse(**data)

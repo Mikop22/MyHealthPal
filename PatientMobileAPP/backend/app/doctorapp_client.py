@@ -24,9 +24,13 @@ logger = logging.getLogger(__name__)
 
 _PREFIX = "/api/v1/mobile-prep"
 
+# Module-level client reused across requests for connection pooling.
+# Initialised lazily via ``get_client()`` so tests can replace it.
+_client: Optional[httpx.AsyncClient] = None
+
 
 def _base_url() -> str:
-    return os.environ.get("DOCTORAPP_BASE_URL", "http://localhost:8001")
+    return os.environ.get("DOCTORAPP_BASE_URL", "http://localhost:8001").rstrip("/")
 
 
 def _timeout() -> float:
@@ -34,6 +38,22 @@ def _timeout() -> float:
         return float(os.environ.get("DOCTORAPP_TIMEOUT", "30"))
     except (TypeError, ValueError):
         return 30.0
+
+
+def get_client() -> httpx.AsyncClient:
+    """Return the shared ``AsyncClient``, creating it on first call."""
+    global _client
+    if _client is None or _client.is_closed:
+        _client = httpx.AsyncClient(timeout=httpx.Timeout(_timeout()))
+    return _client
+
+
+async def close_client() -> None:
+    """Close the shared client (called during application shutdown)."""
+    global _client
+    if _client is not None and not _client.is_closed:
+        await _client.aclose()
+        _client = None
 
 
 class DoctorAppClientError(Exception):
@@ -57,14 +77,15 @@ async def _request(
     ------
     DoctorAppClientError
         For any non-2xx response from the upstream service.
-    httpx.ConnectError, httpx.TimeoutException
-        For network-level failures (caller should translate to 502/504).
+    httpx.TimeoutException
+        When the upstream request times out (caller should return 504).
+    httpx.RequestError
+        For any other network-level failure such as connection refused,
+        protocol errors, or read/write failures (caller should return 502).
     """
     url = f"{_base_url()}{_PREFIX}{path}"
-    timeout = httpx.Timeout(_timeout())
-
-    async with httpx.AsyncClient(timeout=timeout) as client:
-        response = await client.request(method, url, json=json)
+    client = get_client()
+    response = await client.request(method, url, json=json)
 
     if response.status_code >= 400:
         detail = ""

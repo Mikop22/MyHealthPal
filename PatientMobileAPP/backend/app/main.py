@@ -2,6 +2,7 @@ import asyncio
 import base64
 import logging
 import os
+from contextlib import asynccontextmanager
 from typing import Optional
 
 logger = logging.getLogger(__name__)
@@ -21,6 +22,7 @@ from fastapi.responses import JSONResponse
 from app.check_in import router as check_in_router
 from app.labels import router as labels_router
 from app.prep import router as prep_router
+from app.doctorapp_client import close_client as _close_doctorapp_client
 from app.triage import router as triage_router
 from app.medgemma import call_medgemma
 from app.parser import parse_translate_response
@@ -29,7 +31,13 @@ from app.schemas import TranslateResponse
 from app.validation import validate_image
 
 
-app = FastAPI(title="MyHealthPal Document Translator")
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    yield
+    await _close_doctorapp_client()
+
+
+app = FastAPI(title="MyHealthPal Document Translator", lifespan=lifespan)
 # Allow any localhost / 127.0.0.1 origin (any port) for local dev (Expo, Vite, etc.)
 _cors_origin_regex = r"^https?://(localhost|127\.0\.0\.1)(:\d+)?$"
 app.add_middleware(
