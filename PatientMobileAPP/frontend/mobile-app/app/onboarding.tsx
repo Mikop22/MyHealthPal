@@ -1,38 +1,33 @@
-import { useState, useCallback } from "react";
+import { useCallback, useState } from "react";
 import {
-  View,
-  Text,
-  TextInput,
-  useWindowDimensions,
+  Platform,
   Pressable,
   ScrollView,
-  Platform,
   StyleSheet,
+  Text,
+  TextInput,
+  View,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
+import { Ionicons } from "@expo/vector-icons";
 import Animated, {
-  SlideInRight,
-  SlideOutLeft,
-  SlideInLeft,
-  SlideOutRight,
-  LinearTransition,
-  useSharedValue,
+  FadeInDown,
+  FadeOut,
   useAnimatedStyle,
+  useSharedValue,
   withSpring,
 } from "react-native-reanimated";
-import { Ionicons } from "@expo/vector-icons";
-import { UniversalLiquidCard } from "../components/UniversalLiquidCard";
-import { OnboardingOptionButton } from "../components/OnboardingOptionButton";
+
 import { AppIcon } from "../components/AppIcon";
+import { OnboardingOptionButton } from "../components/OnboardingOptionButton";
+import { UniversalLiquidCard } from "../components/UniversalLiquidCard";
+import { Colors } from "../constants/Colors";
+import { Fonts } from "../constants/Typography";
 import {
   usePatientStore,
   type BiologicalSex,
 } from "../store/patientStore";
-import { Fonts } from "../constants/Typography";
-import { Colors } from "../constants/Colors";
-
-/* ───────────── Step Definitions ───────────── */
 
 interface StepOption {
   label: string;
@@ -56,10 +51,10 @@ const STEPS: StepDef[] = [
     question: "What's your age range?",
     description: "This helps us calibrate biometric baselines to your cohort.",
     options: [
-      { label: "18 – 24", value: 21 },
-      { label: "25 – 34", value: 30 },
-      { label: "35 – 44", value: 40 },
-      { label: "45 – 54", value: 50 },
+      { label: "18 - 24", value: 21 },
+      { label: "25 - 34", value: 30 },
+      { label: "35 - 44", value: 40 },
+      { label: "45 - 54", value: 50 },
       { label: "55+", value: 60 },
     ],
   },
@@ -120,28 +115,14 @@ const STEPS: StepDef[] = [
   },
 ];
 
-/* ───────────── Animation config (premium slide + fade) ───────────── */
-const ENTER_SPRING = { damping: 20, stiffness: 90 };
-
-const stepContainerStyle = {
-  position: "absolute" as const,
-  top: 0,
-  left: 0,
-  right: 0,
-  bottom: 0,
-  width: "100%" as const,
-  height: "100%" as const,
-  alignItems: "center" as const,
-};
+const TRANSITION_LOCK_MS = 180;
+const HEADER_BUTTON_WIDTH = 84;
 
 type SelectionValue = string | number | (string | number)[];
 type Selections = Record<string, SelectionValue>;
 
-/* ───────────── Component ───────────── */
-
 export default function OnboardingScreen() {
   const router = useRouter();
-  const { width } = useWindowDimensions();
   const {
     setAge,
     setSex,
@@ -154,7 +135,6 @@ export default function OnboardingScreen() {
   const [stepIndex, setStepIndex] = useState(0);
   const [selections, setSelections] = useState<Selections>({});
   const [isTransitioning, setIsTransitioning] = useState(false);
-  const [direction, setDirection] = useState<1 | -1>(1);
 
   const pressScale = useSharedValue(1);
   const ctaAnimStyle = useAnimatedStyle(() => ({
@@ -182,9 +162,10 @@ export default function OnboardingScreen() {
           (currentSelection as (string | number)[]).includes(value)
         );
       }
+
       return currentSelection === value;
     },
-    [step.multiSelect, currentSelection],
+    [currentSelection, step.multiSelect],
   );
 
   const handleSelect = useCallback(
@@ -193,7 +174,7 @@ export default function OnboardingScreen() {
 
       if (step.multiSelect) {
         setSelections((prev) => {
-          const arr = Array.isArray(prev[step.key])
+          const existing = Array.isArray(prev[step.key])
             ? [...(prev[step.key] as (string | number)[])]
             : [];
 
@@ -201,28 +182,29 @@ export default function OnboardingScreen() {
             return { ...prev, [step.key]: ["prefer_not_to_say"] };
           }
 
-          const filtered = arr.filter((v) => v !== "prefer_not_to_say");
-          const idx = filtered.indexOf(value);
-          if (idx >= 0) {
-            filtered.splice(idx, 1);
+          const nextValues = existing.filter((item) => item !== "prefer_not_to_say");
+          const optionIndex = nextValues.indexOf(value);
+
+          if (optionIndex >= 0) {
+            nextValues.splice(optionIndex, 1);
           } else {
-            filtered.push(value);
+            nextValues.push(value);
           }
-          return { ...prev, [step.key]: filtered };
+
+          return { ...prev, [step.key]: nextValues };
         });
-      } else {
-        setSelections((prev) => ({ ...prev, [step.key]: value }));
+
+        return;
       }
+
+      setSelections((prev) => ({ ...prev, [step.key]: value }));
     },
     [isTransitioning, step.key, step.multiSelect],
   );
 
-  const handleEmailChange = useCallback(
-    (text: string) => {
-      setSelections((prev) => ({ ...prev, email: text }));
-    },
-    [],
-  );
+  const handleEmailChange = useCallback((text: string) => {
+    setSelections((prev) => ({ ...prev, email: text }));
+  }, []);
 
   const commitStep = useCallback(
     (stepKey: string, value: SelectionValue) => {
@@ -244,120 +226,111 @@ export default function OnboardingScreen() {
           break;
       }
     },
-    [setAge, setSex, setLanguage, setEthnicity, setEmail],
+    [setAge, setEmail, setEthnicity, setLanguage, setSex],
   );
+
+  const unlockTransition = useCallback(() => {
+    setTimeout(() => {
+      setIsTransitioning(false);
+    }, TRANSITION_LOCK_MS);
+  }, []);
 
   const handleBack = useCallback(() => {
     if (stepIndex === 0 || isTransitioning) return;
-    setDirection(-1);
+
     setIsTransitioning(true);
-    setTimeout(() => {
-      setStepIndex((i) => i - 1);
-      setIsTransitioning(false);
-    }, 350);
-  }, [stepIndex, isTransitioning]);
+    setStepIndex((current) => current - 1);
+    unlockTransition();
+  }, [isTransitioning, stepIndex, unlockTransition]);
 
   const handleNext = useCallback(() => {
     if (!hasSelection || isTransitioning) return;
 
     const value = selections[step.key];
     commitStep(step.key, value);
-    setDirection(1);
     setIsTransitioning(true);
 
     if (isLastStep) {
       completeDemographics();
       setTimeout(() => {
         router.replace("/(tabs)/scanner");
-      }, 400);
-    } else {
-      setTimeout(() => {
-        setStepIndex((i) => i + 1);
-        setIsTransitioning(false);
-      }, 350);
+      }, TRANSITION_LOCK_MS);
+      return;
     }
+
+    setStepIndex((current) => current + 1);
+    unlockTransition();
   }, [
-    hasSelection,
-    isTransitioning,
-    isLastStep,
-    selections,
-    step.key,
     commitStep,
     completeDemographics,
+    hasSelection,
+    isLastStep,
+    isTransitioning,
     router,
+    selections,
+    step.key,
+    unlockTransition,
   ]);
 
-  const entering =
-    direction === 1
-      ? SlideInRight.springify()
-          .damping(ENTER_SPRING.damping)
-          .stiffness(ENTER_SPRING.stiffness)
-          .withInitialValues({ opacity: 0 })
-      : SlideInLeft.springify()
-          .damping(ENTER_SPRING.damping)
-          .stiffness(ENTER_SPRING.stiffness)
-          .withInitialValues({ opacity: 0 });
-
-  const exiting =
-    direction === 1
-      ? SlideOutLeft.duration(300)
-      : SlideOutRight.duration(300);
-
-  const optionsList = step.options?.map((opt) => (
-    <OnboardingOptionButton
-      key={String(opt.value)}
-      label={opt.label}
-      subtitle={opt.subtitle}
-      selected={isOptionSelected(opt.value)}
-      onPress={() => handleSelect(opt.value)}
-    />
+  const optionsList = step.options?.map((option, index) => (
+    <Animated.View
+      key={`${step.key}-${String(option.value)}`}
+      entering={FadeInDown.delay((index + 1) * 100).springify().damping(12)}
+    >
+      <OnboardingOptionButton
+        label={option.label}
+        subtitle={option.subtitle}
+        selected={isOptionSelected(option.value)}
+        onPress={() => handleSelect(option.value)}
+      />
+    </Animated.View>
   ));
 
   return (
     <View className="flex-1 bg-white">
-      {/* Top bar: Back button */}
-      <View className="flex-row items-center justify-between px-6 pt-16 pb-2">
-        {stepIndex > 0 ? (
+      <View className="px-6 pt-16">
+        <View className="h-16 flex-row items-center justify-between">
           <Pressable
             onPress={handleBack}
-            className="flex-row items-center py-2 pr-4"
+            pointerEvents={stepIndex === 0 ? "none" : "auto"}
+            style={[
+              styles.headerButton,
+              stepIndex === 0 && styles.headerButtonHidden,
+            ]}
           >
             <Ionicons name="chevron-back" size={20} color="#166534" />
-            <Text className="text-sm font-semibold text-primary ml-1">
-              Back
-            </Text>
+            <Text className="ml-1 text-sm font-semibold text-primary">Back</Text>
           </Pressable>
-        ) : (
-          <View className="w-16" />
-        )}
+
+          <Text style={styles.headerStepLabel}>
+            Step {stepIndex + 1} of {STEPS.length}
+          </Text>
+
+          <View style={{ width: HEADER_BUTTON_WIDTH }} />
+        </View>
       </View>
 
-      <View
-        className="flex-1 w-full items-center"
-        style={{ overflow: "hidden" }}
-      >
+      <View className="flex-1 w-full items-center px-5" style={styles.contentViewport}>
         <Animated.View
           key={step.key}
-          entering={entering}
-          exiting={exiting}
-          layout={LinearTransition.springify().damping(20).stiffness(90)}
-          style={stepContainerStyle}
+          entering={FadeInDown.springify().damping(15).stiffness(150)}
+          exiting={FadeOut.duration(150)}
+          style={styles.stepShell}
         >
-          <View className="w-[90%] max-w-[400px] mt-16">
-            {/* Top Card: Question & Description */}
+          <View className="w-full max-w-[400px]">
             <UniversalLiquidCard
               variant="elevated"
-              className="w-full rounded-3xl overflow-hidden"
+              className="w-full overflow-hidden rounded-3xl"
             >
-              <View className="w-full justify-center items-center py-8 px-4">
+              <View className="w-full items-center justify-center px-4 py-8">
                 <Text
-                  className="text-2xl text-primary mb-2 text-center"
+                  className="mb-2 text-center text-2xl text-primary"
                   style={{ fontFamily: Fonts.bold }}
                 >
                   {step.question}
                 </Text>
                 <Text
-                  className="text-sm text-forest-600 leading-5 text-center"
+                  className="text-center text-sm leading-5 text-forest-600"
                   style={{ fontFamily: Fonts.regular }}
                 >
                   {step.description}
@@ -365,9 +338,11 @@ export default function OnboardingScreen() {
               </View>
             </UniversalLiquidCard>
 
-            {/* Email TextInput step */}
             {isInputStep && (
-              <View style={{ marginTop: 24 }}>
+              <Animated.View
+                entering={FadeInDown.delay(100).springify().damping(12)}
+                style={{ marginTop: 24 }}
+              >
                 <View style={inputStyles.inputContainer}>
                   <View style={inputStyles.iconWrap}>
                     <AppIcon name="mail" size={20} color={Colors.forest[500]} />
@@ -389,63 +364,76 @@ export default function OnboardingScreen() {
                 <Text style={inputStyles.hint}>
                   Your email is kept private and never shared.
                 </Text>
-              </View>
+              </Animated.View>
             )}
 
-            {/* Options List — for non-input steps */}
             {!isInputStep && step.multiSelect ? (
               <ScrollView
                 style={{ marginTop: 24, maxHeight: 360 }}
-                showsVerticalScrollIndicator={false}
                 bounces={false}
+                showsVerticalScrollIndicator={false}
                 contentContainerStyle={{ gap: 8 }}
               >
                 {optionsList}
               </ScrollView>
             ) : !isInputStep ? (
-              <View style={{ marginTop: 24, gap: 8 }}>
-                {optionsList}
-              </View>
+              <View style={{ marginTop: 24, gap: 8 }}>{optionsList}</View>
             ) : null}
           </View>
         </Animated.View>
       </View>
 
-      {/* Action button — glass gradient */}
       <Animated.View
         style={[
           ctaAnimStyle,
-          { width: "90%", maxWidth: 400, alignSelf: "center", paddingBottom: 40 },
+          {
+            width: "90%",
+            maxWidth: 400,
+            alignSelf: "center",
+            paddingBottom: 40,
+          },
         ]}
       >
         <Pressable
           onPress={handleNext}
           disabled={!hasSelection}
           onPressIn={() => {
-            if (hasSelection)
-              pressScale.value = withSpring(0.96, { damping: 12, stiffness: 300 });
+            if (hasSelection) {
+              pressScale.value = withSpring(0.96, {
+                damping: 12,
+                stiffness: 300,
+              });
+            }
           }}
           onPressOut={() => {
-            pressScale.value = withSpring(1, { damping: 12, stiffness: 300 });
+            pressScale.value = withSpring(1, {
+              damping: 12,
+              stiffness: 300,
+            });
           }}
           style={[
             ctaStyles.btn,
             Platform.OS === "web" && (ctaStyles.btnWeb as object),
-            hasSelection && Platform.OS === "web" && (ctaStyles.btnWebActive as object),
+            hasSelection &&
+              Platform.OS === "web" &&
+              (ctaStyles.btnWebActive as object),
           ]}
         >
           <LinearGradient
             colors={["#00C8B4", "#22C55E"]}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 0 }}
-            style={[StyleSheet.absoluteFill, { opacity: hasSelection ? 0.45 : 0.15 }]}
+            style={[
+              StyleSheet.absoluteFill,
+              { opacity: hasSelection ? 0.45 : 0.15 },
+            ]}
           />
           <Text
             style={{
+              zIndex: 1,
               fontFamily: Fonts.bold,
               fontSize: 18,
               color: hasSelection ? "#1F2937" : "rgba(31,41,55,0.35)",
-              zIndex: 1,
             }}
           >
             {isLastStep ? "Confirm" : "Continue"}
@@ -497,6 +485,33 @@ const inputStyles = StyleSheet.create({
     textAlign: "center",
     marginTop: 14,
     letterSpacing: 0.2,
+  },
+});
+
+const styles = StyleSheet.create({
+  contentViewport: {
+    overflow: "hidden",
+  },
+  stepShell: {
+    flex: 1,
+    width: "100%",
+    alignItems: "center",
+    paddingTop: 16,
+  },
+  headerButton: {
+    width: HEADER_BUTTON_WIDTH,
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 8,
+  },
+  headerButtonHidden: {
+    opacity: 0,
+  },
+  headerStepLabel: {
+    fontFamily: Fonts.medium,
+    fontSize: 13,
+    color: Colors.forest[500],
+    letterSpacing: 0.3,
   },
 });
 
