@@ -494,7 +494,6 @@ const styles = StyleSheet.create({
   },
   alertTextWrap: { flex: 1 },
   alertTitle: {
-    ...TypeScale.caption,
     fontSize: 13,
     fontWeight: "700",
     color: Colors.semantic.error,
