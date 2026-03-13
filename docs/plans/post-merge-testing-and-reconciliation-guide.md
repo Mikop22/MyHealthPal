@@ -12,12 +12,12 @@ Now that the PatientMobileAPP and DoctorAPP front-end and back-end are integrate
 
 Before testing, start all four services:
 
-| Service | Directory | Command | Default Port |
-|---------|-----------|---------|-------------|
-| DoctorAPP Backend | `DoctorAPP/back-end` | `uvicorn app.main:app --reload --port 8000` | 8000 |
-| DoctorAPP Frontend | `DoctorAPP/front-end` | `npm run dev` | 3000 |
-| PatientMobileAPP Backend | `PatientMobileAPP/backend` | `uvicorn app.main:app --reload --port 8080` | 8080 |
-| PatientMobileAPP Mobile | `PatientMobileAPP/frontend/mobile-app` | `npx expo start` | 8081 (Metro) |
+| Service | Directory | Command | Default Port | Recommended Port |
+|---------|-----------|---------|-------------|-----------------|
+| DoctorAPP Backend | `DoctorAPP/back-end` | `uvicorn app.main:app --reload --port 8000` | 8000 | 8000 |
+| DoctorAPP Frontend | `DoctorAPP/front-end` | `npm run dev` | 3000 | 3000 |
+| PatientMobileAPP Backend | `PatientMobileAPP/backend` | `uvicorn app.main:app --reload --port 8080` | 8000 | 8080 |
+| PatientMobileAPP Mobile | `PatientMobileAPP/frontend/mobile-app` | `npx expo start` | 8081 (Metro) | 8081 |
 
 > **Important:** The PatientMobileAPP backend must run on a **different port** than DoctorAPP backend since they both default to 8000. See Part 2, Issue 1 for details.
 
@@ -28,7 +28,7 @@ Before testing, start all four services:
 1. Open the DoctorAPP frontend at `http://localhost:3000`.
 2. Navigate to the **Patients** page.
 3. Click **Add Patient** and fill in a name and email.
-4. Verify the patient appears in the roster with status "Pending".
+4. Verify the patient appears in the roster with status "In Progress".
 5. Click on the new patient and select **Schedule Appointment**.
 6. Fill in the date/time and submit.
 7. Verify:
@@ -38,8 +38,8 @@ Before testing, start all four services:
 
 **What could go wrong:**
 - MongoDB connection string not set → backend returns 500.
-- SMTP credentials not configured → email send fails silently; the prep episode is still created but the patient never gets the link.
-- XRP wallet creation fails if the XRPL network is down (non-blocking but `xrp_wallet_address` will be empty).
+- SMTP credentials not configured → email is skipped but the backend logs a warning and an `[EMAIL STUB]` line with the recipient and form URL. The prep episode is still created, but the patient never receives the link. Check the server logs to confirm.
+- XRP wallet creation fails if the XRPL network is down → the backend returns HTTP 502 and the patient is **not** created. You must have a working XRPL connection to add patients.
 
 ---
 
@@ -48,11 +48,10 @@ Before testing, start all four services:
 **What you are testing:** Mobile deep link → PatientMobileAPP frontend → PatientMobileAPP backend → DoctorAPP backend
 
 1. Copy the `invite_token` from MongoDB (`prep_episodes.invite_token`) or from the email link.
-2. In the Expo mobile app, navigate to the **Onboarding** screen.
-3. Enter (or deep-link with) the invite token.
-4. The app should call `GET /prep/invite/{token}` on the PatientMobileAPP backend, which proxies to `GET /api/v1/mobile-prep/invite/{token}` on DoctorAPP.
-5. Verify:
-   - The patient sees their name and appointment date.
+2. **Note:** The mobile app's Onboarding screen does not yet handle invite tokens or call `/prep/` endpoints. Until the deep-link + prep UI screens are implemented, test this flow using direct API calls (e.g., curl or Postman).
+3. Call `GET /prep/invite/{token}` on the PatientMobileAPP backend (which proxies to `GET /api/v1/mobile-prep/invite/{token}` on DoctorAPP).
+4. Verify:
+   - The response contains the patient name and appointment date.
    - The prep episode status in MongoDB updates to `"invite_opened"`.
 
 **What could go wrong:**
@@ -71,14 +70,14 @@ Before testing, start all four services:
    - Verify the prep episode status updates to `"started"`.
 2. Navigate to the **Triage** tab in the mobile app.
 3. Enter a free-text symptom narrative (e.g., "I've had a headache and dizziness for 3 days").
-4. The app should extract symptom cards using OpenAI.
+4. The app should extract symptom cards using MedGemma (via the `/triage/extract` endpoint on the PatientMobileAPP backend).
 5. Review, confirm, or dismiss individual symptom cards.
 6. Submit the check-in.
    - This calls `POST /prep/{token}/save-checkin` with the `CheckinPayload` (raw text, extracted symptoms, confirmed/dismissed lists).
    - Verify the `checkin_payload` field in the `prep_episodes` MongoDB document is populated.
 
 **What could go wrong:**
-- `OPENAI_API_KEY` not set on the PatientMobileAPP backend → symptom extraction fails.
+- MedGemma endpoint not configured (`SAGEMAKER_ENDPOINT_NAME`) or AWS credentials missing → symptom extraction fails.
 - Payload shape mismatch between mobile frontend and `CheckinPayload` schema → 422 Validation Error.
 - Proxy timeout if DoctorAPP is slow → PatientMobileAPP returns 504.
 
@@ -107,9 +106,13 @@ Before testing, start all four services:
 
 **What you are testing:** Health data sync → submit → analysis pipeline → patient summary
 
-1. If the patient has connected Apple Health data (via webhook), navigate to the **Vitals** tab to review metrics.
+1. If the patient has Apple Health data, navigate to the **Vitals** tab to review metrics.
+   - **Note:** There are two separate paths for health data, each using a different token:
+     - **Webhook path:** Apple Health data arrives at `POST /api/v1/webhook/apple-health/{form_token}` on DoctorAPP, which stores biometrics on the **appointment** document. This uses the appointment's `form_token`.
+     - **Mobile prep path:** The patient manually shares health data via the steps below, which stores `health_data_payload` on the **prep episode** document. This uses the `invite_token`.
+   - These paths are independent. You do not need both to complete the flow.
 2. Tap **Share Health Data**.
-   - This calls `POST /prep/{token}/save-health-data` with the `HealthDataPayload`.
+   - This calls `POST /prep/{invite_token}/save-health-data` with the `HealthDataPayload`.
 3. Tap **Submit** to finalize.
    - This calls `POST /prep/{token}/submit`, proxied to DoctorAPP.
    - DoctorAPP runs the full analysis pipeline: transform → embeddings → RAG analysis → persist results.
@@ -152,12 +155,12 @@ Before testing, start all four services:
 
 **What you are testing:** DoctorAPP web intake form as a fallback when mobile is unavailable
 
-1. Use the web fallback URL from the invite email (format: `http://localhost:3000/intake/{token}`).
+1. Use the web fallback URL from the invite email (format: `http://localhost:3000/intake/{form_token}`). Note: this uses the appointment's `form_token`, not the mobile-prep `invite_token`.
 2. Fill in the web intake form.
 3. Submit.
-   - This calls `POST /api/v1/intake/{token}/submit` directly on DoctorAPP.
-   - The prep episode source should update to `"web_fallback"`.
-4. Verify the same analysis pipeline runs and the clinician dashboard shows results.
+   - This calls `POST /api/v1/intake/{form_token}/submit` directly on DoctorAPP.
+   - The intake route updates the **appointment** document (sets `status: "completed"`, stores `patient_payload` and `analysis_result`). It does **not** update the `prep_episodes` collection.
+4. Verify the analysis result is stored on the appointment and the clinician dashboard shows results.
 
 ---
 
@@ -188,7 +191,7 @@ DOCTORAPP_BASE_URL=http://localhost:8001
 
 **What needs to happen:**
 - Decide on a port convention. Recommended: DoctorAPP on `8000`, PatientMobileAPP on `8080`.
-- Update **both** `PatientMobileAPP/backend/.env.example` (template) **and** `PatientMobileAPP/backend/.env` (runtime) to reflect the correct DoctorAPP URL (e.g., `http://localhost:8000`). The template and runtime file must stay in sync.
+- Update `PatientMobileAPP/backend/.env.example` (template) to show `DOCTORAPP_BASE_URL=http://localhost:8000`. Then copy `.env.example` to a local `.env` (which should be gitignored) and set the correct runtime values.
 - Update the default in `PatientMobileAPP/backend/app/doctorapp_client.py` to match (or remove the default and require explicit configuration).
 - Update the mobile frontend's `EXPO_PUBLIC_API_URL` to point to the PatientMobileAPP backend port (e.g., `http://localhost:8080`).
 
@@ -199,7 +202,7 @@ DOCTORAPP_BASE_URL=http://localhost:8001
 **Problem:** The actual `PatientMobileAPP/backend/.env` file is missing `DOCTORAPP_BASE_URL`. Without it, all eight `/prep/` proxy routes will fail because `doctorapp_client.py` falls back to `http://localhost:8001` which is likely not running.
 
 **What needs to happen:**
-- Add `DOCTORAPP_BASE_URL=http://localhost:8000` to `PatientMobileAPP/backend/.env`.
+- Add `DOCTORAPP_BASE_URL=http://localhost:8000` to your local `.env` (copied from `.env.example`; `.env` should be gitignored and not tracked in the repo).
 - Optionally add `DOCTORAPP_TIMEOUT=30` for explicit timeout control.
 
 ---
@@ -267,12 +270,11 @@ const API_BASE =
 
 ### Issue 7 — Email Configuration Required for Full Flow
 
-**Problem:** The appointment creation flow sends an invite email to the patient. If SMTP is not configured, the email silently fails but the prep episode is still created.
+**Problem:** The appointment creation flow sends an invite email to the patient. If SMTP is not configured, the email is skipped — the backend logs a warning and prints an `[EMAIL STUB]` line with the recipient and form URL, but no email is actually sent. The prep episode is still created.
 
 **What needs to happen:**
-- For testing without email: manually copy the `invite_token` from MongoDB and use it directly.
+- For testing without email: check server logs for the `[EMAIL STUB]` line to find the form URL and invite token, or manually query the `invite_token` from MongoDB.
 - For testing with email: configure `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, and `SMTP_PASSWORD` in the DoctorAPP backend `.env`.
-- Consider adding a log warning when email sending fails so testers know to check SMTP configuration.
 
 ---
 
