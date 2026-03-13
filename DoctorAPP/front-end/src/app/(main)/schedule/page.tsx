@@ -81,7 +81,7 @@ function deriveTypeBreakdown(entries: ScheduleEntry[]) {
     counts[e.type] = (counts[e.type] || 0) + 1;
   }
   return Object.entries(counts).map(([label, value]) => ({
-    label: label + "s",
+    label: label.endsWith("s") ? label : label + "s",
     value: String(value),
   }));
 }

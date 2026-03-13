@@ -226,7 +226,7 @@ export default function TriageScreen() {
       .then(setActionPlan)
       .catch(() => {})
       .finally(() => setActionPlanLoading(false));
-  }, [allReviewedForEffect]);
+  }, [allReviewedForEffect, actionPlan, actionPlanLoading, symptoms, inputText]);
 
   const panGesture = Gesture.Pan()
     .activeOffsetX([-15, 15])

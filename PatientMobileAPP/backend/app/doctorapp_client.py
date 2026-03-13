@@ -8,7 +8,7 @@ mobile frontend without exposing internal service URLs.
 Configuration
 -------------
 Set ``DOCTORAPP_BASE_URL`` in the environment (defaults to
-``http://localhost:8001``).  An optional ``DOCTORAPP_TIMEOUT``
+``http://localhost:8000``).  An optional ``DOCTORAPP_TIMEOUT``
 (seconds, default 30) controls per-request timeout.
 """
 
