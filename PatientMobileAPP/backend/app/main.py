@@ -20,6 +20,7 @@ from fastapi.responses import JSONResponse
 
 from app.check_in import router as check_in_router
 from app.labels import router as labels_router
+from app.prep import router as prep_router
 from app.triage import router as triage_router
 from app.medgemma import call_medgemma
 from app.parser import parse_translate_response
@@ -41,6 +42,7 @@ app.add_middleware(
 app.include_router(crowdfunding_module.router)
 app.include_router(check_in_router)
 app.include_router(labels_router)
+app.include_router(prep_router)
 app.include_router(triage_router)
 
 
