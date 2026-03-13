@@ -625,6 +625,9 @@ const s = StyleSheet.create({
     color: Colors.text.primary,
     letterSpacing: -0.3,
   },
+  statValueAccent: {
+    color: Colors.accent,
+  },
   statCaption: {
     fontSize: 11,
     fontFamily: Fonts.medium,

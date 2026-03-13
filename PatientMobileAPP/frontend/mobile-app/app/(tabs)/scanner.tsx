@@ -244,12 +244,13 @@ export default function ScannerScreen() {
                   const icons = ["medical", "alert-circle", "fitness"] as const;
                   return (
                     <View key={i} style={styles.bulletRow}>
-                      <AppIcon
-                        name={icons[i % icons.length]}
-                        size={20}
-                        color={Colors.text.secondary}
-                        style={styles.bulletIcon}
-                      />
+                      <View style={styles.bulletIconWrap}>
+                        <AppIcon
+                          name={icons[i % icons.length]}
+                          size={18}
+                          color={Colors.accent}
+                        />
+                      </View>
                       <Text style={styles.bulletText}>{bullet}</Text>
                     </View>
                   );

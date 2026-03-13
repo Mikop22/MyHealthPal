@@ -3,11 +3,8 @@ import { ScrollView, StyleSheet, Text, View } from "react-native";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { LinearGradient } from "expo-linear-gradient";
 import { AppIcon, type AppIconName } from "../../components/AppIcon";
-import { UniversalLiquidCard } from "../../components/UniversalLiquidCard";
-import { SectionHeader } from "../../components/SectionHeader";
-import { StatusBadge } from "../../components/StatusBadge";
 import { Colors } from "../../constants/Colors";
-import { Fonts, TypeScale } from "../../constants/Typography";
+import { Fonts } from "../../constants/Typography";
 import { usePatientStore } from "../../store/patientStore";
 
 const FALLBACK = "Not specified";
@@ -81,13 +78,13 @@ function SettingsRow({
   return (
     <View style={[s.settingsRow, !isLast && s.settingsRowBorder]}>
       <View style={s.settingsIconWrap}>
-        <AppIcon name={icon} size={18} color={Colors.brand} />
+        <AppIcon name={icon} size={18} color={Colors.accent} />
       </View>
       <View style={s.settingsTextWrap}>
         <Text style={s.settingsLabel}>{label}</Text>
         <Text style={s.settingsValue}>{value}</Text>
       </View>
-      <AppIcon name="chevron-forward" size={16} color={Colors.text.muted} />
+      <AppIcon name="chevron-forward" size={16} color={TEXT_TERTIARY} />
     </View>
   );
 }
@@ -99,19 +96,19 @@ function ProfileHeader() {
     <View style={s.profileHeader}>
       <View style={s.avatarOuter}>
         <LinearGradient
-          colors={["rgba(68, 173, 79, 0.25)", "rgba(54, 139, 62, 0.12)"]}
+          colors={["rgba(134,239,172,0.34)", "rgba(22,163,74,0.10)"]}
           style={s.avatarGradientRing}
         />
         <View style={s.avatarInner}>
-          <AppIcon name="person" size={36} color={Colors.brand} />
+          <AppIcon name="person" size={36} color={TEXT_PRIMARY} />
         </View>
       </View>
       <Text style={s.profileName}>Patient Profile</Text>
-      <StatusBadge
-        label={demographics.completedAt ? "Completed" : "Incomplete"}
-        variant={demographics.completedAt ? "success" : "warning"}
-        style={{ marginTop: 8 }}
-      />
+      <Text style={s.profileSub}>
+        {demographics.completedAt
+          ? "Onboarding completed"
+          : "Profile incomplete"}
+      </Text>
     </View>
   );
 }
@@ -138,8 +135,11 @@ export default function SettingsScreen() {
         </Animated.View>
 
         <Animated.View entering={FadeInDown.duration(500).delay(200)}>
-          <UniversalLiquidCard variant="default" style={s.demographicsCard}>
-            <SectionHeader title="Demographics" icon="clipboard" />
+          <View style={s.surfaceCard}>
+            <View style={s.cardLabelRow}>
+              <AppIcon name="clipboard" size={14} color={Colors.accent} />
+              <Text style={s.cardLabel}>DEMOGRAPHICS</Text>
+            </View>
 
             <SettingsRow
               icon="calendar"
@@ -170,10 +170,16 @@ export default function SettingsScreen() {
           </View>
         </Animated.View>
 
-        {/* ── App Info Card ── */}
         <Animated.View entering={FadeInDown.duration(500).delay(300)}>
-          <UniversalLiquidCard variant="default" style={s.demographicsCard}>
-            <SectionHeader title="App Info" icon="shield-checkmark" />
+          <View style={s.surfaceCard}>
+            <View style={s.cardLabelRow}>
+              <AppIcon
+                name="shield-checkmark"
+                size={14}
+                color={Colors.accent}
+              />
+              <Text style={s.cardLabel}>APP INFO</Text>
+            </View>
 
             <SettingsRow
               icon="information-circle"
@@ -199,9 +205,13 @@ export default function SettingsScreen() {
             <View style={s.statusRow}>
               <View style={s.statusBadge}>
                 <AppIcon
-                  name={demographics.completedAt ? "checkmark-circle" : "alert-circle"}
-                  size={22}
-                  color={demographics.completedAt ? Colors.semantic.success : Colors.semantic.warning}
+                  name={
+                    demographics.completedAt
+                      ? "checkmark-circle"
+                      : "alert-circle"
+                  }
+                  size={20}
+                  color={demographics.completedAt ? Colors.accent : TEXT_SECONDARY}
                 />
               </View>
               <View style={{ flex: 1 }}>
@@ -251,17 +261,18 @@ const s = StyleSheet.create({
     elevation: 3,
   },
   pageTitle: {
-    ...TypeScale.title,
+    fontSize: 32,
     fontFamily: Fonts.bold,
-    color: Colors.text.primary,
-    marginTop: 4,
+    color: TEXT_PRIMARY,
+    letterSpacing: -0.8,
   },
   pageSub: {
-    ...TypeScale.body,
+    fontSize: 15,
     fontFamily: Fonts.regular,
-    color: Colors.text.muted,
-    marginTop: 2,
+    color: TEXT_SECONDARY,
+    marginTop: 4,
     marginBottom: 24,
+    letterSpacing: 0.1,
   },
   profileHeader: {
     alignItems: "center",
@@ -284,7 +295,7 @@ const s = StyleSheet.create({
     width: 78,
     height: 78,
     borderRadius: 39,
-    backgroundColor: "rgba(68, 173, 79, 0.06)",
+    backgroundColor: "#FFFFFF",
     alignItems: "center",
     justifyContent: "center",
     shadowColor: "#101828",
@@ -294,15 +305,30 @@ const s = StyleSheet.create({
     elevation: 2,
   },
   profileName: {
-    ...TypeScale.heading,
+    fontSize: 20,
     fontFamily: Fonts.bold,
-    color: Colors.text.primary,
+    color: TEXT_PRIMARY,
+    letterSpacing: -0.2,
   },
-
-  /* ── Demographics Card ── */
-  demographicsCard: { padding: 24, marginBottom: 16 },
-
-  /* ── Settings Row ── */
+  profileSub: {
+    fontSize: 13,
+    fontFamily: Fonts.regular,
+    color: TEXT_SECONDARY,
+    marginTop: 4,
+    letterSpacing: 0.2,
+  },
+  cardLabelRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 7,
+    marginBottom: 14,
+  },
+  cardLabel: {
+    fontSize: 11,
+    fontFamily: Fonts.bold,
+    color: TEXT_SECONDARY,
+    letterSpacing: 1.4,
+  },
   settingsRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -311,15 +337,13 @@ const s = StyleSheet.create({
   },
   settingsRowBorder: {
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: "rgba(200, 230, 210, 0.3)",
+    borderBottomColor: DIVIDER,
   },
   settingsIconWrap: {
     width: 40,
     height: 40,
     borderRadius: 12,
-    backgroundColor: "rgba(68, 173, 79, 0.06)",
-    borderWidth: StyleSheet.hairlineWidth * 2,
-    borderColor: "rgba(68, 173, 79, 0.12)",
+    backgroundColor: "#F4F7F5",
     alignItems: "center",
     justifyContent: "center",
   },
@@ -327,15 +351,17 @@ const s = StyleSheet.create({
     flex: 1,
   },
   settingsLabel: {
-    ...TypeScale.caption,
+    fontSize: 12,
     fontFamily: Fonts.medium,
-    color: Colors.text.muted,
-    marginBottom: 2,
+    color: TEXT_SECONDARY,
+    letterSpacing: 0.3,
+    marginBottom: 3,
   },
   settingsValue: {
-    ...TypeScale.subheading,
+    fontSize: 16,
     fontFamily: Fonts.semiBold,
-    color: Colors.text.primary,
+    color: TEXT_PRIMARY,
+    letterSpacing: -0.1,
   },
   statusCard: {
     paddingVertical: 22,
@@ -349,20 +375,22 @@ const s = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: "rgba(68, 173, 79, 0.06)",
+    backgroundColor: "rgba(34, 197, 94, 0.10)",
     alignItems: "center",
     justifyContent: "center",
   },
   statusTitle: {
-    ...TypeScale.subheading,
+    fontSize: 16,
     fontFamily: Fonts.semiBold,
-    color: Colors.text.primary,
+    color: TEXT_PRIMARY,
+    letterSpacing: -0.1,
   },
   statusSub: {
-    ...TypeScale.caption,
+    fontSize: 13,
     fontFamily: Fonts.regular,
-    color: Colors.text.muted,
-    marginTop: 2,
+    color: TEXT_SECONDARY,
+    marginTop: 3,
+    letterSpacing: 0.1,
     lineHeight: 19,
   },
 });

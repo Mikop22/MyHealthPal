@@ -25,7 +25,7 @@ import {
   type BiometricSeries,
 } from "../../providers/MockHealthKit";
 import { Colors } from "../../constants/Colors";
-import { Fonts, TypeScale } from "../../constants/Typography";
+import { Fonts } from "../../constants/Typography";
 
 const METRICS = getMockBiometrics();
 
@@ -45,7 +45,7 @@ const METRIC_ICONS: Record<string, Parameters<typeof AppIcon>[0]["name"]> = {
 
 type MetricIconName = Parameters<typeof AppIcon>[0]["name"];
 
-function PulsingAlertBadge() {
+function PulsingAlertBadge({ text }: { text: string }) {
   const glow = useSharedValue(0.3);
 
   useEffect(() => {
@@ -57,17 +57,17 @@ function PulsingAlertBadge() {
       -1,
       false,
     );
-  }, []);
+  }, [glow]);
 
   const glowStyle = useAnimatedStyle(() => ({
-    borderColor: `rgba(226,92,92,${glow.value * 0.6})`,
-    shadowOpacity: glow.value * 0.4,
+    borderColor: `rgba(34,197,94,${0.14 + glow.value * 0.12})`,
+    shadowOpacity: 0.03 + glow.value * 0.06,
   }));
 
   return (
     <Animated.View style={[styles.alertBadge, glowStyle]}>
       <View style={styles.alertIconWrap}>
-        <AppIcon name="warning" size={20} color={Colors.semantic.error} />
+        <AppIcon name="warning" size={18} color={Colors.accent} />
       </View>
       <View style={styles.alertTextWrap}>
         <Text style={styles.alertTitle}>{text}</Text>
@@ -127,14 +127,17 @@ export default function VitalsScreen() {
   const ul3 = useSharedValue(0);
   const ul4 = useSharedValue(0);
   const ul5 = useSharedValue(0);
-  const underlineWidths: Record<string, SharedValue<number>> = {
-    hrv: ul0,
-    rhr: ul1,
-    temp: ul2,
-    resp: ul3,
-    steps: ul4,
-    sleep: ul5,
-  };
+  const underlineWidths = useMemo<Record<string, SharedValue<number>>>(
+    () => ({
+      hrv: ul0,
+      rhr: ul1,
+      temp: ul2,
+      resp: ul3,
+      steps: ul4,
+      sleep: ul5,
+    }),
+    [ul0, ul1, ul2, ul3, ul4, ul5],
+  );
 
   useEffect(() => {
     METRICS.forEach((m) => {
@@ -142,7 +145,7 @@ export default function VitalsScreen() {
         duration: 220,
       });
     });
-  }, [activeKey]);
+  }, [activeKey, underlineWidths]);
 
   useEffect(() => {
     hasAnimated.current = true;
@@ -164,7 +167,7 @@ export default function VitalsScreen() {
       active.data.map((d) => ({
         value: d.value,
         label: d.date.split(" ")[1],
-        dataPointColor: d.flag ? Colors.semantic.error : Colors.brand,
+        dataPointColor: d.flag ? Colors.accent : "#16A34A",
         dataPointRadius: d.flag ? 7 : 4,
         customDataPoint: d.flag ? () => <PulsingDataPoint /> : undefined,
       })),
@@ -225,34 +228,7 @@ export default function VitalsScreen() {
                   isActive={m.key === activeKey}
                   underlineValue={underlineWidths[m.key]}
                   onPress={() => setActiveKey(m.key)}
-                  style={styles.pillOuter}
-                >
-                  {isActive ? (
-                    <LinearGradient
-                      colors={[Colors.brandLight, Colors.brand]}
-                      start={{ x: 0, y: 0 }}
-                      end={{ x: 1, y: 1 }}
-                      style={styles.pill}
-                    >
-                      <AppIcon name={iconName} size={14} color="#fff" />
-                      <Text style={[styles.pillText, styles.pillTextActive]}>
-                        {m.shortLabel}
-                      </Text>
-                    </LinearGradient>
-                  ) : (
-                    <View style={[styles.pill, styles.pillInactive]}>
-                      <AppIcon
-                        name={iconName}
-                        size={14}
-                        color={Colors.text.secondary}
-                      />
-                      <Text style={styles.pillText}>{m.shortLabel}</Text>
-                    </View>
-                  )}
-                  <View style={styles.underlineTrack}>
-                    <Animated.View style={[styles.underlineFill, ulStyle]} />
-                  </View>
-                </Pressable>
+                />
               );
             })}
           </ScrollView>
@@ -296,14 +272,14 @@ export default function VitalsScreen() {
                   height={chartHeight}
                   curved
                   areaChart
-                  color={Colors.brand}
+                  color={Colors.accent}
                   thickness={3}
-                  startFillColor="rgba(68, 173, 79, 0.25)"
-                  endFillColor="rgba(255,255,255,0)"
-                  startOpacity={0.4}
+                  startFillColor="rgba(34,197,94,0.12)"
+                  endFillColor="rgba(34,197,94,0.01)"
+                  startOpacity={0.5}
                   endOpacity={0}
                   hideDataPoints={false}
-                  dataPointsColor={Colors.brand}
+                  dataPointsColor="#16A34A"
                   dataPointsHeight={8}
                   dataPointsWidth={8}
                   xAxisColor="#E4E7EC"
@@ -361,7 +337,7 @@ export default function VitalsScreen() {
                 <Text
                   style={[
                     styles.deltaValue,
-                    { color: isAnomaly ? Colors.semantic.error : Colors.semantic.success },
+                    isAnomaly && styles.deltaValueAccent,
                   ]}
                 >
                   {deltaSign}
@@ -372,7 +348,7 @@ export default function VitalsScreen() {
             </View>
 
             {isAnomaly && (
-              <PulsingAlertBadge />
+              <PulsingAlertBadge text="Clinically significant deviation" />
             )}
           </View>
         </Animated.View>
@@ -393,7 +369,7 @@ function PulsingDataPoint() {
       -1,
       false,
     );
-  }, []);
+  }, [scale]);
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],
@@ -458,16 +434,25 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 6,
     paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 16,
+    paddingVertical: 11,
+    borderRadius: 18,
+  },
+  pillActive: {
+    backgroundColor: Colors.accent,
   },
   pillInactive: {
-    backgroundColor: "rgba(68, 173, 79, 0.06)",
+    backgroundColor: "#FFFFFF",
     borderWidth: 1,
-    borderColor: "rgba(68, 173, 79, 0.12)",
+    borderColor: "#E4E7EC",
   },
-  pillText: { fontSize: 14, fontWeight: "600", color: Colors.text.secondary },
-  pillTextActive: { color: "#fff" },
+  pillText: {
+    fontSize: 14,
+    fontFamily: Fonts.semiBold,
+    color: TEXT_PRIMARY,
+  },
+  pillTextActive: {
+    color: "#fff",
+  },
   underlineTrack: {
     height: 3,
     width: "58%",
@@ -477,7 +462,6 @@ const styles = StyleSheet.create({
     backgroundColor: "transparent",
   },
   underlineFill: {
-<<<<<<< HEAD
     height: 3,
     backgroundColor: Colors.accent,
     borderRadius: 999,
@@ -499,16 +483,10 @@ const styles = StyleSheet.create({
     color: TEXT_SECONDARY,
     letterSpacing: 1.4,
     marginBottom: 6,
-=======
-    height: 2.5,
-    backgroundColor: Colors.brand,
-    borderRadius: 2,
->>>>>>> 48bb07f9ca3b8fffa3be953e30da10c96a084e3b
   },
   chartTitle: {
-    ...TypeScale.subheading,
+    fontSize: 20,
     fontFamily: Fonts.bold,
-<<<<<<< HEAD
     color: TEXT_PRIMARY,
     letterSpacing: -0.3,
     flexShrink: 1,
@@ -543,19 +521,12 @@ const styles = StyleSheet.create({
   axisText: {
     fontSize: 11,
     color: TEXT_SECONDARY,
-=======
-    color: Colors.text.primary,
-    marginBottom: 16,
->>>>>>> 48bb07f9ca3b8fffa3be953e30da10c96a084e3b
   },
-  riskZoneWrap: { position: "relative", marginBottom: 8 },
-  chartWrap: { marginLeft: -8 },
-  axisText: { fontSize: 11, color: Colors.text.muted },
   spikeOuter: {
     width: 16,
     height: 16,
     borderRadius: 8,
-    backgroundColor: "rgba(226, 92, 92, 0.20)",
+    backgroundColor: "rgba(34,197,94,0.20)",
     alignItems: "center",
     justifyContent: "center",
   },
@@ -563,7 +534,7 @@ const styles = StyleSheet.create({
     width: 10,
     height: 10,
     borderRadius: 5,
-    backgroundColor: Colors.semantic.error,
+    backgroundColor: Colors.accent,
     borderWidth: 2,
     borderColor: "#fff",
   },
@@ -585,12 +556,11 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: TEXT_SECONDARY,
   },
-  legendLabel: { ...TypeScale.caption, color: Colors.text.muted },
   riskLegend: {
     width: 16,
     height: 8,
     borderRadius: 2,
-    backgroundColor: "rgba(226,92,92,0.2)",
+    backgroundColor: "rgba(239,68,68,0.18)",
     marginLeft: 8,
   },
   deltaRow: {
@@ -605,25 +575,35 @@ const styles = StyleSheet.create({
     alignItems: "flex-end",
   },
   deltaDivider: {
-    width: 1,
-    height: 40,
-    backgroundColor: "rgba(200, 230, 210, 0.4)",
+    width: StyleSheet.hairlineWidth,
+    height: 42,
+    backgroundColor: DIVIDER,
     marginHorizontal: 16,
   },
   deltaMetric: {
-    ...TypeScale.title,
-    fontWeight: "800",
-    color: Colors.text.primary,
+    fontSize: 30,
+    fontFamily: Fonts.bold,
+    color: TEXT_PRIMARY,
+    letterSpacing: -0.5,
   },
   deltaUnit: {
     fontSize: 15,
-    fontWeight: "500",
-    color: Colors.text.muted,
+    fontFamily: Fonts.medium,
+    color: TEXT_SECONDARY,
   },
   deltaLabel: {
-    ...TypeScale.caption,
-    color: Colors.text.muted,
-    marginTop: 2,
+    fontSize: 12,
+    color: TEXT_SECONDARY,
+    marginTop: 3,
+  },
+  deltaValue: {
+    fontSize: 22,
+    fontFamily: Fonts.bold,
+    color: TEXT_PRIMARY,
+    letterSpacing: -0.3,
+  },
+  deltaValueAccent: {
+    color: Colors.accent,
   },
   alertBadge: {
     flexDirection: "row",
@@ -633,30 +613,32 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 12,
     borderRadius: 16,
-    borderWidth: 1.5,
-    borderColor: "rgba(226, 92, 92, 0.3)",
-    backgroundColor: Colors.semantic.errorBg,
-    shadowColor: Colors.semantic.error,
-    shadowOffset: { width: 0, height: 0 },
-    shadowRadius: 12,
+    borderWidth: 1,
+    backgroundColor: "#FAFCFA",
+    shadowColor: Colors.accent,
+    shadowOffset: { width: 0, height: 8 },
+    shadowRadius: 18,
+    elevation: 2,
   },
   alertIconWrap: {
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: "rgba(226, 92, 92, 0.10)",
+    backgroundColor: "rgba(34, 197, 94, 0.10)",
     alignItems: "center",
     justifyContent: "center",
   },
-  alertTextWrap: { flex: 1 },
+  alertTextWrap: {
+    flex: 1,
+  },
   alertTitle: {
     fontSize: 13,
-    fontWeight: "700",
-    color: Colors.semantic.error,
+    fontFamily: Fonts.bold,
+    color: TEXT_PRIMARY,
   },
   alertSub: {
-    ...TypeScale.caption,
-    color: Colors.text.secondary,
-    marginTop: 2,
+    fontSize: 12,
+    color: TEXT_SECONDARY,
+    marginTop: 3,
   },
 });

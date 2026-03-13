@@ -342,20 +342,12 @@ export default function OnboardingScreen() {
               >
                 <View style={inputStyles.inputContainer}>
                   <View style={inputStyles.iconWrap}>
-<<<<<<< HEAD
                     <AppIcon name="mail" size={18} color={Colors.accent} />
-=======
-                    <AppIcon name="mail" size={20} color={Colors.text.muted} />
->>>>>>> 48bb07f9ca3b8fffa3be953e30da10c96a084e3b
                   </View>
                   <TextInput
                     style={inputStyles.input}
                     placeholder={step.inputPlaceholder}
-<<<<<<< HEAD
                     placeholderTextColor={TEXT_TERTIARY}
-=======
-                    placeholderTextColor={Colors.text.muted}
->>>>>>> 48bb07f9ca3b8fffa3be953e30da10c96a084e3b
                     value={(selections.email as string) ?? ""}
                     onChangeText={handleEmailChange}
                     keyboardType="email-address"
@@ -417,18 +409,6 @@ export default function OnboardingScreen() {
             hasSelection ? ctaStyles.btnActive : ctaStyles.btnDisabled,
           ]}
         >
-<<<<<<< HEAD
-=======
-          <LinearGradient
-            colors={[Colors.brandLight, Colors.brand]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 0 }}
-            style={[
-              StyleSheet.absoluteFill,
-              { opacity: hasSelection ? 0.45 : 0.15 },
-            ]}
-          />
->>>>>>> 48bb07f9ca3b8fffa3be953e30da10c96a084e3b
           <Text
             style={[
               ctaStyles.text,
@@ -470,21 +450,13 @@ const inputStyles = StyleSheet.create({
     flex: 1,
     fontSize: 16,
     fontFamily: Fonts.medium,
-<<<<<<< HEAD
     color: TEXT_PRIMARY,
-=======
-    color: Colors.text.primary,
->>>>>>> 48bb07f9ca3b8fffa3be953e30da10c96a084e3b
     letterSpacing: -0.1,
   },
   hint: {
     fontSize: 12,
     fontFamily: Fonts.regular,
-<<<<<<< HEAD
     color: TEXT_SECONDARY,
-=======
-    color: Colors.text.muted,
->>>>>>> 48bb07f9ca3b8fffa3be953e30da10c96a084e3b
     textAlign: "center",
     marginTop: 14,
     letterSpacing: 0.2,
@@ -523,11 +495,7 @@ const styles = StyleSheet.create({
   headerStepLabel: {
     fontFamily: Fonts.medium,
     fontSize: 13,
-<<<<<<< HEAD
     color: TEXT_SECONDARY,
-=======
-    color: Colors.text.muted,
->>>>>>> 48bb07f9ca3b8fffa3be953e30da10c96a084e3b
     letterSpacing: 0.3,
   },
   contentViewport: {
