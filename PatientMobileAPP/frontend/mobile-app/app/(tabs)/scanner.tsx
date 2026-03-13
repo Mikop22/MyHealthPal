@@ -209,20 +209,20 @@ export default function ScannerScreen() {
               <AppIcon
                 name={error ? "alert-circle" : "checkmark-circle"}
                 size={28}
-                color={error ? Colors.forest[600] : Colors.accent}
+                color={error ? Colors.text.secondary : Colors.brand}
               />
               <Text style={styles.headerTitle}>
                 {loading ? "Analyzing…" : error ? "Scan Failed" : "Scan Complete"}
               </Text>
               <Pressable onPress={handleDismiss} style={styles.closeBtn}>
-                <AppIcon name="close" size={20} color={Colors.forest[700]} />
+                <AppIcon name="close" size={20} color={Colors.text.secondary} />
               </Pressable>
             </View>
 
             {/* ─── Loading State ─── */}
             {loading && (
               <View style={styles.loadingWrap}>
-                <ActivityIndicator size="large" color={Colors.accent} />
+                <ActivityIndicator size="large" color={Colors.brand} />
                 <Text style={styles.loadingText}>
                   MedGemma is reading your document…
                 </Text>
@@ -232,7 +232,7 @@ export default function ScannerScreen() {
             {/* ─── Error State ─── */}
             {error && !loading && (
               <View style={styles.errorWrap}>
-                <AppIcon name="alert-circle" size={40} color={Colors.forest[400]} />
+                <AppIcon name="alert-circle" size={40} color={Colors.text.muted} />
                 <Text style={styles.errorText}>{error}</Text>
                 <Pressable onPress={handleRetry} style={styles.retryBtn}>
                   <AppIcon name="checkmark" size={18} color="#fff" />
@@ -258,7 +258,7 @@ export default function ScannerScreen() {
                       <AppIcon
                         name={icons[i % icons.length]}
                         size={20}
-                        color={Colors.forest[600]}
+                        color={Colors.text.secondary}
                         style={styles.bulletIcon}
                       />
                       <Text style={styles.bulletText}>{bullet}</Text>
@@ -383,7 +383,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 4,
     borderRadius: 2,
-    backgroundColor: Colors.forest[300],
+    backgroundColor: "rgba(200, 230, 210, 0.5)",
     alignSelf: "center",
     marginBottom: 16,
   },
@@ -399,13 +399,13 @@ const styles = StyleSheet.create({
     marginLeft: 10,
     fontSize: 22,
     fontWeight: "700",
-    color: Colors.primary,
+    color: Colors.text.primary,
   },
   closeBtn: {
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: Colors.forest[100],
+    backgroundColor: "rgba(200, 230, 210, 0.3)",
     alignItems: "center",
     justifyContent: "center",
   },
@@ -419,7 +419,7 @@ const styles = StyleSheet.create({
   loadingText: {
     fontSize: 15,
     fontWeight: "500",
-    color: Colors.forest[600],
+    color: Colors.text.secondary,
   },
 
   /* Error */
@@ -430,7 +430,7 @@ const styles = StyleSheet.create({
   },
   errorText: {
     fontSize: 15,
-    color: Colors.forest[700],
+    color: Colors.text.secondary,
     textAlign: "center",
     paddingHorizontal: 16,
   },
@@ -438,7 +438,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
-    backgroundColor: Colors.accent,
+    backgroundColor: Colors.brand,
     paddingHorizontal: 24,
     paddingVertical: 12,
     borderRadius: 16,
@@ -459,7 +459,7 @@ const styles = StyleSheet.create({
   sectionLabel: {
     fontSize: 12,
     fontWeight: "700",
-    color: Colors.forest[600],
+    color: Colors.text.secondary,
     textTransform: "uppercase",
     letterSpacing: 1.2,
     marginBottom: 14,
@@ -477,12 +477,12 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 16,
     lineHeight: 24,
-    color: Colors.forest[800],
+    color: Colors.text.primary,
   },
 
   /* Nutritional swap accent */
   swapCard: {
-    backgroundColor: Colors.accent,
+    backgroundColor: Colors.brand,
     borderRadius: 20,
     padding: 20,
     marginTop: 8,
