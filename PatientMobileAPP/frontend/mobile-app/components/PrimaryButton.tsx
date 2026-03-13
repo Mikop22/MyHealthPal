@@ -17,7 +17,7 @@ import Animated, {
 import { LinearGradient } from "expo-linear-gradient";
 import { AppIcon, type AppIconName } from "./AppIcon";
 import { Colors } from "../constants/Colors";
-import { Fonts, TypeScale } from "../constants/Typography";
+import { Fonts } from "../constants/Typography";
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
@@ -79,7 +79,6 @@ export function PrimaryButton({
 
   const animStyle = useAnimatedStyle(() => ({
     transform: [{ scale: interpolate(pressed.value, [0, 1], [1, 0.965]) }],
-    opacity: interpolate(pressed.value, [0, 1], [1, 0.92]),
   }));
 
   const onPressIn = useCallback(() => {

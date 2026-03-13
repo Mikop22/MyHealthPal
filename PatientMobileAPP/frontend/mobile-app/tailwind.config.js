@@ -39,10 +39,12 @@ module.exports = {
         surface: "#F8FDF8",
 
         /* Text hierarchy (matches DoctorAPP CSS vars) */
-        "text-primary": "#1F2D1F",
-        "text-secondary": "#3D5C3D",
-        "text-muted": "#6B7E6B",
-        "text-body": "#2D3B2D",
+        content: {
+          primary: "#1F2D1F",
+          secondary: "#3D5C3D",
+          muted: "#6B7E6B",
+          body: "#2D3B2D",
+        },
 
         /* Semantic states */
         success: { DEFAULT: "#2E7D32", bg: "rgba(232, 245, 233, 0.6)" },

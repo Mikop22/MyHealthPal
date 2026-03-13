@@ -93,7 +93,6 @@ export default function TabsLayout() {
           fontSize: 10,
           fontWeight: "600",
           letterSpacing: 0.2,
-          color: Colors.text.muted,
         },
         tabBarBackground: () =>
           Platform.OS !== "web" ? (

@@ -8,7 +8,6 @@ import Animated, {
   withSequence,
   interpolate,
 } from "react-native-reanimated";
-import { Colors } from "../constants/Colors";
 
 interface SkeletonLoaderProps {
   /** Width of the skeleton element */

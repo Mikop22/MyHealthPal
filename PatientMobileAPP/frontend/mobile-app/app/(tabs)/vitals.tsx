@@ -22,8 +22,6 @@ import { LineChart } from "react-native-gifted-charts";
 import Svg, { Rect } from "react-native-svg";
 import { AppIcon } from "../../components/AppIcon";
 import { UniversalLiquidCard } from "../../components/UniversalLiquidCard";
-import { SectionHeader } from "../../components/SectionHeader";
-import { StatusBadge } from "../../components/StatusBadge";
 import {
   getMockBiometrics,
   type BiometricSeries,
@@ -42,7 +40,7 @@ const METRIC_ICONS: Record<string, Parameters<typeof AppIcon>[0]["name"]> = {
 
 type MetricIconName = Parameters<typeof AppIcon>[0]["name"];
 
-function PulsingAlertBadge({ text }: { text: string }) {
+function PulsingAlertBadge() {
   const glow = useSharedValue(0.3);
 
   useEffect(() => {
@@ -327,7 +325,7 @@ export default function VitalsScreen() {
             </View>
 
             {isAnomaly && (
-              <PulsingAlertBadge text="Clinically significant deviation detected" />
+              <PulsingAlertBadge />
             )}
           </UniversalLiquidCard>
         </Animated.View>
