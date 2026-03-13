@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import {
-  View,
-  Text,
-  Pressable,
   StyleSheet,
-  ScrollView,
+  Text,
   TextInput,
+  Pressable,
+  ScrollView,
+  View,
 } from "react-native";
 import Animated, {
   useSharedValue,
@@ -21,13 +21,19 @@ import Animated, {
 import { LinearGradient } from "expo-linear-gradient";
 import Svg, { Rect } from "react-native-svg";
 import { AppIcon } from "../../components/AppIcon";
-import { UniversalLiquidCard } from "../../components/UniversalLiquidCard";
 import { Colors } from "../../constants/Colors";
 import { Fonts } from "../../constants/Typography";
 import { usePatientStore } from "../../store/patientStore";
 
 const GOAL = 2000;
 const INITIAL_RAISED = 1240;
+
+const SCREEN_BG = "#F6F8F6";
+const CARD_BG = "#FFFFFF";
+const TEXT_PRIMARY = "#101828";
+const TEXT_SECONDARY = "#667085";
+const TEXT_TERTIARY = "#98A2B3";
+const DIVIDER = "rgba(15, 23, 42, 0.08)";
 
 const MOCK_DONORS = [
   { id: "d1", initials: "AK", amount: 50, timeAgo: "2 h ago" },
@@ -36,8 +42,6 @@ const MOCK_DONORS = [
   { id: "d4", initials: "LP", amount: 15, timeAgo: "2 d ago" },
   { id: "d5", initials: "NK", amount: 75, timeAgo: "3 d ago" },
 ];
-
-/* ───────── Deterministic QR Code ───────── */
 
 const QR_N = 21;
 
@@ -64,9 +68,11 @@ function MockQRCode({ size = 160 }: { size?: number }) {
   const mod = size / QR_N;
   const cells = useMemo(() => {
     const out: { x: number; y: number }[] = [];
-    for (let r = 0; r < QR_N; r++)
-      for (let c = 0; c < QR_N; c++)
+    for (let r = 0; r < QR_N; r++) {
+      for (let c = 0; c < QR_N; c++) {
         if (qrModule(r, c)) out.push({ x: c * mod, y: r * mod });
+      }
+    }
     return out;
   }, [mod]);
 
@@ -79,14 +85,13 @@ function MockQRCode({ size = 160 }: { size?: number }) {
           y={p.y}
           width={mod}
           height={mod}
-          fill={Colors.primary}
+          fill={TEXT_PRIMARY}
         />
       ))}
     </Svg>
   );
 }
 
-/* ── Animated count-up text ── */
 function CountUpText({
   value,
   prefix = "",
@@ -101,7 +106,10 @@ function CountUpText({
 
   useEffect(() => {
     anim.value = prevRef.current;
-    anim.value = withTiming(value, { duration: 700, easing: Easing.out(Easing.cubic) });
+    anim.value = withTiming(value, {
+      duration: 700,
+      easing: Easing.out(Easing.cubic),
+    });
     prevRef.current = value;
   }, [value]);
 
@@ -115,10 +123,14 @@ function CountUpText({
     return () => clearInterval(id);
   }, []);
 
-  return <Text style={style}>{prefix}{display.toLocaleString()}</Text>;
+  return (
+    <Text style={style}>
+      {prefix}
+      {display.toLocaleString()}
+    </Text>
+  );
 }
 
-/* ── Gradient shimmer progress bar ── */
 function ShimmerBar({
   progress,
   height = 10,
@@ -149,7 +161,8 @@ function ShimmerBar({
 
   const shimmerStyle = useAnimatedStyle(() => ({
     left: shimmer.value * (barWidth * (progress.value || 0) - 60),
-    opacity: shimmer.value < 0.85 ? shimmer.value * 0.35 : (1 - shimmer.value) * 3,
+    opacity:
+      shimmer.value < 0.85 ? shimmer.value * 0.35 : (1 - shimmer.value) * 3,
   }));
 
   return (
@@ -157,9 +170,15 @@ function ShimmerBar({
       style={[s.barTrack, { height, borderRadius: height / 2 }]}
       onLayout={(e) => onLayout?.(e.nativeEvent.layout.width)}
     >
-      <Animated.View style={[StyleSheet.absoluteFill, fillStyle, { overflow: "hidden", borderRadius: height / 2 }]}>
+      <Animated.View
+        style={[
+          StyleSheet.absoluteFill,
+          fillStyle,
+          { overflow: "hidden", borderRadius: height / 2 },
+        ]}
+      >
         <LinearGradient
-          colors={["#86EFAC", "#22C55E", "#16A34A"]}
+          colors={["#22C55E", "#16A34A"]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 0 }}
           style={StyleSheet.absoluteFill}
@@ -170,7 +189,6 @@ function ShimmerBar({
   );
 }
 
-/* ── Profile Avatar ── */
 function ProfileAvatar({ size = 72 }: { size?: number }) {
   return (
     <View
@@ -180,7 +198,7 @@ function ProfileAvatar({ size = 72 }: { size?: number }) {
       ]}
     >
       <LinearGradient
-        colors={["rgba(134,239,172,0.4)", "rgba(22,163,74,0.15)"]}
+        colors={["rgba(134,239,172,0.38)", "rgba(22,163,74,0.12)"]}
         style={[
           s.avatarGradientRing,
           { width: size + 6, height: size + 6, borderRadius: (size + 6) / 2 },
@@ -198,7 +216,6 @@ function ProfileAvatar({ size = 72 }: { size?: number }) {
   );
 }
 
-/* ── Donor avatar with initials ── */
 function DonorBadge({ initials }: { initials: string }) {
   return (
     <View style={s.donorAvatar}>
@@ -206,8 +223,6 @@ function DonorBadge({ initials }: { initials: string }) {
     </View>
   );
 }
-
-/* ───────── Screen ───────── */
 
 export default function FundingScreen() {
   const [raised, setRaised] = useState(INITIAL_RAISED);
@@ -258,7 +273,6 @@ export default function FundingScreen() {
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
-        {/* ── Page Header ── */}
         <Animated.View entering={getFirstTouchEntering(0)} style={s.pageHeaderRow}>
           <View>
             <Text style={s.pageHeaderTitle}>Funding</Text>
@@ -270,9 +284,8 @@ export default function FundingScreen() {
           </Pressable>
         </Animated.View>
 
-        {/* ── Patient Profile Card ── */}
         <Animated.View entering={getFirstTouchEntering(1)}>
-          <UniversalLiquidCard variant="elevated" style={s.profileCard}>
+          <View style={s.surfaceCard}>
             <View style={s.profileRow}>
               <ProfileAvatar size={68} />
               <View style={s.profileInfo}>
@@ -283,7 +296,6 @@ export default function FundingScreen() {
               </View>
             </View>
 
-            {/* About Me */}
             <View style={s.sectionBlock}>
               <View style={s.sectionLabelRow}>
                 <AppIcon name="person" size={14} color={Colors.text.muted} />
@@ -292,7 +304,7 @@ export default function FundingScreen() {
               <TextInput
                 style={s.bioInput}
                 placeholder="Share a brief introduction about yourself..."
-                placeholderTextColor={Colors.forest[400]}
+                placeholderTextColor={TEXT_TERTIARY}
                 multiline
                 value={fundingProfile.aboutMe}
                 onChangeText={setAboutMe}
@@ -300,28 +312,26 @@ export default function FundingScreen() {
               />
             </View>
 
-            {/* Case Description */}
-            <View style={s.sectionBlock}>
+            <View style={s.sectionBlockLast}>
               <View style={s.sectionLabelRow}>
                 <AppIcon name="medical" size={14} color={Colors.text.muted} />
                 <Text style={s.sectionLabel}>CASE DESCRIPTION</Text>
               </View>
               <TextInput
-                style={[s.bioInput, { minHeight: 100 }]}
+                style={[s.bioInput, s.caseInput]}
                 placeholder="Describe your medical situation and why you need funding support..."
-                placeholderTextColor={Colors.forest[400]}
+                placeholderTextColor={TEXT_TERTIARY}
                 multiline
                 value={fundingProfile.caseDescription}
                 onChangeText={setCaseDescription}
                 textAlignVertical="top"
               />
             </View>
-          </UniversalLiquidCard>
+          </View>
         </Animated.View>
 
-        {/* ── Campaign Progress Card ── */}
         <Animated.View entering={getFirstTouchEntering(2)}>
-          <UniversalLiquidCard variant="elevated" style={s.campaignCard}>
+          <View style={s.surfaceCard}>
             <View style={s.campaignHeader}>
               <LinearGradient
                 colors={["rgba(134,239,172,0.25)", "rgba(22,163,74,0.12)"]}
@@ -332,7 +342,7 @@ export default function FundingScreen() {
               <View style={{ flex: 1 }}>
                 <Text style={s.campaignTitle}>MRI Diagnostic Imaging</Text>
                 <Text style={s.campaignSub}>
-                  Pelvic MRI · Suspected endometriosis
+                  Pelvic MRI | Suspected endometriosis
                 </Text>
               </View>
             </View>
@@ -349,7 +359,7 @@ export default function FundingScreen() {
               </View>
               <View style={s.statDivider} />
               <View style={s.statItem}>
-                <Text style={s.statValue}>{pct}%</Text>
+                <Text style={[s.statValue, s.statValueAccent]}>{pct}%</Text>
                 <Text style={s.statCaption}>funded</Text>
               </View>
             </View>
@@ -358,7 +368,7 @@ export default function FundingScreen() {
               progress={progress}
               barWidth={barWidth}
               onLayout={setBarWidth}
-              height={10}
+              height={6}
             />
 
             {!isFunded && (
@@ -372,12 +382,11 @@ export default function FundingScreen() {
                 </Pressable>
               </View>
             )}
-          </UniversalLiquidCard>
+          </View>
         </Animated.View>
 
-        {/* ── Recent Donors ── */}
         <Animated.View entering={getFirstTouchEntering(3)}>
-          <UniversalLiquidCard variant="default" style={s.donorsCard}>
+          <View style={s.surfaceCard}>
             <View style={s.sectionLabelRow}>
               <AppIcon name="heart" size={13} color={Colors.text.muted} />
               <Text style={s.sectionLabel}>RECENT SUPPORTERS</Text>
@@ -387,7 +396,7 @@ export default function FundingScreen() {
                 key={d.id}
                 style={[
                   s.donorRow,
-                  idx === MOCK_DONORS.length - 1 && { marginBottom: 0 },
+                  idx === MOCK_DONORS.length - 1 && s.donorRowLast,
                 ]}
               >
                 <DonorBadge initials={d.initials} />
@@ -398,10 +407,9 @@ export default function FundingScreen() {
                 <Text style={s.donorAmount}>+${d.amount}</Text>
               </View>
             ))}
-          </UniversalLiquidCard>
+          </View>
         </Animated.View>
 
-        {/* ── QR Code (visible when fully funded) ── */}
         {isFunded && (
           <Animated.View
             entering={
@@ -413,7 +421,7 @@ export default function FundingScreen() {
                 : undefined
             }
           >
-            <UniversalLiquidCard variant="active" style={s.qrCard}>
+            <View style={[s.surfaceCard, s.qrCard]}>
               <View style={s.qrTitleRow}>
                 <View style={s.qrBadge}>
                   <AppIcon name="shield-checkmark" size={18} color="#fff" />
@@ -421,43 +429,61 @@ export default function FundingScreen() {
                 <Text style={s.qrTitle}>Fully Funded</Text>
               </View>
               <Text style={s.qrSub}>
-                Present this QR code at the imaging centre to redeem your funded diagnostic.
+                Present this QR code at the imaging centre to redeem your funded
+                diagnostic.
               </Text>
               <View style={s.qrFrame}>
                 <MockQRCode size={170} />
               </View>
               <Text style={s.qrRef}>REF: MHP-2026-4821-ENDO</Text>
-            </UniversalLiquidCard>
+            </View>
           </Animated.View>
         )}
 
-        <View style={{ height: 32 }} />
+        <View style={{ height: 24 }} />
       </ScrollView>
     </View>
   );
 }
 
 const s = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "transparent" },
-  scroll: { flex: 1 },
-  content: { paddingHorizontal: 24, paddingTop: 16, paddingBottom: 40 },
-
-  /* ── Header ── */
+  container: {
+    flex: 1,
+    backgroundColor: SCREEN_BG,
+  },
+  scroll: {
+    flex: 1,
+  },
+  content: {
+    paddingHorizontal: 24,
+    paddingTop: 18,
+    paddingBottom: 96,
+  },
+  surfaceCard: {
+    backgroundColor: CARD_BG,
+    borderRadius: 20,
+    padding: 24,
+    marginBottom: 16,
+    shadowColor: "#101828",
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.05,
+    shadowRadius: 24,
+    elevation: 3,
+  },
   pageHeaderRow: {
     flexDirection: "row",
     alignItems: "flex-end",
     justifyContent: "space-between",
     marginBottom: 24,
-    marginTop: 4,
   },
   pageHeaderTitle: {
-    fontSize: 28,
+    fontSize: 32,
     fontFamily: Fonts.bold,
     color: Colors.text.primary,
     letterSpacing: -0.5,
   },
   pageHeaderSub: {
-    fontSize: 14,
+    fontSize: 15,
     fontFamily: Fonts.regular,
     color: Colors.text.muted,
     marginTop: 2,
@@ -469,13 +495,13 @@ const s = StyleSheet.create({
     backgroundColor: Colors.accent,
     paddingHorizontal: 16,
     paddingVertical: 10,
-    borderRadius: 24,
+    borderRadius: 999,
     gap: 6,
     shadowColor: Colors.accent,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.25,
-    shadowRadius: 12,
-    elevation: 4,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.16,
+    shadowRadius: 18,
+    elevation: 3,
   },
   createCampaignBtnText: {
     color: "#fff",
@@ -483,31 +509,28 @@ const s = StyleSheet.create({
     fontSize: 14,
     letterSpacing: 0.2,
   },
-
-  /* ── Profile Card ── */
-  profileCard: { padding: 28, marginBottom: 16 },
   profileRow: {
     flexDirection: "row",
     alignItems: "center",
     gap: 18,
     marginBottom: 24,
   },
-  profileInfo: { flex: 1 },
+  profileInfo: {
+    flex: 1,
+  },
   profileName: {
-    fontSize: 18,
+    fontSize: 19,
     fontFamily: Fonts.bold,
     color: Colors.text.primary,
     letterSpacing: -0.2,
   },
   profileHint: {
-    fontSize: 13,
+    fontSize: 14,
     fontFamily: Fonts.regular,
     color: Colors.text.muted,
     marginTop: 3,
     letterSpacing: 0.1,
   },
-
-  /* ── Avatar ── */
   avatarOuter: {
     alignItems: "center",
     justifyContent: "center",
@@ -519,12 +542,18 @@ const s = StyleSheet.create({
     backgroundColor: "rgba(68, 173, 79, 0.06)",
     alignItems: "center",
     justifyContent: "center",
-    borderWidth: 2.5,
-    borderColor: "#fff",
+    shadowColor: "#101828",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.05,
+    shadowRadius: 12,
+    elevation: 2,
   },
-
-  /* ── Sections ── */
-  sectionBlock: { marginBottom: 20 },
+  sectionBlock: {
+    marginBottom: 20,
+  },
+  sectionBlockLast: {
+    marginBottom: 0,
+  },
   sectionLabelRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -538,21 +567,21 @@ const s = StyleSheet.create({
     letterSpacing: 1.4,
   },
   bioInput: {
-    backgroundColor: "rgba(240, 253, 244, 0.5)",
-    borderRadius: 16,
-    borderWidth: StyleSheet.hairlineWidth * 2,
-    borderColor: "rgba(187, 247, 208, 0.4)",
+    backgroundColor: "#F8FAFB",
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: "#E4E7EC",
     paddingHorizontal: 18,
     paddingVertical: 14,
     fontSize: 15,
     fontFamily: Fonts.regular,
     color: Colors.text.primary,
     lineHeight: 22,
-    minHeight: 72,
+    minHeight: 76,
   },
-
-  /* ── Campaign ── */
-  campaignCard: { padding: 28, marginBottom: 16 },
+  caseInput: {
+    minHeight: 108,
+  },
   campaignHeader: {
     flexDirection: "row",
     alignItems: "center",
@@ -560,16 +589,15 @@ const s = StyleSheet.create({
     marginBottom: 24,
   },
   campaignIconCapsule: {
-    width: 50,
-    height: 50,
-    borderRadius: 16,
+    width: 52,
+    height: 52,
+    borderRadius: 18,
     alignItems: "center",
     justifyContent: "center",
-    borderWidth: StyleSheet.hairlineWidth * 2,
-    borderColor: "rgba(134,239,172,0.3)",
+    backgroundColor: "rgba(34, 197, 94, 0.10)",
   },
   campaignTitle: {
-    fontSize: 17,
+    fontSize: 18,
     fontFamily: Fonts.bold,
     color: Colors.text.primary,
     letterSpacing: -0.2,
@@ -581,20 +609,18 @@ const s = StyleSheet.create({
     marginTop: 3,
     letterSpacing: 0.1,
   },
-
-  /* ── Stats Row ── */
   statsRow: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-around",
-    marginBottom: 20,
-    paddingVertical: 16,
-    backgroundColor: "rgba(240, 253, 244, 0.35)",
-    borderRadius: 16,
+    justifyContent: "space-between",
+    marginBottom: 22,
   },
-  statItem: { alignItems: "center" },
+  statItem: {
+    flex: 1,
+    alignItems: "center",
+  },
   statValue: {
-    fontSize: 20,
+    fontSize: 21,
     fontFamily: Fonts.bold,
     color: Colors.text.primary,
     letterSpacing: -0.3,
@@ -608,16 +634,14 @@ const s = StyleSheet.create({
     textTransform: "uppercase",
   },
   statDivider: {
-    width: StyleSheet.hairlineWidth * 2,
-    height: 32,
-    backgroundColor: "rgba(187, 247, 208, 0.5)",
+    width: StyleSheet.hairlineWidth,
+    height: 40,
+    backgroundColor: DIVIDER,
   },
-
-  /* ── Progress bar ── */
   barTrack: {
-    backgroundColor: "rgba(240, 253, 244, 0.6)",
+    backgroundColor: "#E7ECE8",
     overflow: "hidden",
-    marginBottom: 20,
+    marginBottom: 22,
     position: "relative",
   },
   shimmer: {
@@ -626,11 +650,12 @@ const s = StyleSheet.create({
     bottom: 0,
     width: 60,
     backgroundColor: "rgba(255,255,255,0.35)",
-    borderRadius: 4,
+    borderRadius: 999,
   },
-
-  /* ── Buttons ── */
-  btnRow: { flexDirection: "row", gap: 10 },
+  btnRow: {
+    flexDirection: "row",
+    gap: 10,
+  },
   donateBtn: {
     flex: 1,
     flexDirection: "row",
@@ -639,11 +664,11 @@ const s = StyleSheet.create({
     gap: 8,
     backgroundColor: Colors.accent,
     paddingVertical: 14,
-    borderRadius: 20,
+    borderRadius: 16,
     shadowColor: Colors.accent,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.16,
+    shadowRadius: 18,
     elevation: 3,
   },
   donateBtnText: {
@@ -655,10 +680,8 @@ const s = StyleSheet.create({
   fillBtn: {
     paddingHorizontal: 20,
     paddingVertical: 14,
-    borderRadius: 20,
-    backgroundColor: "rgba(240, 253, 244, 0.6)",
-    borderWidth: StyleSheet.hairlineWidth * 2,
-    borderColor: "rgba(187, 247, 208, 0.5)",
+    borderRadius: 16,
+    backgroundColor: "#F2F4F7",
     justifyContent: "center",
   },
   fillBtnText: {
@@ -667,9 +690,6 @@ const s = StyleSheet.create({
     color: Colors.text.secondary,
     letterSpacing: 0.1,
   },
-
-  /* ── Donors ── */
-  donorsCard: { padding: 28, marginBottom: 16 },
   donorRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -677,15 +697,18 @@ const s = StyleSheet.create({
     marginBottom: 16,
     paddingBottom: 16,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: "rgba(187, 247, 208, 0.3)",
+    borderBottomColor: DIVIDER,
+  },
+  donorRowLast: {
+    marginBottom: 0,
+    paddingBottom: 0,
+    borderBottomWidth: 0,
   },
   donorAvatar: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: "rgba(240, 253, 244, 0.7)",
-    borderWidth: StyleSheet.hairlineWidth * 2,
-    borderColor: "rgba(187, 247, 208, 0.4)",
+    backgroundColor: "#F4F7F5",
     alignItems: "center",
     justifyContent: "center",
   },
@@ -714,9 +737,9 @@ const s = StyleSheet.create({
     marginTop: 1,
     letterSpacing: 0.2,
   },
-
-  /* ── QR Code ── */
-  qrCard: { padding: 32, alignItems: "center" },
+  qrCard: {
+    alignItems: "center",
+  },
   qrTitleRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -733,9 +756,9 @@ const s = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     shadowColor: Colors.accent,
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.25,
-    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.16,
+    shadowRadius: 18,
     elevation: 3,
   },
   qrTitle: {
@@ -756,18 +779,18 @@ const s = StyleSheet.create({
   },
   qrFrame: {
     padding: 20,
-    backgroundColor: "#fff",
+    backgroundColor: "#FFFFFF",
     borderRadius: 20,
-    borderWidth: StyleSheet.hairlineWidth * 2,
-    borderColor: "rgba(187, 247, 208, 0.35)",
+    borderWidth: 1,
+    borderColor: "#E4E7EC",
     marginBottom: 16,
     alignItems: "center",
     justifyContent: "center",
-    shadowColor: "rgba(22, 101, 52, 0.08)",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 1,
-    shadowRadius: 16,
-    elevation: 3,
+    shadowColor: "#101828",
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.04,
+    shadowRadius: 20,
+    elevation: 2,
   },
   qrRef: {
     fontSize: 12,

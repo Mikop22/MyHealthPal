@@ -1,5 +1,5 @@
 import React from "react";
-import { View, Text, StyleSheet, ScrollView } from "react-native";
+import { ScrollView, StyleSheet, Text, View } from "react-native";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { LinearGradient } from "expo-linear-gradient";
 import { AppIcon, type AppIconName } from "../../components/AppIcon";
@@ -11,6 +11,12 @@ import { Fonts, TypeScale } from "../../constants/Typography";
 import { usePatientStore } from "../../store/patientStore";
 
 const FALLBACK = "Not specified";
+const SCREEN_BG = "#F6F8F6";
+const CARD_BG = "#FFFFFF";
+const TEXT_PRIMARY = "#101828";
+const TEXT_SECONDARY = "#667085";
+const TEXT_TERTIARY = "#98A2B3";
+const DIVIDER = "rgba(15, 23, 42, 0.08)";
 
 function formatSex(sex: string | null): string {
   if (!sex) return FALLBACK;
@@ -52,16 +58,15 @@ function formatLanguage(lang: string | null): string {
   if (!lang) return FALLBACK;
   const labels: Record<string, string> = {
     en: "English",
-    fr: "Français",
-    es: "Español",
-    ar: "العربية",
-    zh: "中文",
+    fr: "Francais",
+    es: "Espanol",
+    ar: "Arabic",
+    zh: "Chinese",
     other: "Other",
   };
   return labels[lang] ?? lang;
 }
 
-/* ── Premium list item for settings display ── */
 function SettingsRow({
   icon,
   label,
@@ -87,7 +92,6 @@ function SettingsRow({
   );
 }
 
-/* ── Profile header with avatar ── */
 function ProfileHeader() {
   const { demographics } = usePatientStore();
 
@@ -122,20 +126,17 @@ export default function SettingsScreen() {
         contentContainerStyle={s.content}
         showsVerticalScrollIndicator={false}
       >
-        {/* ── Page Header ── */}
         <Animated.View entering={FadeInDown.duration(500).delay(50)}>
           <Text style={s.pageTitle}>Profile</Text>
           <Text style={s.pageSub}>Your health information</Text>
         </Animated.View>
 
-        {/* ── Avatar Card ── */}
         <Animated.View entering={FadeInDown.duration(500).delay(100)}>
-          <UniversalLiquidCard variant="elevated" style={s.profileCard}>
+          <View style={s.surfaceCard}>
             <ProfileHeader />
-          </UniversalLiquidCard>
+          </View>
         </Animated.View>
 
-        {/* ── Demographics Card ── */}
         <Animated.View entering={FadeInDown.duration(500).delay(200)}>
           <UniversalLiquidCard variant="default" style={s.demographicsCard}>
             <SectionHeader title="Demographics" icon="clipboard" />
@@ -166,7 +167,7 @@ export default function SettingsScreen() {
               value={demographics.email ?? FALLBACK}
               isLast
             />
-          </UniversalLiquidCard>
+          </View>
         </Animated.View>
 
         {/* ── App Info Card ── */}
@@ -190,12 +191,11 @@ export default function SettingsScreen() {
               value="View"
               isLast
             />
-          </UniversalLiquidCard>
+          </View>
         </Animated.View>
 
-        {/* ── Completion Status ── */}
         <Animated.View entering={FadeInDown.duration(500).delay(400)}>
-          <UniversalLiquidCard variant="subtle" style={s.statusCard}>
+          <View style={[s.surfaceCard, s.statusCard]}>
             <View style={s.statusRow}>
               <View style={s.statusBadge}>
                 <AppIcon
@@ -217,21 +217,39 @@ export default function SettingsScreen() {
                 </Text>
               </View>
             </View>
-          </UniversalLiquidCard>
+          </View>
         </Animated.View>
 
-        <View style={{ height: 32 }} />
+        <View style={{ height: 24 }} />
       </ScrollView>
     </View>
   );
 }
 
 const s = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "transparent" },
-  scroll: { flex: 1 },
-  content: { paddingHorizontal: 24, paddingTop: 16, paddingBottom: 40 },
-
-  /* ── Page Header ── */
+  container: {
+    flex: 1,
+    backgroundColor: SCREEN_BG,
+  },
+  scroll: {
+    flex: 1,
+  },
+  content: {
+    paddingHorizontal: 24,
+    paddingTop: 18,
+    paddingBottom: 96,
+  },
+  surfaceCard: {
+    backgroundColor: CARD_BG,
+    borderRadius: 20,
+    padding: 24,
+    marginBottom: 16,
+    shadowColor: "#101828",
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.05,
+    shadowRadius: 24,
+    elevation: 3,
+  },
   pageTitle: {
     ...TypeScale.title,
     fontFamily: Fonts.bold,
@@ -245,10 +263,9 @@ const s = StyleSheet.create({
     marginTop: 2,
     marginBottom: 24,
   },
-
-  /* ── Profile Card ── */
-  profileCard: { padding: 32, marginBottom: 16, alignItems: "center" },
-  profileHeader: { alignItems: "center" },
+  profileHeader: {
+    alignItems: "center",
+  },
   avatarOuter: {
     width: 86,
     height: 86,
@@ -270,8 +287,11 @@ const s = StyleSheet.create({
     backgroundColor: "rgba(68, 173, 79, 0.06)",
     alignItems: "center",
     justifyContent: "center",
-    borderWidth: 2.5,
-    borderColor: "#fff",
+    shadowColor: "#101828",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.05,
+    shadowRadius: 12,
+    elevation: 2,
   },
   profileName: {
     ...TypeScale.heading,
@@ -286,7 +306,7 @@ const s = StyleSheet.create({
   settingsRow: {
     flexDirection: "row",
     alignItems: "center",
-    paddingVertical: 14,
+    paddingVertical: 15,
     gap: 14,
   },
   settingsRowBorder: {
@@ -303,7 +323,9 @@ const s = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  settingsTextWrap: { flex: 1 },
+  settingsTextWrap: {
+    flex: 1,
+  },
   settingsLabel: {
     ...TypeScale.caption,
     fontFamily: Fonts.medium,
@@ -315,9 +337,9 @@ const s = StyleSheet.create({
     fontFamily: Fonts.semiBold,
     color: Colors.text.primary,
   },
-
-  /* ── Status Card ── */
-  statusCard: { padding: 24, marginBottom: 16 },
+  statusCard: {
+    paddingVertical: 22,
+  },
   statusRow: {
     flexDirection: "row",
     alignItems: "center",

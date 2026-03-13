@@ -11,6 +11,11 @@ import Animated, {
 import { AppIcon, type AppIconName } from "../../components/AppIcon";
 import { Colors } from "../../constants/Colors";
 
+const TAB_ACTIVE = Colors.accent;
+const TAB_INACTIVE = "#667085";
+const TAB_BORDER = "rgba(15, 23, 42, 0.08)";
+const TAB_BG = "rgba(255,255,255,0.92)";
+
 /* ── Per-tab icon mapping ── */
 interface TabDefinition {
   name: string;
@@ -59,7 +64,7 @@ function TabIcon({ name, focused }: { name: AppIconName; focused: boolean }) {
         <AppIcon
           name={name}
           size={20}
-          color={focused ? Colors.tabBar.active : Colors.tabBar.inactive}
+          color={focused ? TAB_ACTIVE : TAB_INACTIVE}
         />
       </Animated.View>
       <Animated.View style={[styles.underline, underlineStyle]} />
@@ -72,8 +77,8 @@ export default function TabsLayout() {
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: Colors.tabBar.active,
-        tabBarInactiveTintColor: Colors.tabBar.inactive,
+        tabBarActiveTintColor: TAB_ACTIVE,
+        tabBarInactiveTintColor: TAB_INACTIVE,
         tabBarShowLabel: true,
         tabBarStyle: {
           backgroundColor:
@@ -86,21 +91,33 @@ export default function TabsLayout() {
               WebkitBackdropFilter: "blur(20px) saturate(120%)",
             } as Record<string, string>)
             : {}),
-          height: Platform.OS === "web" ? 64 : undefined,
-          paddingBottom: Platform.OS === "web" ? 8 : undefined,
+          height: Platform.OS === "web" ? 68 : 72,
+          paddingTop: 8,
+          paddingBottom: Platform.OS === "web" ? 8 : 10,
+          shadowColor: "#0F172A",
+          shadowOffset: { width: 0, height: -6 },
+          shadowOpacity: 0.04,
+          shadowRadius: 18,
+          elevation: 8,
+        },
+        tabBarItemStyle: {
+          paddingTop: 2,
         },
         tabBarLabelStyle: {
-          fontSize: 10,
+          fontSize: 11,
           fontWeight: "600",
           letterSpacing: 0.2,
         },
         tabBarBackground: () =>
           Platform.OS !== "web" ? (
-            <BlurView
-              intensity={60}
-              tint="light"
-              style={{ position: "absolute", inset: 0 } as never}
-            />
+            <View style={styles.tabBarBackground}>
+              <BlurView
+                intensity={54}
+                tint="light"
+                style={{ position: "absolute", inset: 0 } as never}
+              />
+              <View style={styles.tabBarOverlay} />
+            </View>
           ) : (null as unknown as React.ReactElement),
       }}
     >
@@ -124,12 +141,20 @@ const styles = StyleSheet.create({
   iconWrap: {
     alignItems: "center",
     justifyContent: "center",
-    gap: 3,
-    paddingTop: 2,
+    gap: 4,
+    paddingTop: 4,
   },
   underline: {
-    height: 2.5,
-    borderRadius: 2,
-    backgroundColor: Colors.tabBar.active,
+    height: 3,
+    borderRadius: 999,
+    backgroundColor: TAB_ACTIVE,
+  },
+  tabBarBackground: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(255,255,255,0.84)",
+  },
+  tabBarOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(255,255,255,0.58)",
   },
 });
