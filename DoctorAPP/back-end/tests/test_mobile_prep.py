@@ -390,10 +390,15 @@ class TestSubmitPrep:
             },
         }
         client, mock_coll = _make_client(prep_doc=doc)
+        # Explicitly mock the analysis pipeline to fail so we exercise the
+        # failure-handling path deterministically without relying on real deps.
+        client.app.state.analyze_patient_pipeline = MagicMock(
+            side_effect=RuntimeError("analysis failed")
+        )
         resp = client.post(f"/api/v1/mobile-prep/{TOKEN}/submit")
         assert resp.status_code == 200
         body = resp.json()
-        # Pipeline fails in test (mocked embedding_model) so status falls back
+        # Pipeline is mocked to fail so status falls back to submitted
         assert body["status"] == "submitted"
         assert body["summary_ready"] is True
 
@@ -426,11 +431,15 @@ class TestSubmitPrep:
             },
         }
         client, mock_coll = _make_client(prep_doc=doc)
+        # Explicitly mock the analysis pipeline to raise so this test does not
+        # depend on incidental failures from mocked downstream dependencies.
+        client.app.state.analyze_patient_pipeline = MagicMock(
+            side_effect=RuntimeError("analysis failed")
+        )
         resp = client.post(f"/api/v1/mobile-prep/{TOKEN}/submit")
         assert resp.status_code == 200
 
-        # The mocked analysis pipeline will raise because
-        # app.state.embedding_model is a MagicMock — verify fallback occurred.
+        # The mocked analysis pipeline raised, so verify the fallback occurred.
         # The last update_one sets status back to submitted on failure.
         last_update = mock_coll.update_one.call_args_list[-1][0][1]["$set"]
         assert last_update["status"] == "submitted"
