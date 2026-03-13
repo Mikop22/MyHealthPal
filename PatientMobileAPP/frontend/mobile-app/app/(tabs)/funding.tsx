@@ -461,8 +461,6 @@ export default function FundingScreen() {
                 <Text style={s.donorAmount}>+${c.amount}</Text>
               </View>
             ))}
-              </View>
-            ))}
           </View>
         </Animated.View>
 

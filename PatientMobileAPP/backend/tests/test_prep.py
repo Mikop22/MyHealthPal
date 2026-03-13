@@ -443,7 +443,7 @@ class TestClientHelpers:
 
     def test_base_url_defaults(self, monkeypatch):
         monkeypatch.delenv("DOCTORAPP_BASE_URL", raising=False)
-        assert client_module._base_url() == "http://localhost:8001"
+        assert client_module._base_url() == "http://localhost:8000"
 
     def test_base_url_from_env(self, monkeypatch):
         monkeypatch.setenv("DOCTORAPP_BASE_URL", "https://api.example.com")
