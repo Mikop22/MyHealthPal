@@ -1,6 +1,5 @@
 import { useCallback, useState } from "react";
 import {
-  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -8,7 +7,7 @@ import {
   TextInput,
   View,
 } from "react-native";
-import { LinearGradient } from "expo-linear-gradient";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import Animated, {
@@ -21,13 +20,18 @@ import Animated, {
 
 import { AppIcon } from "../components/AppIcon";
 import { OnboardingOptionButton } from "../components/OnboardingOptionButton";
-import { UniversalLiquidCard } from "../components/UniversalLiquidCard";
 import { Colors } from "../constants/Colors";
 import { Fonts } from "../constants/Typography";
 import {
   usePatientStore,
   type BiologicalSex,
 } from "../store/patientStore";
+
+const SCREEN_BG = "#F6F8F6";
+const CARD_BG = "#FFFFFF";
+const TEXT_PRIMARY = "#101828";
+const TEXT_SECONDARY = "#667085";
+const TEXT_TERTIARY = "#98A2B3";
 
 interface StepOption {
   label: string;
@@ -77,10 +81,10 @@ const STEPS: StepDef[] = [
       "We'll match you with clinicians and resources in your language.",
     options: [
       { label: "English", value: "en" },
-      { label: "Français", value: "fr" },
-      { label: "Español", value: "es" },
-      { label: "العربية", value: "ar" },
-      { label: "中文", value: "zh" },
+      { label: "Francais", value: "fr" },
+      { label: "Espanol", value: "es" },
+      { label: "Arabic", value: "ar" },
+      { label: "Chinese", value: "zh" },
       { label: "Other", value: "other" },
     ],
   },
@@ -116,13 +120,14 @@ const STEPS: StepDef[] = [
 ];
 
 const TRANSITION_LOCK_MS = 180;
-const HEADER_BUTTON_WIDTH = 84;
+const HEADER_BUTTON_WIDTH = 92;
 
 type SelectionValue = string | number | (string | number)[];
 type Selections = Record<string, SelectionValue>;
 
 export default function OnboardingScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const {
     setAge,
     setSex,
@@ -182,7 +187,9 @@ export default function OnboardingScreen() {
             return { ...prev, [step.key]: ["prefer_not_to_say"] };
           }
 
-          const nextValues = existing.filter((item) => item !== "prefer_not_to_say");
+          const nextValues = existing.filter(
+            (item) => item !== "prefer_not_to_say",
+          );
           const optionIndex = nextValues.indexOf(value);
 
           if (optionIndex >= 0) {
@@ -287,9 +294,14 @@ export default function OnboardingScreen() {
   ));
 
   return (
-    <View className="flex-1 bg-white">
-      <View className="px-6 pt-16">
-        <View className="h-16 flex-row items-center justify-between">
+    <View style={styles.container}>
+      <View
+        style={[
+          styles.headerWrap,
+          { paddingTop: insets.top + 8 },
+        ]}
+      >
+        <View style={styles.headerRow}>
           <Pressable
             onPress={handleBack}
             pointerEvents={stepIndex === 0 ? "none" : "auto"}
@@ -298,8 +310,8 @@ export default function OnboardingScreen() {
               stepIndex === 0 && styles.headerButtonHidden,
             ]}
           >
-            <Ionicons name="chevron-back" size={20} color="#166534" />
-            <Text className="ml-1 text-sm font-semibold text-primary">Back</Text>
+            <Ionicons name="chevron-back" size={18} color={TEXT_PRIMARY} />
+            <Text style={styles.headerButtonText}>Back</Text>
           </Pressable>
 
           <Text style={styles.headerStepLabel}>
@@ -310,47 +322,32 @@ export default function OnboardingScreen() {
         </View>
       </View>
 
-      <View className="flex-1 w-full items-center px-5" style={styles.contentViewport}>
+      <View style={styles.contentViewport}>
         <Animated.View
           key={step.key}
           entering={FadeInDown.springify().damping(15).stiffness(150)}
           exiting={FadeOut.duration(150)}
           style={styles.stepShell}
         >
-          <View className="w-full max-w-[400px]">
-            <UniversalLiquidCard
-              variant="elevated"
-              className="w-full overflow-hidden rounded-3xl"
-            >
-              <View className="w-full items-center justify-center px-4 py-8">
-                <Text
-                  className="mb-2 text-center text-2xl text-primary"
-                  style={{ fontFamily: Fonts.bold }}
-                >
-                  {step.question}
-                </Text>
-                <Text
-                  className="text-center text-sm leading-5 text-forest-600"
-                  style={{ fontFamily: Fonts.regular }}
-                >
-                  {step.description}
-                </Text>
-              </View>
-            </UniversalLiquidCard>
+          <View style={styles.stepContent}>
+            <View style={styles.questionCard}>
+              <Text style={styles.questionText}>{step.question}</Text>
+              <Text style={styles.descriptionText}>{step.description}</Text>
+            </View>
 
             {isInputStep && (
               <Animated.View
                 entering={FadeInDown.delay(100).springify().damping(12)}
-                style={{ marginTop: 24 }}
+                style={styles.inputWrap}
               >
                 <View style={inputStyles.inputContainer}>
                   <View style={inputStyles.iconWrap}>
-                    <AppIcon name="mail" size={20} color={Colors.forest[500]} />
+                    <AppIcon name="mail" size={18} color={Colors.accent} />
                   </View>
                   <TextInput
                     style={inputStyles.input}
                     placeholder={step.inputPlaceholder}
-                    placeholderTextColor={Colors.forest[400]}
+                    placeholderTextColor={TEXT_TERTIARY}
                     value={(selections.email as string) ?? ""}
                     onChangeText={handleEmailChange}
                     keyboardType="email-address"
@@ -369,15 +366,15 @@ export default function OnboardingScreen() {
 
             {!isInputStep && step.multiSelect ? (
               <ScrollView
-                style={{ marginTop: 24, maxHeight: 360 }}
+                style={styles.optionsScroll}
                 bounces={false}
                 showsVerticalScrollIndicator={false}
-                contentContainerStyle={{ gap: 8 }}
+                contentContainerStyle={styles.optionsScrollContent}
               >
                 {optionsList}
               </ScrollView>
             ) : !isInputStep ? (
-              <View style={{ marginTop: 24, gap: 8 }}>{optionsList}</View>
+              <View style={styles.optionsList}>{optionsList}</View>
             ) : null}
           </View>
         </Animated.View>
@@ -386,12 +383,8 @@ export default function OnboardingScreen() {
       <Animated.View
         style={[
           ctaAnimStyle,
-          {
-            width: "90%",
-            maxWidth: 400,
-            alignSelf: "center",
-            paddingBottom: 40,
-          },
+          styles.ctaWrap,
+          { paddingBottom: Math.max(insets.bottom, 20) + 18 },
         ]}
       >
         <Pressable
@@ -413,28 +406,14 @@ export default function OnboardingScreen() {
           }}
           style={[
             ctaStyles.btn,
-            Platform.OS === "web" && (ctaStyles.btnWeb as object),
-            hasSelection &&
-              Platform.OS === "web" &&
-              (ctaStyles.btnWebActive as object),
+            hasSelection ? ctaStyles.btnActive : ctaStyles.btnDisabled,
           ]}
         >
-          <LinearGradient
-            colors={["#00C8B4", "#22C55E"]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 0 }}
-            style={[
-              StyleSheet.absoluteFill,
-              { opacity: hasSelection ? 0.45 : 0.15 },
-            ]}
-          />
           <Text
-            style={{
-              zIndex: 1,
-              fontFamily: Fonts.bold,
-              fontSize: 18,
-              color: hasSelection ? "#1F2937" : "rgba(31,41,55,0.35)",
-            }}
+            style={[
+              ctaStyles.text,
+              hasSelection ? ctaStyles.textActive : ctaStyles.textDisabled,
+            ]}
           >
             {isLastStep ? "Confirm" : "Continue"}
           </Text>
@@ -448,40 +427,36 @@ const inputStyles = StyleSheet.create({
   inputContainer: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "rgba(255,255,255,0.65)",
+    backgroundColor: CARD_BG,
     borderRadius: 20,
-    borderWidth: StyleSheet.hairlineWidth * 2,
-    borderColor: "rgba(187, 247, 208, 0.45)",
     paddingHorizontal: 18,
     height: 60,
-    shadowColor: "rgba(22, 101, 52, 0.06)",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 1,
-    shadowRadius: 12,
-    elevation: 2,
+    shadowColor: "#0F172A",
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.05,
+    shadowRadius: 24,
+    elevation: 3,
   },
   iconWrap: {
     width: 38,
     height: 38,
     borderRadius: 12,
-    backgroundColor: "rgba(240, 253, 244, 0.7)",
-    borderWidth: StyleSheet.hairlineWidth * 2,
-    borderColor: "rgba(187, 247, 208, 0.35)",
+    backgroundColor: "#F4F7F5",
     alignItems: "center",
     justifyContent: "center",
     marginRight: 14,
   },
   input: {
     flex: 1,
-    fontSize: 17,
+    fontSize: 16,
     fontFamily: Fonts.medium,
-    color: Colors.forest[800],
+    color: TEXT_PRIMARY,
     letterSpacing: -0.1,
   },
   hint: {
     fontSize: 12,
     fontFamily: Fonts.regular,
-    color: Colors.forest[400],
+    color: TEXT_SECONDARY,
     textAlign: "center",
     marginTop: 14,
     letterSpacing: 0.2,
@@ -489,47 +464,131 @@ const inputStyles = StyleSheet.create({
 });
 
 const styles = StyleSheet.create({
-  contentViewport: {
-    overflow: "hidden",
-  },
-  stepShell: {
+  container: {
     flex: 1,
-    width: "100%",
+    backgroundColor: SCREEN_BG,
+  },
+  headerWrap: {
+    paddingHorizontal: 24,
+  },
+  headerRow: {
+    height: 56,
+    flexDirection: "row",
     alignItems: "center",
-    paddingTop: 16,
+    justifyContent: "space-between",
   },
   headerButton: {
     width: HEADER_BUTTON_WIDTH,
     flexDirection: "row",
     alignItems: "center",
+    gap: 4,
     paddingVertical: 8,
   },
   headerButtonHidden: {
     opacity: 0,
   },
+  headerButtonText: {
+    fontFamily: Fonts.semiBold,
+    fontSize: 14,
+    color: TEXT_PRIMARY,
+  },
   headerStepLabel: {
     fontFamily: Fonts.medium,
     fontSize: 13,
-    color: Colors.forest[500],
+    color: TEXT_SECONDARY,
     letterSpacing: 0.3,
+  },
+  contentViewport: {
+    flex: 1,
+    overflow: "hidden",
+    width: "100%",
+    alignItems: "center",
+    paddingHorizontal: 20,
+  },
+  stepShell: {
+    flex: 1,
+    width: "100%",
+    alignItems: "center",
+    paddingTop: 20,
+  },
+  stepContent: {
+    width: "100%",
+    maxWidth: 400,
+  },
+  questionCard: {
+    width: "100%",
+    backgroundColor: CARD_BG,
+    borderRadius: 28,
+    paddingHorizontal: 24,
+    paddingVertical: 28,
+    shadowColor: "#0F172A",
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.05,
+    shadowRadius: 28,
+    elevation: 4,
+  },
+  questionText: {
+    marginBottom: 8,
+    textAlign: "center",
+    fontSize: 28,
+    color: TEXT_PRIMARY,
+    fontFamily: Fonts.bold,
+    letterSpacing: -0.5,
+  },
+  descriptionText: {
+    textAlign: "center",
+    fontSize: 14,
+    lineHeight: 21,
+    color: TEXT_SECONDARY,
+    fontFamily: Fonts.regular,
+  },
+  inputWrap: {
+    marginTop: 24,
+  },
+  optionsScroll: {
+    marginTop: 24,
+    maxHeight: 360,
+  },
+  optionsScrollContent: {
+    gap: 10,
+  },
+  optionsList: {
+    marginTop: 24,
+    gap: 10,
+  },
+  ctaWrap: {
+    width: "90%",
+    maxWidth: 400,
+    alignSelf: "center",
   },
 });
 
 const ctaStyles = StyleSheet.create({
   btn: {
-    height: 56,
-    borderRadius: 30,
-    overflow: "hidden",
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.35)",
-    backgroundColor: "rgba(255,255,255,0.15)",
+    height: 58,
+    borderRadius: 999,
     alignItems: "center",
     justifyContent: "center",
   },
-  btnWeb: {
-    // @ts-expect-error web-only
-    backdropFilter: "blur(24px) saturate(160%)",
-    WebkitBackdropFilter: "blur(24px) saturate(160%)",
+  btnActive: {
+    backgroundColor: Colors.accent,
+    shadowColor: Colors.accent,
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.18,
+    shadowRadius: 20,
+    elevation: 4,
   },
-  btnWebActive: {},
+  btnDisabled: {
+    backgroundColor: "#D0D5DD",
+  },
+  text: {
+    fontFamily: Fonts.bold,
+    fontSize: 18,
+  },
+  textActive: {
+    color: "#FFFFFF",
+  },
+  textDisabled: {
+    color: "rgba(16, 24, 40, 0.45)",
+  },
 });

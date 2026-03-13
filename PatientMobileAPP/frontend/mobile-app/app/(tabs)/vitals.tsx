@@ -178,7 +178,7 @@ export default function VitalsScreen() {
     Math.abs(delta) > Math.abs(active.baselineAvg) * 0.15 ||
     active.data.some((d) => d.flag);
 
-  const chartWidth = Math.min(width - 88, 500);
+  const chartWidth = Math.min(width - 92, 500);
   const chartHeight = 200;
   const dataMin = Math.min(...active.data.map((d) => d.value));
   const dataMax = Math.max(...active.data.map((d) => d.value));
@@ -234,7 +234,7 @@ export default function VitalsScreen() {
         <Animated.View entering={getFirstTouchEntering(2)}>
           <View style={styles.surfaceCard}>
             <View style={styles.chartHeader}>
-              <View>
+              <View style={styles.chartHeaderText}>
                 <Text style={styles.cardEyebrow}>LONGITUDINAL TREND</Text>
                 <Text style={styles.chartTitle}>{active.label}</Text>
               </View>
@@ -470,6 +470,10 @@ const styles = StyleSheet.create({
     gap: 12,
     marginBottom: 18,
   },
+  chartHeaderText: {
+    flex: 1,
+    minWidth: 0,
+  },
   cardEyebrow: {
     fontSize: 11,
     fontFamily: Fonts.bold,
@@ -482,8 +486,11 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.bold,
     color: TEXT_PRIMARY,
     letterSpacing: -0.3,
+    flexShrink: 1,
   },
   chartValuePill: {
+    flexShrink: 0,
+    alignSelf: "flex-start",
     paddingHorizontal: 14,
     paddingVertical: 9,
     borderRadius: 999,
@@ -502,9 +509,11 @@ const styles = StyleSheet.create({
   riskZoneWrap: {
     position: "relative",
     marginBottom: 10,
+    width: "100%",
+    overflow: "hidden",
   },
   chartWrap: {
-    marginLeft: -6,
+    width: "100%",
   },
   axisText: {
     fontSize: 11,

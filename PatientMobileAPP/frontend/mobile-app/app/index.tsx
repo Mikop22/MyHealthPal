@@ -1,16 +1,20 @@
 import { useEffect } from "react";
-import { View, Text, useWindowDimensions } from "react-native";
+import { StyleSheet, Text, View, useWindowDimensions } from "react-native";
 import { useRouter } from "expo-router";
 import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withTiming,
-  withDelay,
   Easing,
-  runOnJS,
+  useAnimatedStyle,
+  useSharedValue,
+  withDelay,
+  withTiming,
 } from "react-native-reanimated";
 import { LogoBreathing } from "../components/LogoBreathing";
+import { Fonts } from "../constants/Typography";
 import { usePatientStore } from "../store/patientStore";
+
+const SCREEN_BG = "#F6F8F6";
+const TEXT_PRIMARY = "#101828";
+const TEXT_SECONDARY = "#667085";
 
 export default function SplashScreen() {
   const router = useRouter();
@@ -59,24 +63,67 @@ export default function SplashScreen() {
   }));
 
   return (
-    <View className="flex-1 items-center justify-center">
-      {/* Watermark behind everything */}
-      <LogoBreathing watermark size={width * 0.7} style={{ top: "15%" }} />
+    <View style={styles.container}>
+      <LogoBreathing watermark size={width * 0.7} style={{ top: "14%" }} />
 
-      {/* Centered breathing logo */}
-      <LogoBreathing size={100} />
+      <View style={styles.logoHalo} />
+      <LogoBreathing size={108} />
 
-      <Animated.View style={titleStyle} className="mt-6">
-        <Text className="text-3xl font-bold text-primary text-center">
-          MyHealthPal
-        </Text>
+      <Animated.View style={[titleStyle, styles.titleWrap]}>
+        <Text style={styles.title}>MyHealthPal</Text>
       </Animated.View>
 
-      <Animated.View style={subtitleStyle} className="mt-2 px-10">
-        <Text className="text-base text-forest-600 text-center leading-6">
+      <Animated.View style={[subtitleStyle, styles.subtitleCard]}>
+        <Text style={styles.subtitle}>
           Your biometrics, your story, your proof.
         </Text>
       </Animated.View>
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: SCREEN_BG,
+    paddingHorizontal: 24,
+  },
+  logoHalo: {
+    position: "absolute",
+    width: 180,
+    height: 180,
+    borderRadius: 90,
+    backgroundColor: "rgba(34, 197, 94, 0.08)",
+  },
+  titleWrap: {
+    marginTop: 28,
+  },
+  title: {
+    fontSize: 34,
+    fontFamily: Fonts.bold,
+    color: TEXT_PRIMARY,
+    textAlign: "center",
+    letterSpacing: -0.8,
+  },
+  subtitleCard: {
+    marginTop: 16,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 24,
+    paddingHorizontal: 22,
+    paddingVertical: 16,
+    shadowColor: "#0F172A",
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.05,
+    shadowRadius: 28,
+    elevation: 4,
+  },
+  subtitle: {
+    fontSize: 15,
+    fontFamily: Fonts.regular,
+    color: TEXT_SECONDARY,
+    textAlign: "center",
+    lineHeight: 22,
+  },
+});

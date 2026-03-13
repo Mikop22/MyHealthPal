@@ -1,22 +1,20 @@
 import React, { useEffect } from "react";
-import { Platform, View, StyleSheet } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
 import { Tabs } from "expo-router";
-import { BlurView } from "expo-blur";
 import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withSpring,
   interpolate,
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
 } from "react-native-reanimated";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { AppIcon, type AppIconName } from "../../components/AppIcon";
 import { Colors } from "../../constants/Colors";
+import { Fonts } from "../../constants/Typography";
 
 const TAB_ACTIVE = Colors.accent;
 const TAB_INACTIVE = "#667085";
-const TAB_BORDER = "rgba(15, 23, 42, 0.08)";
-const TAB_BG = "rgba(255,255,255,0.92)";
 
-/* ── Per-tab icon mapping ── */
 interface TabDefinition {
   name: string;
   title: string;
@@ -32,13 +30,12 @@ const TABS: TabDefinition[] = [
   { name: "settings", title: "Profile", icon: "settings" },
 ];
 
-/* ── Animated tab icon with spring scale + underline ── */
 function TabIcon({ name, focused }: { name: AppIconName; focused: boolean }) {
-  const scale = useSharedValue(focused ? 1.18 : 1);
+  const scale = useSharedValue(focused ? 1.14 : 1);
   const underline = useSharedValue(focused ? 1 : 0);
 
   useEffect(() => {
-    scale.value = withSpring(focused ? 1.18 : 1, {
+    scale.value = withSpring(focused ? 1.14 : 1, {
       damping: 16,
       stiffness: 400,
       mass: 0.6,
@@ -54,7 +51,7 @@ function TabIcon({ name, focused }: { name: AppIconName; focused: boolean }) {
   }));
 
   const underlineStyle = useAnimatedStyle(() => ({
-    width: interpolate(underline.value, [0, 1], [0, 20]),
+    width: interpolate(underline.value, [0, 1], [0, 18]),
     opacity: underline.value,
   }));
 
@@ -72,7 +69,21 @@ function TabIcon({ name, focused }: { name: AppIconName; focused: boolean }) {
   );
 }
 
+function ActiveTabLabel({
+  title,
+  focused,
+}: {
+  title: string;
+  focused: boolean;
+}) {
+  if (!focused) return null;
+
+  return <Text style={styles.activeLabel}>{title}</Text>;
+}
+
 export default function TabsLayout() {
+  const insets = useSafeAreaInsets();
+
   return (
     <Tabs
       screenOptions={{
@@ -80,46 +91,29 @@ export default function TabsLayout() {
         tabBarActiveTintColor: TAB_ACTIVE,
         tabBarInactiveTintColor: TAB_INACTIVE,
         tabBarShowLabel: true,
+        tabBarHideOnKeyboard: true,
+        sceneStyle: {
+          backgroundColor: "transparent",
+        },
         tabBarStyle: {
-          backgroundColor: Platform.OS === "web" ? TAB_BG : "transparent",
-          borderTopColor: TAB_BORDER,
+          backgroundColor: "#FFFFFF",
           borderTopWidth: StyleSheet.hairlineWidth,
-          ...(Platform.OS === "web"
-            ? ({
-              backdropFilter: "blur(24px) saturate(150%)",
-              WebkitBackdropFilter: "blur(24px) saturate(150%)",
-              boxShadow: "0 -8px 30px rgba(15,23,42,0.06)",
-            } as Record<string, string>)
-            : {}),
-          height: Platform.OS === "web" ? 68 : 72,
+          borderTopColor: "rgba(15, 23, 42, 0.10)",
+          height: 75 + insets.bottom,
           paddingTop: 8,
-          paddingBottom: Platform.OS === "web" ? 8 : 10,
+          paddingBottom: insets.bottom,
           shadowColor: "#0F172A",
-          shadowOffset: { width: 0, height: -6 },
+          shadowOffset: { width: 0, height: -4 },
           shadowOpacity: 0.04,
-          shadowRadius: 18,
-          elevation: 8,
+          shadowRadius: 14,
+          elevation: 10,
         },
         tabBarItemStyle: {
+          justifyContent: "center",
+          alignItems: "center",
           paddingTop: 2,
+          paddingBottom: 2,
         },
-        tabBarLabelStyle: {
-          fontSize: 11,
-          fontWeight: "600",
-          letterSpacing: 0.15,
-          marginBottom: 2,
-        },
-        tabBarBackground: () =>
-          Platform.OS !== "web" ? (
-            <View style={styles.tabBarBackground}>
-              <BlurView
-                intensity={54}
-                tint="light"
-                style={{ position: "absolute", inset: 0 } as never}
-              />
-              <View style={styles.tabBarOverlay} />
-            </View>
-          ) : (null as unknown as React.ReactElement),
       }}
     >
       {TABS.map((tab) => (
@@ -130,6 +124,9 @@ export default function TabsLayout() {
             title: tab.title,
             tabBarIcon: ({ focused }) => (
               <TabIcon name={tab.icon} focused={focused} />
+            ),
+            tabBarLabel: ({ focused }) => (
+              <ActiveTabLabel title={tab.title} focused={focused} />
             ),
           }}
         />
@@ -142,20 +139,19 @@ const styles = StyleSheet.create({
   iconWrap: {
     alignItems: "center",
     justifyContent: "center",
-    gap: 4,
-    paddingTop: 4,
+    gap: 6,
+    paddingTop: 2,
   },
   underline: {
     height: 3,
     borderRadius: 999,
     backgroundColor: TAB_ACTIVE,
   },
-  tabBarBackground: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(255,255,255,0.84)",
-  },
-  tabBarOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(255,255,255,0.58)",
+  activeLabel: {
+    fontSize: 10,
+    fontFamily: Fonts.semiBold,
+    color: "#344054",
+    letterSpacing: 0.15,
+    marginTop: 4,
   },
 });
