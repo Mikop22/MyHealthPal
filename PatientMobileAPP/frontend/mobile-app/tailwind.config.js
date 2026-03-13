@@ -13,6 +13,19 @@ module.exports = {
     extend: {
       /* ───────────── Color Palette ───────────── */
       colors: {
+        brand: {
+          DEFAULT: "#44AD4F",
+          50: "#F4FBF5",
+          100: "#E4F5E7",
+          200: "#C6E8CC",
+          300: "#9ED7A7",
+          400: "#6DC94F",
+          500: "#44AD4F",
+          600: "#368B3E",
+          700: "#2E7D32",
+          800: "#235E27",
+          900: "#173D1A",
+        },
         forest: {
           DEFAULT: "#166534",
           50: "#F0FDF4",
@@ -27,15 +40,33 @@ module.exports = {
           900: "#14532D",
           950: "#052E16",
         },
-        primary: "#166534",
-        secondary: "#DCFCE7",
-        accent: "#22C55E",
-        surface: "#FAFFFE",
+        primary: "#163828",
+        secondary: "#E3F5E6",
+        accent: "#44AD4F",
+        background: "#F4FAF6",
+        surface: "#FCFFFD",
+        "surface-strong": "#F8FDF9",
+        text: {
+          primary: "#163828",
+          secondary: "#466252",
+          muted: "#6E8477",
+        },
+        border: {
+          soft: "rgba(197, 221, 203, 0.7)",
+          strong: "rgba(169, 198, 176, 0.95)",
+        },
+        semantic: {
+          success: "#2E7D32",
+          warning: "#C9771A",
+          error: "#D65B5B",
+          info: "#3178C6",
+        },
 
         glass: {
           fill: "rgba(255, 255, 255, 0.08)",
           "fill-12": "rgba(255, 255, 255, 0.12)",
           "fill-20": "rgba(255, 255, 255, 0.20)",
+          "fill-strong": "rgba(255, 255, 255, 0.72)",
           border: "rgba(255, 255, 255, 0.25)",
           "border-strong": "rgba(255, 255, 255, 0.35)",
           green: "rgba(220, 252, 231, 0.15)",
@@ -45,6 +76,8 @@ module.exports = {
 
       /* ───────────── Border Radii ───────────── */
       borderRadius: {
+        pill: "999px",
+        panel: "28px",
         glass: "30px",
         "glass-sm": "20px",
         "glass-lg": "40px",
@@ -75,9 +108,20 @@ module.exports = {
 
       /* ───────────── Typography ───────────── */
       fontFamily: {
-        sans: ["Inter", "system-ui", "-apple-system", "sans-serif"],
-        display: ["Inter", "system-ui", "-apple-system", "sans-serif"],
+        sans: ["DM Sans", "system-ui", "-apple-system", "sans-serif"],
+        display: ["DM Sans", "system-ui", "-apple-system", "sans-serif"],
         mono: ["JetBrains Mono", "Fira Code", "monospace"],
+      },
+
+      fontSize: {
+        xs: ["12px", { lineHeight: "16px", letterSpacing: "0.2px" }],
+        sm: ["14px", { lineHeight: "20px", letterSpacing: "0.1px" }],
+        base: ["16px", { lineHeight: "24px", letterSpacing: "0px" }],
+        lg: ["18px", { lineHeight: "26px", letterSpacing: "-0.1px" }],
+        xl: ["20px", { lineHeight: "28px", letterSpacing: "-0.15px" }],
+        "2xl": ["24px", { lineHeight: "32px", letterSpacing: "-0.25px" }],
+        "3xl": ["28px", { lineHeight: "36px", letterSpacing: "-0.4px" }],
+        "4xl": ["32px", { lineHeight: "40px", letterSpacing: "-0.8px" }],
       },
 
       /* ───────────── Animations (web-only keyframes) ───────────── */
@@ -117,6 +161,7 @@ module.exports = {
 
       /* ───────────── Spacing Aliases ───────────── */
       spacing: {
+        18: "72px",
         "card-sm": "16px",
         card: "24px",
         "card-lg": "32px",

@@ -17,17 +17,19 @@ import Animated, {
   interpolate,
   type SharedValue,
 } from "react-native-reanimated";
-import { LinearGradient } from "expo-linear-gradient";
 import { LineChart } from "react-native-gifted-charts";
 import Svg, { Rect } from "react-native-svg";
 import { AppIcon } from "../../components/AppIcon";
+import { MetricPill } from "../../components/MetricPill";
+import { SectionHeader } from "../../components/SectionHeader";
+import { StatusBadge } from "../../components/StatusBadge";
 import { UniversalLiquidCard } from "../../components/UniversalLiquidCard";
 import {
   getMockBiometrics,
   type BiometricSeries,
 } from "../../providers/MockHealthKit";
 import { Colors } from "../../constants/Colors";
-import { Fonts } from "../../constants/Typography";
+import { Fonts, Typography } from "../../constants/Typography";
 
 const METRICS = getMockBiometrics();
 
@@ -164,6 +166,40 @@ export default function VitalsScreen() {
         showsVerticalScrollIndicator={false}
       >
         <Animated.View entering={getFirstTouchEntering(0)}>
+          <UniversalLiquidCard variant="elevated" style={styles.summaryCard}>
+            <View style={styles.summaryTopRow}>
+              <SectionHeader
+                eyebrow="Health overview"
+                title="Vitals"
+                subtitle="Track your baseline, spot changes early, and know when to reach out."
+              />
+              <StatusBadge
+                tone={isAnomaly ? "warning" : "success"}
+                icon={isAnomaly ? "warning" : "checkmark-circle"}
+                label={isAnomaly ? "Needs review" : "Within range"}
+              />
+            </View>
+
+            <View style={styles.summaryStatsRow}>
+              <View style={styles.summaryStat}>
+                <Text style={styles.summaryStatLabel}>Latest reading</Text>
+                <Text style={styles.summaryStatValue}>
+                  {latest.value} <Text style={styles.summaryStatUnit}>{active.unit}</Text>
+                </Text>
+              </View>
+              <View style={styles.summaryDivider} />
+              <View style={styles.summaryStat}>
+                <Text style={styles.summaryStatLabel}>26-week baseline</Text>
+                <Text style={styles.summaryStatValue}>
+                  {active.baselineAvg}{" "}
+                  <Text style={styles.summaryStatUnit}>{active.unit}</Text>
+                </Text>
+              </View>
+            </View>
+          </UniversalLiquidCard>
+        </Animated.View>
+
+        <Animated.View entering={getFirstTouchEntering(0)}>
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
@@ -187,28 +223,12 @@ export default function VitalsScreen() {
                   onPress={() => setActiveKey(m.key)}
                   style={styles.pillOuter}
                 >
-                  {isActive ? (
-                    <LinearGradient
-                      colors={["#22C55E", "#16A34A"]}
-                      start={{ x: 0, y: 0 }}
-                      end={{ x: 1, y: 1 }}
-                      style={styles.pill}
-                    >
-                      <AppIcon name={iconName} size={14} color="#fff" />
-                      <Text style={[styles.pillText, styles.pillTextActive]}>
-                        {m.shortLabel}
-                      </Text>
-                    </LinearGradient>
-                  ) : (
-                    <View style={[styles.pill, styles.pillInactive]}>
-                      <AppIcon
-                        name={iconName}
-                        size={14}
-                        color={Colors.forest[600]}
-                      />
-                      <Text style={styles.pillText}>{m.shortLabel}</Text>
-                    </View>
-                  )}
+                  <MetricPill
+                    label={m.shortLabel}
+                    icon={iconName}
+                    active={isActive}
+                    onPress={() => setActiveKey(m.key)}
+                  />
                   <View style={styles.underlineTrack}>
                     <Animated.View style={[styles.underlineFill, ulStyle]} />
                   </View>
@@ -220,7 +240,11 @@ export default function VitalsScreen() {
 
         <Animated.View entering={getFirstTouchEntering(1)}>
           <UniversalLiquidCard variant="elevated" style={styles.chartCard}>
-            <Text style={styles.chartTitle}>{active.label}</Text>
+            <SectionHeader
+              eyebrow="Trend"
+              title={active.label}
+              subtitle="Compared with your personal baseline and risk threshold."
+            />
 
             <View style={styles.riskZoneWrap}>
               <Svg
@@ -289,7 +313,7 @@ export default function VitalsScreen() {
                 26-week baseline: {active.baselineAvg} {active.unit}
               </Text>
               <View style={styles.riskLegend} />
-              <Text style={styles.legendLabel}>Risk zone (Â±15%)</Text>
+              <Text style={styles.legendLabel}>Risk zone (±15%)</Text>
             </View>
           </UniversalLiquidCard>
         </Animated.View>
@@ -301,6 +325,7 @@ export default function VitalsScreen() {
           >
             <View style={styles.deltaRow}>
               <View style={styles.deltaLeft}>
+                <Text style={styles.deltaEyebrow}>Current snapshot</Text>
                 <Text style={styles.deltaMetric}>
                   {latest.value}{" "}
                   <Text style={styles.deltaUnit}>{active.unit}</Text>
@@ -311,6 +336,7 @@ export default function VitalsScreen() {
               <View style={styles.deltaDivider} />
 
               <View style={styles.deltaRight}>
+                <Text style={styles.deltaEyebrow}>Delta</Text>
                 <Text
                   style={[
                     styles.deltaValue,
@@ -325,7 +351,14 @@ export default function VitalsScreen() {
             </View>
 
             {isAnomaly && (
-              <PulsingAlertBadge text="Clinically significant deviation detected" />
+              <View style={styles.alertStack}>
+                <StatusBadge
+                  tone="warning"
+                  icon="warning"
+                  label="Clinically significant deviation"
+                />
+                <PulsingAlertBadge text="Clinically significant deviation detected" />
+              </View>
             )}
           </UniversalLiquidCard>
         </Animated.View>
@@ -362,24 +395,43 @@ function PulsingDataPoint() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "transparent" },
   scroll: { flex: 1 },
-  content: { paddingHorizontal: 20, paddingTop: 8, paddingBottom: 60 },
-  pillRow: { gap: 8, paddingVertical: 8, paddingBottom: 16 },
-  pillOuter: { alignItems: "center" },
-  pill: {
+  content: { paddingHorizontal: 20, paddingTop: 16, paddingBottom: 60, gap: 14 },
+  summaryCard: {
+    padding: 20,
+  },
+  summaryTopRow: {
+    gap: 16,
+  },
+  summaryStatsRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 6,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 20,
+    gap: 16,
+    marginTop: 20,
   },
-  pillInactive: {
-    backgroundColor: Colors.forest[50],
-    borderWidth: 1,
-    borderColor: Colors.forest[200],
+  summaryStat: {
+    flex: 1,
+    gap: 4,
   },
-  pillText: { fontSize: 14, fontWeight: "600", color: Colors.forest[700] },
-  pillTextActive: { color: "#fff" },
+  summaryDivider: {
+    width: 1,
+    alignSelf: "stretch",
+    backgroundColor: Colors.border.soft,
+  },
+  summaryStatLabel: {
+    ...Typography.micro,
+    color: Colors.text.muted,
+    textTransform: "uppercase",
+  },
+  summaryStatValue: {
+    ...Typography.sectionTitle,
+    color: Colors.text.primary,
+  },
+  summaryStatUnit: {
+    ...Typography.caption,
+    color: Colors.text.secondary,
+  },
+  pillRow: { gap: 8, paddingVertical: 8, paddingBottom: 16 },
+  pillOuter: { alignItems: "center" },
   underlineTrack: {
     height: 2.5,
     width: "80%",
@@ -394,15 +446,9 @@ const styles = StyleSheet.create({
     borderRadius: 2,
   },
   chartCard: { padding: 20, marginBottom: 14 },
-  chartTitle: {
-    fontSize: 16,
-    fontFamily: Fonts.bold,
-    color: Colors.primary,
-    marginBottom: 16,
-  },
-  riskZoneWrap: { position: "relative", marginBottom: 8 },
+  riskZoneWrap: { position: "relative", marginTop: 16, marginBottom: 8 },
   chartWrap: { marginLeft: -8 },
-  axisText: { fontSize: 11, color: Colors.forest[500] },
+  axisText: { fontSize: 11, color: Colors.text.muted, fontFamily: Fonts.medium },
   spikeOuter: {
     width: 16,
     height: 16,
@@ -445,28 +491,38 @@ const styles = StyleSheet.create({
   deltaRow: { flexDirection: "row", alignItems: "center" },
   deltaLeft: { flex: 1 },
   deltaRight: { flex: 1, alignItems: "flex-end" },
+  deltaEyebrow: {
+    ...Typography.micro,
+    color: Colors.text.muted,
+    textTransform: "uppercase",
+    marginBottom: 6,
+  },
   deltaDivider: {
     width: 1,
     height: 40,
-    backgroundColor: Colors.forest[200],
+    backgroundColor: Colors.border.soft,
     marginHorizontal: 16,
   },
   deltaMetric: {
-    fontSize: 28,
-    fontWeight: "800",
-    color: Colors.primary,
+    ...Typography.title,
+    color: Colors.text.primary,
   },
   deltaUnit: {
-    fontSize: 15,
-    fontWeight: "500",
-    color: Colors.forest[600],
+    ...Typography.caption,
+    color: Colors.text.secondary,
   },
   deltaLabel: {
-    fontSize: 12,
-    color: Colors.forest[500],
+    ...Typography.caption,
+    color: Colors.text.secondary,
     marginTop: 2,
   },
-  deltaValue: { fontSize: 22, fontWeight: "700" },
+  deltaValue: {
+    ...Typography.sectionTitle,
+  },
+  alertStack: {
+    gap: 10,
+    marginTop: 14,
+  },
   alertBadge: {
     flexDirection: "row",
     alignItems: "center",
@@ -491,6 +547,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   alertTextWrap: { flex: 1 },
-  alertTitle: { fontSize: 13, fontWeight: "700", color: Colors.primary },
-  alertSub: { fontSize: 12, color: Colors.forest[600], marginTop: 2 },
+  alertTitle: { ...Typography.caption, color: Colors.text.primary },
+  alertSub: { ...Typography.micro, color: Colors.text.secondary, marginTop: 2 },
 });
