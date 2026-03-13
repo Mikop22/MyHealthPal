@@ -14,16 +14,16 @@ import { Ionicons } from "@expo/vector-icons";
 import Animated, {
   FadeInDown,
   FadeOut,
-  useAnimatedStyle,
-  useSharedValue,
-  withSpring,
 } from "react-native-reanimated";
 
 import { AppIcon } from "../components/AppIcon";
 import { OnboardingOptionButton } from "../components/OnboardingOptionButton";
+import { PrimaryButton } from "../components/PrimaryButton";
+import { SectionHeader } from "../components/SectionHeader";
+import { StatusBadge } from "../components/StatusBadge";
 import { UniversalLiquidCard } from "../components/UniversalLiquidCard";
 import { Colors } from "../constants/Colors";
-import { Fonts } from "../constants/Typography";
+import { Fonts, Typography } from "../constants/Typography";
 import {
   usePatientStore,
   type BiologicalSex,
@@ -136,14 +136,10 @@ export default function OnboardingScreen() {
   const [selections, setSelections] = useState<Selections>({});
   const [isTransitioning, setIsTransitioning] = useState(false);
 
-  const pressScale = useSharedValue(1);
-  const ctaAnimStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: pressScale.value }],
-  }));
-
   const step = STEPS[stepIndex];
   const isLastStep = stepIndex === STEPS.length - 1;
   const isInputStep = step.inputType === "email";
+  const progressPct = ((stepIndex + 1) / STEPS.length) * 100;
 
   const currentSelection: SelectionValue | null =
     selections[step.key] ?? (step.multiSelect ? [] : null);
@@ -287,7 +283,12 @@ export default function OnboardingScreen() {
   ));
 
   return (
-    <View className="flex-1 bg-white">
+    <View style={styles.screen}>
+      <LinearGradient
+        colors={[Colors.background, Colors.surfaceStrong]}
+        style={StyleSheet.absoluteFill}
+      />
+
       <View className="px-6 pt-16">
         <View className="h-16 flex-row items-center justify-between">
           <Pressable
@@ -298,13 +299,15 @@ export default function OnboardingScreen() {
               stepIndex === 0 && styles.headerButtonHidden,
             ]}
           >
-            <Ionicons name="chevron-back" size={20} color="#166534" />
-            <Text className="ml-1 text-sm font-semibold text-primary">Back</Text>
+            <Ionicons name="chevron-back" size={20} color={Colors.primary} />
+            <Text style={styles.backLabel}>Back</Text>
           </Pressable>
 
-          <Text style={styles.headerStepLabel}>
-            Step {stepIndex + 1} of {STEPS.length}
-          </Text>
+          <UniversalLiquidCard variant="subtle" style={styles.headerPill}>
+            <Text style={styles.headerStepLabel}>
+              Step {stepIndex + 1} of {STEPS.length}
+            </Text>
+          </UniversalLiquidCard>
 
           <View style={{ width: HEADER_BUTTON_WIDTH }} />
         </View>
@@ -318,23 +321,30 @@ export default function OnboardingScreen() {
           style={styles.stepShell}
         >
           <View className="w-full max-w-[400px]">
+            <View style={styles.progressTrack}>
+              <View style={[styles.progressFill, { width: `${progressPct}%` }]} />
+            </View>
+
             <UniversalLiquidCard
               variant="elevated"
               className="w-full overflow-hidden rounded-3xl"
+              style={styles.heroCard}
             >
-              <View className="w-full items-center justify-center px-4 py-8">
-                <Text
-                  className="mb-2 text-center text-2xl text-primary"
-                  style={{ fontFamily: Fonts.bold }}
-                >
-                  {step.question}
-                </Text>
-                <Text
-                  className="text-center text-sm leading-5 text-forest-600"
-                  style={{ fontFamily: Fonts.regular }}
-                >
-                  {step.description}
-                </Text>
+              <View style={styles.heroGlow} />
+              <View className="w-full px-5 py-8">
+                <View style={styles.heroMetaRow}>
+                  <StatusBadge
+                    tone="info"
+                    icon={isInputStep ? "mail" : "shield-checkmark"}
+                    label={isInputStep ? "Private contact" : "Personalized setup"}
+                  />
+                </View>
+
+                <SectionHeader
+                  eyebrow="Onboarding"
+                  title={step.question}
+                  subtitle={step.description}
+                />
               </View>
             </UniversalLiquidCard>
 
@@ -362,7 +372,7 @@ export default function OnboardingScreen() {
                   />
                 </View>
                 <Text style={inputStyles.hint}>
-                  Your email is kept private and never shared.
+                  Your email is kept private and only used for care updates.
                 </Text>
               </Animated.View>
             )}
@@ -383,34 +393,19 @@ export default function OnboardingScreen() {
         </Animated.View>
       </View>
 
-      <Animated.View
-        style={[
-          ctaAnimStyle,
-          {
-            width: "90%",
-            maxWidth: 400,
-            alignSelf: "center",
-            paddingBottom: 40,
-          },
-        ]}
+      <View
+        style={{
+          width: "90%",
+          maxWidth: 400,
+          alignSelf: "center",
+          paddingBottom: 40,
+        }}
       >
-        <Pressable
+        <PrimaryButton
           onPress={handleNext}
           disabled={!hasSelection}
-          onPressIn={() => {
-            if (hasSelection) {
-              pressScale.value = withSpring(0.96, {
-                damping: 12,
-                stiffness: 300,
-              });
-            }
-          }}
-          onPressOut={() => {
-            pressScale.value = withSpring(1, {
-              damping: 12,
-              stiffness: 300,
-            });
-          }}
+          icon={isLastStep ? "checkmark" : "chevron-forward"}
+          label={isLastStep ? "Confirm" : "Continue"}
           style={[
             ctaStyles.btn,
             Platform.OS === "web" && (ctaStyles.btnWeb as object),
@@ -418,28 +413,8 @@ export default function OnboardingScreen() {
               Platform.OS === "web" &&
               (ctaStyles.btnWebActive as object),
           ]}
-        >
-          <LinearGradient
-            colors={["#00C8B4", "#22C55E"]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 0 }}
-            style={[
-              StyleSheet.absoluteFill,
-              { opacity: hasSelection ? 0.45 : 0.15 },
-            ]}
-          />
-          <Text
-            style={{
-              zIndex: 1,
-              fontFamily: Fonts.bold,
-              fontSize: 18,
-              color: hasSelection ? "#1F2937" : "rgba(31,41,55,0.35)",
-            }}
-          >
-            {isLastStep ? "Confirm" : "Continue"}
-          </Text>
-        </Pressable>
-      </Animated.View>
+        />
+      </View>
     </View>
   );
 }
@@ -489,6 +464,10 @@ const inputStyles = StyleSheet.create({
 });
 
 const styles = StyleSheet.create({
+  screen: {
+    flex: 1,
+    backgroundColor: Colors.background,
+  },
   contentViewport: {
     overflow: "hidden",
   },
@@ -504,14 +483,49 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingVertical: 8,
   },
+  backLabel: {
+    marginLeft: 4,
+    ...Typography.caption,
+    color: Colors.text.primary,
+  },
   headerButtonHidden: {
     opacity: 0,
   },
+  headerPill: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 999,
+  },
   headerStepLabel: {
-    fontFamily: Fonts.medium,
-    fontSize: 13,
-    color: Colors.forest[500],
-    letterSpacing: 0.3,
+    ...Typography.micro,
+    color: Colors.text.secondary,
+  },
+  progressTrack: {
+    height: 6,
+    borderRadius: 999,
+    backgroundColor: "rgba(197, 221, 203, 0.55)",
+    overflow: "hidden",
+    marginBottom: 18,
+  },
+  progressFill: {
+    height: "100%",
+    borderRadius: 999,
+    backgroundColor: Colors.brand[500],
+  },
+  heroCard: {
+    borderColor: Colors.border.glass,
+  },
+  heroGlow: {
+    position: "absolute",
+    top: -30,
+    right: -10,
+    width: 160,
+    height: 160,
+    borderRadius: 80,
+    backgroundColor: "rgba(109, 201, 79, 0.16)",
+  },
+  heroMetaRow: {
+    marginBottom: 18,
   },
 });
 

@@ -6,11 +6,51 @@
  */
 
 export const Colors = {
-  primary: "#166534",
-  secondary: "#DCFCE7",
-  accent: "#22C55E",
-  surface: "#FAFFFE",
+  primary: "#163828",
+  secondary: "#E3F5E6",
+  accent: "#44AD4F",
+  background: "#F4FAF6",
+  surface: "#FCFFFD",
+  surfaceStrong: "#F8FDF9",
   white: "#FFFFFF",
+
+  brand: {
+    50: "#F4FBF5",
+    100: "#E4F5E7",
+    200: "#C6E8CC",
+    300: "#9ED7A7",
+    400: "#6DC94F",
+    500: "#44AD4F",
+    600: "#368B3E",
+    700: "#2E7D32",
+    800: "#235E27",
+    900: "#173D1A",
+  },
+
+  text: {
+    primary: "#163828",
+    secondary: "#466252",
+    muted: "#6E8477",
+    inverse: "#FFFFFF",
+    tertiary: "#8EA497",
+  },
+
+  border: {
+    soft: "rgba(197, 221, 203, 0.7)",
+    strong: "rgba(169, 198, 176, 0.95)",
+    glass: "rgba(255, 255, 255, 0.36)",
+  },
+
+  semantic: {
+    success: "#2E7D32",
+    successSoft: "#E7F6EA",
+    warning: "#C9771A",
+    warningSoft: "#FFF3DE",
+    error: "#D65B5B",
+    errorSoft: "#FDEBEC",
+    info: "#3178C6",
+    infoSoft: "#EAF4FF",
+  },
 
   forest: {
     50: "#F0FDF4",
@@ -30,6 +70,7 @@ export const Colors = {
     fill: "rgba(255, 255, 255, 0.08)",
     fill12: "rgba(255, 255, 255, 0.12)",
     fill20: "rgba(255, 255, 255, 0.20)",
+    fillStrong: "rgba(255, 255, 255, 0.72)",
     border: "rgba(255, 255, 255, 0.25)",
     borderStrong: "rgba(255, 255, 255, 0.35)",
     green: "rgba(220, 252, 231, 0.15)",
@@ -44,8 +85,8 @@ export const Colors = {
   },
 
   tabBar: {
-    active: "#22C55E",
-    inactive: "#15803D",
+    active: "#44AD4F",
+    inactive: "#527261",
     background: "rgba(255, 255, 255, 0.92)",
     border: "rgba(220, 252, 231, 0.6)",
   },

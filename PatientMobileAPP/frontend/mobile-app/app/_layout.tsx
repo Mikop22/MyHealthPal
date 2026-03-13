@@ -35,7 +35,12 @@ export default function RootLayout() {
   const isOnboarding = pathname.includes("onboarding");
 
   return (
-    <View style={{ flex: 1, backgroundColor: isOnboarding ? "white" : "transparent" }}>
+    <View
+      style={{
+        flex: 1,
+        backgroundColor: isOnboarding ? Colors.background : "transparent",
+      }}
+    >
       {!isOnboarding && <GlassCanvas />}
       <StatusBar style="dark" />
       <Stack
@@ -57,7 +62,13 @@ export default function RootLayout() {
         }}
       >
         <Stack.Screen name="index" options={{ headerShown: false }} />
-        <Stack.Screen name="onboarding" options={{ headerShown: false, contentStyle: { backgroundColor: "white" } }} />
+        <Stack.Screen
+          name="onboarding"
+          options={{
+            headerShown: false,
+            contentStyle: { backgroundColor: Colors.background },
+          }}
+        />
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       </Stack>
     </View>

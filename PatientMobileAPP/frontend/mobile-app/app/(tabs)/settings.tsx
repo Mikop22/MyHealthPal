@@ -3,9 +3,11 @@ import { View, Text, StyleSheet, ScrollView } from "react-native";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { LinearGradient } from "expo-linear-gradient";
 import { AppIcon, type AppIconName } from "../../components/AppIcon";
+import { SectionHeader } from "../../components/SectionHeader";
+import { StatusBadge } from "../../components/StatusBadge";
 import { UniversalLiquidCard } from "../../components/UniversalLiquidCard";
 import { Colors } from "../../constants/Colors";
-import { Fonts } from "../../constants/Typography";
+import { Typography } from "../../constants/Typography";
 import { usePatientStore } from "../../store/patientStore";
 
 const FALLBACK = "Not specified";
@@ -122,8 +124,18 @@ export default function SettingsScreen() {
       >
         {/* ── Page Header ── */}
         <Animated.View entering={FadeInDown.duration(500).delay(50)}>
-          <Text style={s.pageTitle}>Profile</Text>
-          <Text style={s.pageSub}>Your health information</Text>
+          <SectionHeader
+            eyebrow="Account"
+            title="Profile"
+            subtitle="Your personal details, completion status, and care preferences."
+            trailing={
+              <StatusBadge
+                tone={demographics.completedAt ? "success" : "warning"}
+                icon={demographics.completedAt ? "checkmark-circle" : "warning"}
+                label={demographics.completedAt ? "Complete" : "Needs update"}
+              />
+            }
+          />
         </Animated.View>
 
         {/* ── Avatar Card ── */}
@@ -235,23 +247,6 @@ const s = StyleSheet.create({
   scroll: { flex: 1 },
   content: { paddingHorizontal: 24, paddingTop: 16, paddingBottom: 40 },
 
-  /* ── Page Header ── */
-  pageTitle: {
-    fontSize: 28,
-    fontFamily: Fonts.bold,
-    color: Colors.primary,
-    letterSpacing: -0.5,
-    marginTop: 4,
-  },
-  pageSub: {
-    fontSize: 14,
-    fontFamily: Fonts.regular,
-    color: Colors.forest[500],
-    marginTop: 2,
-    marginBottom: 24,
-    letterSpacing: 0.1,
-  },
-
   /* ── Profile Card ── */
   profileCard: { padding: 32, marginBottom: 16, alignItems: "center" },
   profileHeader: { alignItems: "center" },
@@ -280,17 +275,13 @@ const s = StyleSheet.create({
     borderColor: "#fff",
   },
   profileName: {
-    fontSize: 20,
-    fontFamily: Fonts.bold,
-    color: Colors.primary,
-    letterSpacing: -0.2,
+    ...Typography.sectionTitle,
+    color: Colors.text.primary,
   },
   profileSub: {
-    fontSize: 13,
-    fontFamily: Fonts.regular,
-    color: Colors.forest[500],
+    ...Typography.caption,
+    color: Colors.text.secondary,
     marginTop: 4,
-    letterSpacing: 0.2,
   },
 
   /* ── Demographics Card ── */
@@ -302,10 +293,9 @@ const s = StyleSheet.create({
     marginBottom: 18,
   },
   cardLabel: {
-    fontSize: 11,
-    fontFamily: Fonts.bold,
-    color: Colors.forest[500],
-    letterSpacing: 1.4,
+    ...Typography.micro,
+    color: Colors.text.muted,
+    textTransform: "uppercase",
   },
 
   /* ── Settings Row ── */
@@ -331,17 +321,13 @@ const s = StyleSheet.create({
   },
   settingsTextWrap: { flex: 1 },
   settingsLabel: {
-    fontSize: 12,
-    fontFamily: Fonts.medium,
-    color: Colors.forest[500],
-    letterSpacing: 0.3,
+    ...Typography.caption,
+    color: Colors.text.secondary,
     marginBottom: 2,
   },
   settingsValue: {
-    fontSize: 16,
-    fontFamily: Fonts.semiBold,
-    color: Colors.forest[800],
-    letterSpacing: -0.1,
+    ...Typography.bodyStrong,
+    color: Colors.text.primary,
   },
 
   /* ── Status Card ── */
@@ -360,17 +346,13 @@ const s = StyleSheet.create({
     justifyContent: "center",
   },
   statusTitle: {
-    fontSize: 16,
-    fontFamily: Fonts.semiBold,
-    color: Colors.forest[800],
-    letterSpacing: -0.1,
+    ...Typography.bodyStrong,
+    color: Colors.text.primary,
   },
   statusSub: {
-    fontSize: 13,
-    fontFamily: Fonts.regular,
-    color: Colors.forest[500],
+    ...Typography.caption,
+    color: Colors.text.secondary,
     marginTop: 2,
-    letterSpacing: 0.1,
     lineHeight: 19,
   },
 });
