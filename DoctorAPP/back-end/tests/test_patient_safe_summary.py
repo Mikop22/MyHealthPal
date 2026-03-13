@@ -143,3 +143,16 @@ class TestPrepTransform:
         episode = self._make_episode()
         payload = prep_episode_to_patient_payload(episode)
         assert payload.risk_profile.factors == []
+
+
+def test_prep_models_use_independent_mutable_defaults():
+    first = CheckinPayload(raw_text="first")
+    second = CheckinPayload(raw_text="second")
+    first.confirmed_symptoms.append("sym_1")
+
+    first_health = HealthDataPayload()
+    second_health = HealthDataPayload()
+    first_health.metrics["restingHeartRate"] = [72]
+
+    assert second.confirmed_symptoms == []
+    assert second_health.metrics == {}

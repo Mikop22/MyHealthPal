@@ -9,6 +9,7 @@ in test_intake.py, test_dashboard.py, and test_webhook.py.
 
 from __future__ import annotations
 
+from copy import deepcopy
 from unittest.mock import MagicMock
 
 import pytest
@@ -68,14 +69,14 @@ def _make_client(prep_doc=None, appointment_doc=None, patient_doc=None):
     from app.main import app
 
     mock_prep_coll = MagicMock()
-    mock_prep_coll.find_one.return_value = prep_doc
+    mock_prep_coll.find_one.return_value = deepcopy(prep_doc)
     mock_prep_coll.update_one.return_value = MagicMock()
 
     mock_appt_coll = MagicMock()
-    mock_appt_coll.find_one.return_value = appointment_doc
+    mock_appt_coll.find_one.return_value = deepcopy(appointment_doc)
 
     mock_patient_coll = MagicMock()
-    mock_patient_coll.find_one.return_value = patient_doc
+    mock_patient_coll.find_one.return_value = deepcopy(patient_doc)
 
     mock_db = MagicMock()
     mock_db.prep_episodes = mock_prep_coll
@@ -131,6 +132,23 @@ class TestResolveInvite:
         assert update_args["status"] == "invite_opened"
         assert "invite_opened_at" in update_args
 
+    def test_does_not_regress_submitted_status_on_first_open(self):
+        doc = {**BASE_PREP_DOC, "status": "submitted"}
+        client, mock_coll = _make_client(
+            prep_doc=doc,
+            appointment_doc=APPOINTMENT_DOC,
+            patient_doc=PATIENT_DOC,
+        )
+        resp = client.get(f"/api/v1/mobile-prep/invite/{TOKEN}")
+        assert resp.status_code == 200
+        body = resp.json()
+        assert body["status"] == "submitted"
+        assert body["has_submitted"] is True
+
+        update_args = mock_coll.update_one.call_args[0][1]["$set"]
+        assert "invite_opened_at" in update_args
+        assert "status" not in update_args
+
 
 # ===========================================================================
 # POST /api/v1/mobile-prep/{token}/start
@@ -173,7 +191,28 @@ class TestStartPrep:
         resp = client.post(f"/api/v1/mobile-prep/{TOKEN}/start")
         assert resp.status_code == 200
         body = resp.json()
+        assert body["status"] == "in_progress"
         assert body["checkin_payload"]["raw_text"] == "I feel dizzy"
+
+    def test_does_not_regress_in_progress_status(self):
+        doc = {
+            **BASE_PREP_DOC,
+            "status": "in_progress",
+            "checkin_payload": {
+                "raw_text": "I feel dizzy",
+                "extracted_symptoms": [],
+                "confirmed_symptoms": [],
+                "dismissed_symptoms": [],
+            },
+        }
+        client, mock_coll = _make_client(prep_doc=doc)
+        resp = client.post(f"/api/v1/mobile-prep/{TOKEN}/start")
+        assert resp.status_code == 200
+        body = resp.json()
+        assert body["status"] == "in_progress"
+
+        update_set = mock_coll.update_one.call_args[0][1]["$set"]
+        assert update_set["status"] == "in_progress"
 
 
 # ===========================================================================
@@ -215,6 +254,17 @@ class TestSaveCheckin:
         update_set = mock_coll.update_one.call_args[0][1]["$set"]
         assert update_set["checkin_payload"]["raw_text"] == payload["raw_text"]
 
+    def test_rejects_updates_after_submit(self):
+        doc = {**BASE_PREP_DOC, "status": "submitted"}
+        client, mock_coll = _make_client(prep_doc=doc)
+        resp = client.post(
+            f"/api/v1/mobile-prep/{TOKEN}/save-checkin",
+            json={"raw_text": "test"},
+        )
+        assert resp.status_code == 400
+        assert "cannot save check-in" in resp.json()["detail"].lower()
+        mock_coll.update_one.assert_not_called()
+
 
 # ===========================================================================
 # POST /api/v1/mobile-prep/{token}/save-documents
@@ -252,6 +302,17 @@ class TestSaveDocuments:
         body = resp.json()
         assert body["message"] == "Documents saved."
 
+    def test_rejects_updates_after_submit(self):
+        doc = {**BASE_PREP_DOC, "status": "analysis_running"}
+        client, mock_coll = _make_client(prep_doc=doc)
+        resp = client.post(
+            f"/api/v1/mobile-prep/{TOKEN}/save-documents",
+            json={"documents": []},
+        )
+        assert resp.status_code == 400
+        assert "cannot save documents" in resp.json()["detail"].lower()
+        mock_coll.update_one.assert_not_called()
+
 
 # ===========================================================================
 # POST /api/v1/mobile-prep/{token}/save-health-data
@@ -283,6 +344,17 @@ class TestSaveHealthData:
         assert resp.status_code == 200
         body = resp.json()
         assert body["message"] == "Health data saved."
+
+    def test_rejects_updates_after_submit(self):
+        doc = {**BASE_PREP_DOC, "status": "ready_for_review"}
+        client, mock_coll = _make_client(prep_doc=doc)
+        resp = client.post(
+            f"/api/v1/mobile-prep/{TOKEN}/save-health-data",
+            json={"source": "apple_health", "shared": True},
+        )
+        assert resp.status_code == 400
+        assert "cannot save health data" in resp.json()["detail"].lower()
+        mock_coll.update_one.assert_not_called()
 
 
 # ===========================================================================

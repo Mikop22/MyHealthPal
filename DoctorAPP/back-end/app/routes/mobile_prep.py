@@ -18,13 +18,10 @@ GET  /{token}/status          — lightweight status polling
 
 from __future__ import annotations
 
-import logging
-import uuid
 from datetime import datetime, timezone
 from typing import Optional
 
 from fastapi import APIRouter, HTTPException, Request
-from pydantic import BaseModel
 
 from app.models.prep_episode import (
     CheckinPayload,
@@ -33,7 +30,6 @@ from app.models.prep_episode import (
     DocumentsPayload,
     HealthDataPayload,
     InviteResolutionResponse,
-    PrepEpisode,
     PrepStatus,
     PrepStatusResponse,
     SaveResponse,
@@ -42,8 +38,6 @@ from app.models.prep_episode import (
     SummaryResponse,
 )
 from app.services.patient_safe_summary import generate_patient_safe_summary
-
-logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/v1/mobile-prep", tags=["mobile-prep"])
 
@@ -72,6 +66,22 @@ def _find_patient(db, patient_id: str) -> Optional[dict]:
     return db.patients.find_one({"id": patient_id}, {"_id": 0})
 
 
+LOCKED_PREP_STATUSES = (
+    PrepStatus.submitted.value,
+    PrepStatus.analysis_running.value,
+    PrepStatus.ready_for_review.value,
+    PrepStatus.reviewed.value,
+)
+
+
+def _has_saved_draft_data(prep: dict) -> bool:
+    return bool(
+        prep.get("checkin_payload")
+        or prep.get("documents")
+        or prep.get("health_data_payload")
+    )
+
+
 # ---------------------------------------------------------------------------
 # GET /invite/{token}
 # ---------------------------------------------------------------------------
@@ -89,15 +99,23 @@ async def resolve_invite(token: str, request: Request):
 
     # Mark first open
     if not prep.get("invite_opened_at"):
+        now_iso = _now_iso()
+        update_fields = {
+            "invite_opened_at": now_iso,
+            "updated_at": now_iso,
+        }
+        if prep.get("status") in (
+            PrepStatus.draft.value,
+            PrepStatus.invite_sent.value,
+            None,
+        ):
+            update_fields["status"] = PrepStatus.invite_opened.value
+            prep["status"] = PrepStatus.invite_opened.value
         db.prep_episodes.update_one(
             {"invite_token": token},
-            {"$set": {
-                "invite_opened_at": _now_iso(),
-                "status": PrepStatus.invite_opened.value,
-                "updated_at": _now_iso(),
-            }},
+            {"$set": update_fields},
         )
-        prep["status"] = PrepStatus.invite_opened.value
+        prep["invite_opened_at"] = now_iso
 
     # Fetch appointment context
     appointment = _find_appointment(db, prep["appointment_id"]) or {}
@@ -156,10 +174,20 @@ async def start_prep(token: str, request: Request):
             detail=f"Cannot start prep in status '{prep.get('status')}'.",
         )
 
+    if prep.get("status") in (
+        PrepStatus.started.value,
+        PrepStatus.in_progress.value,
+    ):
+        new_status = prep["status"]
+    elif _has_saved_draft_data(prep):
+        new_status = PrepStatus.in_progress.value
+    else:
+        new_status = PrepStatus.started.value
+
     db.prep_episodes.update_one(
         {"invite_token": token},
         {"$set": {
-            "status": PrepStatus.started.value,
+            "status": new_status,
             "started_at": prep.get("started_at") or _now_iso(),
             "updated_at": _now_iso(),
         }},
@@ -171,7 +199,7 @@ async def start_prep(token: str, request: Request):
 
     return StartPrepResponse(
         prep_episode_id=prep["id"],
-        status=PrepStatus.started.value,
+        status=new_status,
         checkin_payload=existing_checkin,
     )
 
@@ -187,6 +215,11 @@ async def save_checkin(token: str, body: CheckinPayload, request: Request):
     prep = _find_prep_by_token(db, token)
     if not prep:
         raise HTTPException(status_code=404, detail="Prep episode not found.")
+    if prep.get("status") in LOCKED_PREP_STATUSES:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Cannot save check-in in status '{prep.get('status')}'.",
+        )
 
     db.prep_episodes.update_one(
         {"invite_token": token},
@@ -215,6 +248,11 @@ async def save_documents(token: str, body: DocumentsPayload, request: Request):
     prep = _find_prep_by_token(db, token)
     if not prep:
         raise HTTPException(status_code=404, detail="Prep episode not found.")
+    if prep.get("status") in LOCKED_PREP_STATUSES:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Cannot save documents in status '{prep.get('status')}'.",
+        )
 
     db.prep_episodes.update_one(
         {"invite_token": token},
@@ -243,6 +281,11 @@ async def save_health_data(token: str, body: HealthDataPayload, request: Request
     prep = _find_prep_by_token(db, token)
     if not prep:
         raise HTTPException(status_code=404, detail="Prep episode not found.")
+    if prep.get("status") in LOCKED_PREP_STATUSES:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Cannot save health data in status '{prep.get('status')}'.",
+        )
 
     db.prep_episodes.update_one(
         {"invite_token": token},
@@ -278,12 +321,7 @@ async def submit_prep(token: str, request: Request):
     if not prep:
         raise HTTPException(status_code=404, detail="Prep episode not found.")
 
-    if prep.get("status") in (
-        PrepStatus.submitted.value,
-        PrepStatus.analysis_running.value,
-        PrepStatus.ready_for_review.value,
-        PrepStatus.reviewed.value,
-    ):
+    if prep.get("status") in LOCKED_PREP_STATUSES:
         raise HTTPException(status_code=400, detail="Prep has already been submitted.")
 
     # Build patient-safe summary
