@@ -192,7 +192,7 @@ function ProfileAvatar({ size = 72 }: { size?: number }) {
           { width: size, height: size, borderRadius: size / 2 },
         ]}
       >
-        <AppIcon name="person" size={size * 0.45} color={Colors.forest[400]} />
+        <AppIcon name="person" size={size * 0.45} color={Colors.text.muted} />
       </View>
     </View>
   );
@@ -286,7 +286,7 @@ export default function FundingScreen() {
             {/* About Me */}
             <View style={s.sectionBlock}>
               <View style={s.sectionLabelRow}>
-                <AppIcon name="person" size={14} color={Colors.forest[500]} />
+                <AppIcon name="person" size={14} color={Colors.text.muted} />
                 <Text style={s.sectionLabel}>ABOUT ME</Text>
               </View>
               <TextInput
@@ -303,7 +303,7 @@ export default function FundingScreen() {
             {/* Case Description */}
             <View style={s.sectionBlock}>
               <View style={s.sectionLabelRow}>
-                <AppIcon name="medical" size={14} color={Colors.forest[500]} />
+                <AppIcon name="medical" size={14} color={Colors.text.muted} />
                 <Text style={s.sectionLabel}>CASE DESCRIPTION</Text>
               </View>
               <TextInput
@@ -327,7 +327,7 @@ export default function FundingScreen() {
                 colors={["rgba(134,239,172,0.25)", "rgba(22,163,74,0.12)"]}
                 style={s.campaignIconCapsule}
               >
-                <AppIcon name="medical" size={22} color={Colors.accent} />
+                <AppIcon name="medical" size={22} color={Colors.brand} />
               </LinearGradient>
               <View style={{ flex: 1 }}>
                 <Text style={s.campaignTitle}>MRI Diagnostic Imaging</Text>
@@ -379,7 +379,7 @@ export default function FundingScreen() {
         <Animated.View entering={getFirstTouchEntering(3)}>
           <UniversalLiquidCard variant="default" style={s.donorsCard}>
             <View style={s.sectionLabelRow}>
-              <AppIcon name="heart" size={13} color={Colors.forest[500]} />
+              <AppIcon name="heart" size={13} color={Colors.text.muted} />
               <Text style={s.sectionLabel}>RECENT SUPPORTERS</Text>
             </View>
             {MOCK_DONORS.map((d, idx) => (
@@ -453,13 +453,13 @@ const s = StyleSheet.create({
   pageHeaderTitle: {
     fontSize: 28,
     fontFamily: Fonts.bold,
-    color: Colors.primary,
+    color: Colors.text.primary,
     letterSpacing: -0.5,
   },
   pageHeaderSub: {
     fontSize: 14,
     fontFamily: Fonts.regular,
-    color: Colors.forest[500],
+    color: Colors.text.muted,
     marginTop: 2,
     letterSpacing: 0.1,
   },
@@ -496,13 +496,13 @@ const s = StyleSheet.create({
   profileName: {
     fontSize: 18,
     fontFamily: Fonts.bold,
-    color: Colors.primary,
+    color: Colors.text.primary,
     letterSpacing: -0.2,
   },
   profileHint: {
     fontSize: 13,
     fontFamily: Fonts.regular,
-    color: Colors.forest[500],
+    color: Colors.text.muted,
     marginTop: 3,
     letterSpacing: 0.1,
   },
@@ -516,7 +516,7 @@ const s = StyleSheet.create({
     position: "absolute",
   },
   avatarInner: {
-    backgroundColor: Colors.forest[50],
+    backgroundColor: "rgba(68, 173, 79, 0.06)",
     alignItems: "center",
     justifyContent: "center",
     borderWidth: 2.5,
@@ -534,7 +534,7 @@ const s = StyleSheet.create({
   sectionLabel: {
     fontSize: 11,
     fontFamily: Fonts.bold,
-    color: Colors.forest[500],
+    color: Colors.text.muted,
     letterSpacing: 1.4,
   },
   bioInput: {
@@ -546,7 +546,7 @@ const s = StyleSheet.create({
     paddingVertical: 14,
     fontSize: 15,
     fontFamily: Fonts.regular,
-    color: Colors.forest[800],
+    color: Colors.text.primary,
     lineHeight: 22,
     minHeight: 72,
   },
@@ -571,13 +571,13 @@ const s = StyleSheet.create({
   campaignTitle: {
     fontSize: 17,
     fontFamily: Fonts.bold,
-    color: Colors.primary,
+    color: Colors.text.primary,
     letterSpacing: -0.2,
   },
   campaignSub: {
     fontSize: 13,
     fontFamily: Fonts.regular,
-    color: Colors.forest[500],
+    color: Colors.text.muted,
     marginTop: 3,
     letterSpacing: 0.1,
   },
@@ -596,13 +596,13 @@ const s = StyleSheet.create({
   statValue: {
     fontSize: 20,
     fontFamily: Fonts.bold,
-    color: Colors.primary,
+    color: Colors.text.primary,
     letterSpacing: -0.3,
   },
   statCaption: {
     fontSize: 11,
     fontFamily: Fonts.medium,
-    color: Colors.forest[500],
+    color: Colors.text.muted,
     marginTop: 2,
     letterSpacing: 0.5,
     textTransform: "uppercase",
@@ -664,7 +664,7 @@ const s = StyleSheet.create({
   fillBtnText: {
     fontSize: 14,
     fontFamily: Fonts.semiBold,
-    color: Colors.forest[700],
+    color: Colors.text.secondary,
     letterSpacing: 0.1,
   },
 
@@ -692,25 +692,25 @@ const s = StyleSheet.create({
   donorInitials: {
     fontSize: 13,
     fontFamily: Fonts.bold,
-    color: Colors.forest[600],
+    color: Colors.text.secondary,
     letterSpacing: 0.5,
   },
   donorName: {
     fontSize: 15,
     fontFamily: Fonts.medium,
-    color: Colors.forest[800],
+    color: Colors.text.primary,
     letterSpacing: 0.1,
   },
   donorAmount: {
     fontSize: 16,
     fontFamily: Fonts.bold,
-    color: Colors.accent,
+    color: Colors.brand,
     letterSpacing: -0.2,
   },
   donorTime: {
     fontSize: 12,
     fontFamily: Fonts.regular,
-    color: Colors.forest[400],
+    color: Colors.text.muted,
     marginTop: 1,
     letterSpacing: 0.2,
   },
@@ -741,13 +741,13 @@ const s = StyleSheet.create({
   qrTitle: {
     fontSize: 22,
     fontFamily: Fonts.bold,
-    color: Colors.primary,
+    color: Colors.text.primary,
     letterSpacing: -0.3,
   },
   qrSub: {
     fontSize: 14,
     fontFamily: Fonts.regular,
-    color: Colors.forest[600],
+    color: Colors.text.secondary,
     textAlign: "center",
     lineHeight: 21,
     marginBottom: 24,
@@ -772,7 +772,7 @@ const s = StyleSheet.create({
   qrRef: {
     fontSize: 12,
     fontFamily: Fonts.bold,
-    color: Colors.forest[400],
+    color: Colors.text.muted,
     letterSpacing: 2,
   },
 });

@@ -146,7 +146,7 @@ function AboutMeModal({
                   <Text style={styles.modalNameSub}>Community Member</Text>
                 </View>
                 <Pressable onPress={onClose} style={styles.modalClose}>
-                  <AppIcon name="close" size={18} color={Colors.forest[500]} />
+                  <AppIcon name="close" size={18} color={Colors.text.muted} />
                 </Pressable>
               </View>
 
@@ -158,7 +158,7 @@ function AboutMeModal({
                 style={styles.modalScroll}
               >
                 <View style={styles.modalLabelRow}>
-                  <AppIcon name="person" size={13} color={Colors.forest[500]} />
+                  <AppIcon name="person" size={13} color={Colors.text.muted} />
                   <Text style={styles.modalLabel}>ABOUT ME</Text>
                 </View>
                 <Text style={styles.modalBody}>{aboutMe}</Text>
@@ -211,12 +211,12 @@ function RequestCard({
             </View>
             {fulfilled ? (
               <View style={styles.fulfilledChip}>
-                <AppIcon name="checkmark" size={10} color={Colors.accent} />
+                <AppIcon name="checkmark" size={10} color={Colors.brand} />
                 <Text style={styles.fulfilledChipText}>Funded</Text>
               </View>
             ) : (
               <View style={styles.categoryChip}>
-                <AppIcon name={iconName} size={12} color={Colors.forest[500]} />
+                <AppIcon name={iconName} size={12} color={Colors.text.muted} />
               </View>
             )}
           </View>
@@ -321,13 +321,13 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 28,
     fontFamily: Fonts.bold,
-    color: Colors.primary,
+    color: Colors.text.primary,
     letterSpacing: -0.5,
   },
   headerSub: {
     fontSize: 14,
     fontFamily: Fonts.regular,
-    color: Colors.forest[500],
+    color: Colors.text.muted,
     marginTop: 2,
     letterSpacing: 0.1,
   },
@@ -355,7 +355,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: Colors.forest[50],
+    backgroundColor: "rgba(68, 173, 79, 0.06)",
     alignItems: "center",
     justifyContent: "center",
     borderWidth: 2,
@@ -364,19 +364,19 @@ const styles = StyleSheet.create({
   avatarInitials: {
     fontSize: 14,
     fontFamily: Fonts.bold,
-    color: Colors.forest[600],
+    color: Colors.text.secondary,
     letterSpacing: 0.3,
   },
   requester: {
     fontSize: 15,
     fontFamily: Fonts.semiBold,
-    color: Colors.primary,
+    color: Colors.text.primary,
     letterSpacing: -0.1,
   },
   timeAgo: {
     fontSize: 12,
     fontFamily: Fonts.regular,
-    color: Colors.forest[500],
+    color: Colors.text.muted,
     marginTop: 1,
     letterSpacing: 0.1,
   },
@@ -394,7 +394,7 @@ const styles = StyleSheet.create({
   fulfilledChipText: {
     fontSize: 11,
     fontFamily: Fonts.bold,
-    color: Colors.accent,
+    color: Colors.brand,
     letterSpacing: 0.3,
   },
   categoryChip: {
@@ -411,7 +411,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontFamily: Fonts.semiBold,
     lineHeight: 22,
-    color: Colors.forest[800],
+    color: Colors.text.primary,
     letterSpacing: -0.1,
     marginBottom: 6,
   },
@@ -419,7 +419,7 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontFamily: Fonts.regular,
     lineHeight: 19,
-    color: Colors.forest[500],
+    color: Colors.text.muted,
     marginBottom: 16,
     letterSpacing: 0.1,
   },
@@ -445,12 +445,12 @@ const styles = StyleSheet.create({
   progressLabel: {
     fontSize: 14,
     fontFamily: Fonts.bold,
-    color: Colors.primary,
+    color: Colors.text.primary,
     letterSpacing: -0.2,
   },
   progressLabelMuted: {
     fontFamily: Fonts.regular,
-    color: Colors.forest[400],
+    color: Colors.text.muted,
   },
   donateBtn: { borderRadius: 16, overflow: "hidden" },
   donateBtnGradient: {
@@ -502,7 +502,7 @@ const styles = StyleSheet.create({
     width: 52,
     height: 52,
     borderRadius: 26,
-    backgroundColor: Colors.forest[50],
+    backgroundColor: "rgba(68, 173, 79, 0.06)",
     alignItems: "center",
     justifyContent: "center",
     borderWidth: 2.5,
@@ -511,19 +511,19 @@ const styles = StyleSheet.create({
   modalAvatarText: {
     fontSize: 18,
     fontFamily: Fonts.bold,
-    color: Colors.forest[600],
+    color: Colors.text.secondary,
     letterSpacing: 0.5,
   },
   modalName: {
     fontSize: 18,
     fontFamily: Fonts.bold,
-    color: Colors.primary,
+    color: Colors.text.primary,
     letterSpacing: -0.2,
   },
   modalNameSub: {
     fontSize: 12,
     fontFamily: Fonts.regular,
-    color: Colors.forest[500],
+    color: Colors.text.muted,
     marginTop: 2,
     letterSpacing: 0.2,
   },
@@ -549,13 +549,13 @@ const styles = StyleSheet.create({
   modalLabel: {
     fontSize: 11,
     fontFamily: Fonts.bold,
-    color: Colors.forest[500],
+    color: Colors.text.muted,
     letterSpacing: 1.4,
   },
   modalBody: {
     fontSize: 15,
     fontFamily: Fonts.regular,
-    color: Colors.forest[700],
+    color: Colors.text.secondary,
     lineHeight: 23,
     letterSpacing: 0.1,
   },

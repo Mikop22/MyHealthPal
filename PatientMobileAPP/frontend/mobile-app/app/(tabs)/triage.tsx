@@ -236,7 +236,7 @@ export default function TriageScreen() {
             <TextInput
               style={styles.textInput}
               placeholder={PLACEHOLDER_TEXT}
-              placeholderTextColor={Colors.forest[400]}
+              placeholderTextColor={Colors.text.muted}
               multiline
               numberOfLines={4}
               textAlignVertical="top"
@@ -254,12 +254,12 @@ export default function TriageScreen() {
               disabled={!inputText.trim()}
             >
               <LinearGradient
-                colors={inputText.trim() ? ["#22C55E", "#16A34A"] : [Colors.forest[200], Colors.forest[200]]}
+                colors={inputText.trim() ? [Colors.brandLight, Colors.brand] : ["rgba(200, 230, 210, 0.4)", "rgba(200, 230, 210, 0.4)"]}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
                 style={styles.analyzeBtnGradient}
               >
-                <AppIcon name="sparkles" size={20} color={inputText.trim() ? "#fff" : Colors.forest[500]} />
+                <AppIcon name="sparkles" size={20} color={inputText.trim() ? "#fff" : Colors.text.muted} />
                 <Text style={[styles.analyzeBtnText, !inputText.trim() && styles.analyzeBtnTextDisabled]}>
                   Analyze with MedGemma
                 </Text>
@@ -269,7 +269,7 @@ export default function TriageScreen() {
 
           {hasCards && (
             <Pressable onPress={handleReset} style={styles.resetBtn}>
-              <AppIcon name="refresh" size={16} color={Colors.forest[700]} />
+              <AppIcon name="refresh" size={16} color={Colors.text.secondary} />
               <Text style={styles.resetBtnText}>Start over</Text>
             </Pressable>
           )}
@@ -277,7 +277,7 @@ export default function TriageScreen() {
           {/* Loading state */}
           {loading && (
             <View style={styles.loadingWrap}>
-              <ActivityIndicator size="large" color={Colors.accent} />
+              <ActivityIndicator size="large" color={Colors.brand} />
               <Text style={styles.loadingText}>MedGemma is analyzing your symptoms…</Text>
             </View>
           )}
@@ -285,7 +285,7 @@ export default function TriageScreen() {
           {/* Error state */}
           {error && !loading && (
             <View style={styles.errorWrap}>
-              <AppIcon name="alert-circle" size={32} color={Colors.forest[400]} />
+              <AppIcon name="alert-circle" size={32} color={Colors.semantic.error} />
               <Text style={styles.errorText}>{error}</Text>
               <Pressable onPress={handleAnalyze} style={styles.retryBtn}>
                 <Text style={styles.retryBtnText}>Retry</Text>
@@ -376,7 +376,7 @@ export default function TriageScreen() {
                   style={[styles.doneCard, styles.doneCardAccent] as any}
                 >
                   <View style={styles.doneInner}>
-                    <AppIcon name="checkmark-done-circle" size={44} color={Colors.accent} />
+                    <AppIcon name="checkmark-done-circle" size={44} color={Colors.semantic.success} />
                     <Text style={styles.doneTitle}>All Symptoms Reviewed</Text>
                     <Text style={styles.doneSub}>
                       {symptoms.length} symptoms processed and saved
@@ -396,7 +396,7 @@ export default function TriageScreen() {
                     colors={["rgba(240, 253, 244, 0.4)", "rgba(220, 252, 231, 0.2)"]}
                     style={[styles.actionBtnGradient, styles.dismissBtnBorder]}
                   >
-                    <AppIcon name="close" size={20} color={Colors.forest[700]} />
+                    <AppIcon name="close" size={20} color={Colors.text.secondary} />
                     <Text style={styles.dismissBtnText}>Dismiss</Text>
                   </LinearGradient>
                 </Pressable>
@@ -440,7 +440,7 @@ export default function TriageScreen() {
                   colors={["rgba(74,222,128,0.25)", "rgba(34,197,94,0.12)"]}
                   style={styles.clinicIconPill}
                 >
-                  <AppIcon name="location" size={20} color={Colors.accent} />
+                  <AppIcon name="location" size={20} color={Colors.brand} />
                 </LinearGradient>
                 <View style={styles.clinicInfo}>
                   <Text style={styles.clinicName}>{c.name}</Text>
@@ -470,13 +470,13 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 22,
     fontFamily: Fonts.bold,
-    color: Colors.primary,
+    color: Colors.text.primary,
     marginBottom: 4,
   },
   sectionSub: {
     fontSize: 14,
     fontFamily: Fonts.regular,
-    color: Colors.forest[600],
+    color: Colors.text.muted,
     marginBottom: 18,
   },
 
@@ -485,7 +485,7 @@ const styles = StyleSheet.create({
   textInput: {
     fontSize: 15,
     lineHeight: 22,
-    color: Colors.forest[800],
+    color: Colors.text.primary,
     padding: 12,
     minHeight: 120,
     fontFamily: Fonts.regular,
@@ -501,7 +501,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
   },
   analyzeBtnText: { fontSize: 16, fontWeight: "700", color: "#fff" },
-  analyzeBtnTextDisabled: { color: Colors.forest[500] },
+  analyzeBtnTextDisabled: { color: Colors.text.muted },
   resetBtn: {
     flexDirection: "row",
     alignItems: "center",
@@ -509,17 +509,17 @@ const styles = StyleSheet.create({
     gap: 6,
     paddingVertical: 12,
   },
-  resetBtnText: { fontSize: 14, fontWeight: "600", color: Colors.forest[700] },
+  resetBtnText: { fontSize: 14, fontWeight: "600", color: Colors.text.secondary },
 
   /* ── Loading ── */
   loadingWrap: { alignItems: "center", paddingVertical: 32, gap: 14 },
-  loadingText: { fontSize: 15, fontWeight: "500", color: Colors.forest[600] },
+  loadingText: { fontSize: 15, fontWeight: "500", color: Colors.text.muted },
 
   /* ── Error ── */
   errorWrap: { alignItems: "center", paddingVertical: 24, gap: 10 },
-  errorText: { fontSize: 14, color: Colors.forest[700], textAlign: "center", paddingHorizontal: 16 },
+  errorText: { fontSize: 14, color: Colors.text.body, textAlign: "center", paddingHorizontal: 16 },
   retryBtn: {
-    backgroundColor: Colors.accent,
+    backgroundColor: Colors.brand,
     paddingHorizontal: 24,
     paddingVertical: 10,
     borderRadius: 14,
@@ -542,23 +542,23 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: Colors.accent,
+    backgroundColor: Colors.brand,
     alignItems: "center",
     justifyContent: "center",
   },
   severityNum: { color: "#fff", fontWeight: "800", fontSize: 15 },
-  severityLabel: { fontSize: 13, fontWeight: "600", color: Colors.forest[600] },
+  severityLabel: { fontSize: 13, fontWeight: "600", color: Colors.text.muted },
   symptomLabel: {
     fontSize: 17,
     fontWeight: "600",
     lineHeight: 24,
-    color: Colors.primary,
+    color: Colors.text.primary,
     marginBottom: 6,
   },
   symptomExplanation: {
     fontSize: 14,
     lineHeight: 20,
-    color: Colors.forest[600],
+    color: Colors.text.secondary,
     marginBottom: 12,
   },
 
@@ -569,10 +569,10 @@ const styles = StyleSheet.create({
     height: 8,
     borderRadius: 4,
     overflow: "hidden",
-    backgroundColor: Colors.forest[100],
+    backgroundColor: "rgba(200, 230, 210, 0.4)",
   },
   capsuleSegmentInner: { flex: 1 },
-  capsuleSegmentEmpty: { backgroundColor: Colors.forest[100] },
+  capsuleSegmentEmpty: { backgroundColor: "rgba(200, 230, 210, 0.4)" },
 
   /* Swipe overlays */
   swipeBadge: {
@@ -586,8 +586,8 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     borderRadius: 14,
   },
-  confirmBadge: { right: 16, backgroundColor: Colors.accent },
-  dismissBadge: { left: 16, backgroundColor: Colors.forest[700] },
+  confirmBadge: { right: 16, backgroundColor: Colors.brand },
+  dismissBadge: { left: 16, backgroundColor: Colors.text.secondary },
   swipeBadgeText: { color: "#fff", fontSize: 12, fontWeight: "700", letterSpacing: 0.8 },
 
   /* Button fallbacks */
@@ -602,15 +602,15 @@ const styles = StyleSheet.create({
     borderRadius: 16,
   },
   dismissBtnBorder: { borderWidth: 1.5, borderColor: "rgba(0,0,0,0.1)" },
-  dismissBtnText: { fontSize: 15, fontWeight: "700", color: Colors.forest[700] },
+  dismissBtnText: { fontSize: 15, fontWeight: "700", color: Colors.text.secondary },
   confirmBtnText: { fontSize: 15, fontWeight: "700", color: "#fff" },
 
   /* Done state */
   doneCard: { padding: 0 },
   doneCardAccent: { borderWidth: 1.5, borderColor: "rgba(0, 0, 0, 0.15)" },
   doneInner: { alignItems: "center", padding: 32 },
-  doneTitle: { fontSize: 18, fontWeight: "700", color: Colors.primary, marginTop: 12 },
-  doneSub: { fontSize: 14, color: Colors.forest[600], marginTop: 4 },
+  doneTitle: { fontSize: 18, fontWeight: "700", color: Colors.text.primary, marginTop: 12 },
+  doneSub: { fontSize: 14, color: Colors.text.muted, marginTop: 4 },
 
   /* ── Clinics ── */
   mapContainer: { marginBottom: 14, borderRadius: 20, overflow: "hidden" },
@@ -628,16 +628,16 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     borderWidth: 1,
-    borderColor: "rgba(74,222,128,0.3)",
+    borderColor: "rgba(68, 173, 79, 0.2)",
   },
   clinicInfo: { flex: 1 },
-  clinicName: { fontSize: 15, fontWeight: "600", color: Colors.primary },
-  clinicAddr: { fontSize: 13, color: Colors.forest[600], marginTop: 2 },
+  clinicName: { fontSize: 15, fontWeight: "600", color: Colors.text.primary },
+  clinicAddr: { fontSize: 13, color: Colors.text.muted, marginTop: 2 },
   distBadge: {
-    backgroundColor: Colors.forest[100],
+    backgroundColor: "rgba(68, 173, 79, 0.08)",
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 10,
   },
-  distText: { fontSize: 12, fontWeight: "700", color: Colors.forest[700] },
+  distText: { fontSize: 12, fontWeight: "700", color: Colors.brand },
 });
