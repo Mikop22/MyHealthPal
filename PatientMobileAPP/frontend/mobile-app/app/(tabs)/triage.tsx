@@ -25,7 +25,7 @@ import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import { AppIcon } from "../../components/AppIcon";
 import { ClinicMapView, type ClinicPin } from "../../components/MapView";
 import { usePatientStore } from "../../store/patientStore";
-import { postTriageExtract, type TriageSymptomCard } from "../../services/api";
+import { postTriageExtract, postActionPlan, postLabel, type TriageSymptomCard, type ActionPlanResponse } from "../../services/api";
 import { Colors } from "../../constants/Colors";
 import { Fonts } from "../../constants/Typography";
 
@@ -134,6 +134,8 @@ export default function TriageScreen() {
   const [error, setError] = useState<string | null>(null);
   const [symptoms, setSymptoms] = useState<TriageSymptomCard[]>([]);
   const [cardIdx, setCardIdx] = useState(0);
+  const [actionPlan, setActionPlan] = useState<ActionPlanResponse | null>(null);
+  const [actionPlanLoading, setActionPlanLoading] = useState(false);
   const translateX = useSharedValue(0);
   const cardIdxRef = useRef(0);
   cardIdxRef.current = cardIdx;
@@ -163,6 +165,7 @@ export default function TriageScreen() {
     setCardIdx(0);
     setError(null);
     setInputText("");
+    setActionPlan(null);
   }, []);
 
   const triggerHaptic = useCallback(() => {
@@ -190,6 +193,39 @@ export default function TriageScreen() {
     },
     [addSymptom, symptoms],
   );
+
+  // Trigger action plan request and label submission when all symptoms reviewed
+  const allReviewedForEffect = symptoms.length > 0 && cardIdx >= symptoms.length;
+  useEffect(() => {
+    if (!allReviewedForEffect || actionPlan || actionPlanLoading) return;
+
+    const store = usePatientStore.getState();
+    const confirmedIds = store.triageSymptoms
+      .filter((s) => s.confirmed)
+      .map((s) => s.id);
+    const rejectedIds = store.triageSymptoms
+      .filter((s) => !s.confirmed)
+      .map((s) => s.id);
+
+    // Fire-and-forget label submission (Gap 7)
+    postLabel({
+      flow: "check_in_extract",
+      raw_input: { text: inputText },
+      model_output: { symptoms: symptoms.map((s) => ({ id: s.id, label: s.label, severity: s.severity })) },
+      user_corrected: { confirmed: confirmedIds, rejected: rejectedIds },
+    }).catch(() => {});
+
+    // Request action plan (Gap 6)
+    setActionPlanLoading(true);
+    postActionPlan({
+      transcript: inputText,
+      confirmed_card_ids: confirmedIds,
+      rejected_card_ids: rejectedIds,
+    })
+      .then(setActionPlan)
+      .catch(() => {})
+      .finally(() => setActionPlanLoading(false));
+  }, [allReviewedForEffect, actionPlan, actionPlanLoading, symptoms, inputText]);
 
   const panGesture = Gesture.Pan()
     .activeOffsetX([-15, 15])
@@ -438,6 +474,34 @@ export default function TriageScreen() {
                       {symptoms.length} symptoms processed and saved
                     </Text>
                   </View>
+                  {actionPlanLoading && (
+                    <View style={{ alignItems: "center", paddingTop: 16 }}>
+                      <ActivityIndicator size="small" color={Colors.brand} />
+                      <Text style={[styles.doneSub, { marginTop: 8 }]}>
+                        Generating your action plan…
+                      </Text>
+                    </View>
+                  )}
+                  {actionPlan && (
+                    <View style={{ paddingTop: 16 }}>
+                      <Text style={[styles.sectionTitle, { fontSize: 16, marginBottom: 8 }]}>
+                        Summary
+                      </Text>
+                      {actionPlan.summary_bullets.map((b, i) => (
+                        <Text key={i} style={[styles.doneSub, { textAlign: "left", marginBottom: 4 }]}>
+                          • {b}
+                        </Text>
+                      ))}
+                      <Text style={[styles.sectionTitle, { fontSize: 16, marginTop: 16, marginBottom: 8 }]}>
+                        Questions for Your Doctor
+                      </Text>
+                      {actionPlan.questions.map((q, i) => (
+                        <Text key={i} style={[styles.doneSub, { textAlign: "left", marginBottom: 4 }]}>
+                          {i + 1}. {q}
+                        </Text>
+                      ))}
+                    </View>
+                  )}
                 </SurfaceCard>
               )}
             </View>

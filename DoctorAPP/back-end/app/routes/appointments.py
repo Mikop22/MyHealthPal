@@ -4,8 +4,9 @@ from __future__ import annotations
 
 import uuid
 from datetime import datetime, timedelta, timezone
+from typing import Optional
 
-from fastapi import APIRouter, Request, HTTPException
+from fastapi import APIRouter, Query, Request, HTTPException
 from app.models.patient_management import AppointmentCreate, AppointmentRecord
 from app.models.patient import AnalysisResponse
 from app.models.prep_episode import PrepEpisode, PrepStatus
@@ -124,3 +125,17 @@ async def get_patient_appointments(patient_id: str, request: Request):
     for doc in cursor:
         appointments.append(AppointmentRecord(**doc))
     return appointments
+
+
+@router.get("/appointments", response_model=list[AppointmentRecord])
+async def list_appointments_by_date(
+    request: Request,
+    date: Optional[str] = Query(None, description="Filter by date (YYYY-MM-DD)"),
+):
+    """List all appointments, optionally filtered by date, sorted by time."""
+    db = request.app.state.mongo_client[request.app.state.db_name]
+    query: dict = {}
+    if date:
+        query["date"] = date
+    cursor = db.appointments.find(query, {"_id": 0}).sort("time", 1)
+    return [AppointmentRecord(**doc) for doc in cursor]

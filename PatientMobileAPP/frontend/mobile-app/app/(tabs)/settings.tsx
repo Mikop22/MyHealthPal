@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { LinearGradient } from "expo-linear-gradient";
@@ -6,6 +6,7 @@ import { AppIcon, type AppIconName } from "../../components/AppIcon";
 import { Colors } from "../../constants/Colors";
 import { Fonts } from "../../constants/Typography";
 import { usePatientStore } from "../../store/patientStore";
+import { getProfile, updateProfile } from "../../services/api";
 
 const FALLBACK = "Not specified";
 const SCREEN_BG = "#F6F8F6";
@@ -114,7 +115,39 @@ function ProfileHeader() {
 }
 
 export default function SettingsScreen() {
-  const { demographics } = usePatientStore();
+  const { demographics, setAge, setSex, setLanguage, setEthnicity, setEmail } = usePatientStore();
+
+  // Hydrate store from backend on mount
+  useEffect(() => {
+    let cancelled = false;
+    getProfile("current_user")
+      .then((profile) => {
+        if (cancelled) return;
+        if (profile.age !== null) setAge(profile.age);
+        if (profile.sex) setSex(profile.sex as "female" | "male" | "intersex" | "prefer_not_to_say");
+        if (profile.primary_language) setLanguage(profile.primary_language);
+        if (profile.ethnicity.length > 0) setEthnicity(profile.ethnicity);
+        if (profile.email) setEmail(profile.email);
+      })
+      .catch(() => {
+        /* backend unavailable — use local store */
+      });
+    return () => { cancelled = true; };
+  }, []);
+
+  // Persist to backend when demographics change
+  useEffect(() => {
+    if (!demographics.completedAt) return;
+    updateProfile("current_user", {
+      age: demographics.age,
+      sex: demographics.sex,
+      primary_language: demographics.primaryLanguage,
+      ethnicity: demographics.ethnicity,
+      email: demographics.email,
+    }).catch(() => {
+      /* backend unavailable */
+    });
+  }, [demographics.completedAt]);
 
   return (
     <View style={s.container}>

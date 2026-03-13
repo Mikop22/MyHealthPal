@@ -74,7 +74,7 @@ export default async function NotesPage({
         {/* Main area: notes + research sidebar */}
         <div className="flex min-h-0 flex-1 gap-8">
           {/* Notes card — editable ruled notebook */}
-          <NotesEditor />
+          <NotesEditor patientId={patientId} />
 
           {/* Research sidebar */}
           <div className="glass-card flex w-[760px] shrink-0 flex-col gap-5 overflow-y-auto rounded-[24px] px-7 py-8">

@@ -5,7 +5,9 @@ import {
   type TranscribedAudio,
 } from "../store/patientStore";
 
-const API_BASE = "http://localhost:8000";
+const API_BASE =
+  (typeof process !== "undefined" && process.env?.EXPO_PUBLIC_API_URL) ||
+  "http://localhost:8080";
 
 export interface MobileIntakePayload {
   submittedAt: string;

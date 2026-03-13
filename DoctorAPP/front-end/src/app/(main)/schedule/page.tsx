@@ -5,8 +5,8 @@ import {
   ArrowRight,
 } from "lucide-react";
 import Link from "next/link";
-import { fetchPatients } from "@/lib/api";
-import type { PatientRecord } from "@/lib/types";
+import { fetchPatients, fetchAppointmentsByDate } from "@/lib/api";
+import type { PatientRecord, AppointmentRecord } from "@/lib/types";
 import { AnimatedRow, AnimatedSidebar } from "./_components/AnimatedScheduleRows";
 
 /* ── Appointment data ── */
@@ -29,6 +29,7 @@ const dotColor: Record<DotVariant, string> = {
 };
 
 interface ScheduleEntry {
+  id: string;
   time: string;
   name: string;
   type: string;
@@ -36,36 +37,56 @@ interface ScheduleEntry {
   dot: DotVariant;
   highlighted?: boolean;
   muted?: boolean;
+  patientId: string | null;
 }
 
-const scheduleEntries: ScheduleEntry[] = [
-  { time: "8:30 AM", name: "Amara Osei", type: "New Patient", status: "In Progress", dot: "purple", highlighted: true },
-  { time: "10:30 AM", name: "David Chen", type: "Lab Review", status: "Confirmed", dot: "lilac" },
-  { time: "11:45 AM", name: "Maria Santos", type: "Consultation", status: "Confirmed", dot: "purple" },
-  { time: "2:00 PM", name: "Elijah Brooks", type: "Follow-up", status: "Confirmed", dot: "pink" },
-  { time: "3:30 PM", name: "Priya Sharma", type: "Referral", status: "Pending", dot: "lavender", muted: true },
-];
+const DOT_VARIANTS: DotVariant[] = ["purple", "pink", "lilac", "lavender"];
 
-function resolveAppointments(patients: PatientRecord[]) {
-  const nameToId = new Map(patients.map((p) => [p.name.toLowerCase(), p.id]));
-  return scheduleEntries.map((entry) => ({
-    ...entry,
-    patientId: nameToId.get(entry.name.toLowerCase()) ?? null,
+function mapStatus(backendStatus: string): ApptStatus {
+  if (backendStatus === "completed" || backendStatus === "in_progress") return "In Progress";
+  if (backendStatus === "scheduled") return "Confirmed";
+  return "Pending";
+}
+
+function mapAppointmentsToEntries(
+  appointments: AppointmentRecord[],
+  patients: PatientRecord[],
+): ScheduleEntry[] {
+  const idToName = new Map(patients.map((p) => [p.id, p.name]));
+  return appointments.map((appt, i) => ({
+    id: appt.id,
+    time: appt.time || "TBD",
+    name: idToName.get(appt.patient_id) ?? "Unknown Patient",
+    type: appt.status === "completed" ? "Follow-up" : "Consultation",
+    status: mapStatus(appt.status),
+    dot: DOT_VARIANTS[i % DOT_VARIANTS.length],
+    highlighted: i === 0,
+    muted: appt.status === "pending",
+    patientId: appt.patient_id,
   }));
 }
 
-const summaryStats = [
-  { num: "5", label: "Total", color: "text-[var(--purple-primary)]" },
-  { num: "3", label: "Confirmed", color: "text-[var(--purple-primary)]" },
-  { num: "1", label: "Pending", color: "text-[var(--purple-accent)]" },
-];
+function deriveSummary(entries: ScheduleEntry[]) {
+  const total = entries.length;
+  const confirmed = entries.filter((e) => e.status === "Confirmed").length;
+  const pending = entries.filter((e) => e.status === "Pending").length;
+  return [
+    { num: String(total), label: "Total", color: "text-[var(--purple-primary)]" },
+    { num: String(confirmed), label: "Confirmed", color: "text-[var(--purple-primary)]" },
+    { num: String(pending), label: "Pending", color: "text-[var(--purple-accent)]" },
+  ];
+}
 
-const typeBreakdown = [
-  { label: "Follow-ups", value: "1" },
-  { label: "New Patients", value: "1" },
-  { label: "Lab Reviews", value: "1" },
-  { label: "Consultations", value: "1" },
-];
+function deriveTypeBreakdown(entries: ScheduleEntry[]) {
+  const counts: Record<string, number> = {};
+  for (const e of entries) {
+    counts[e.type] = (counts[e.type] || 0) + 1;
+  }
+  return Object.entries(counts).map(([label, value]) => ({
+    label: label.endsWith("s") ? label : label + "s",
+    value: String(value),
+  }));
+}
 
 /* ── Sub-components ── */
 
@@ -93,11 +114,28 @@ function Divider({ strong }: { strong?: boolean }) {
 /* ── Page ── */
 
 export default async function SchedulePage() {
-  const patients = await fetchPatients().catch(() => [] as PatientRecord[]);
-  const appointments = resolveAppointments(patients);
+  const now = new Date();
+  const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+  const [patients, rawAppointments] = await Promise.all([
+    fetchPatients().catch(() => [] as PatientRecord[]),
+    fetchAppointmentsByDate(today).catch(() => [] as AppointmentRecord[]),
+  ]);
+
+  const appointments = rawAppointments.length > 0
+    ? mapAppointmentsToEntries(rawAppointments, patients)
+    : [];
+
+  const summaryStats = deriveSummary(appointments);
+  const typeBreakdown = deriveTypeBreakdown(appointments);
 
   // Find the first patient with a real ID for "Next Up"
   const nextUp = appointments.find((a) => a.patientId);
+
+  const dateLabel = new Date().toLocaleDateString("en-US", {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+  });
 
   return (
     <div className="flex min-h-0 flex-1 gap-6 p-7">
@@ -107,10 +145,10 @@ export default async function SchedulePage() {
           <div className="flex items-center justify-between">
             <div className="flex flex-col gap-0.5">
               <h1 className="text-[22px] font-medium tracking-[-0.1px] text-[var(--text-primary)]">
-                Tuesday, March 10
+                {dateLabel}
               </h1>
               <span className="text-[13px] font-medium tracking-[-0.1px] text-[var(--text-nav)]">
-                5 appointments today
+                {appointments.length} appointment{appointments.length !== 1 ? "s" : ""} today
               </span>
             </div>
 
@@ -186,7 +224,7 @@ export default async function SchedulePage() {
               );
 
               return (
-                <AnimatedRow key={appt.name} index={i}>
+                <AnimatedRow key={appt.id} index={i}>
                   {appt.patientId ? (
                     <Link href={`/dashboard/${appt.patientId}`} className={`${rowClass} cursor-pointer`}>
                       {rowContent}
@@ -214,10 +252,10 @@ export default async function SchedulePage() {
 
             <div className="flex flex-col gap-2">
               <span className="text-[22px] font-medium tracking-[-0.1px] text-[var(--text-primary)]">
-                Amara Osei
+                {nextUp?.name ?? "No upcoming"}
               </span>
               <span className="text-[14px] font-medium tracking-[-0.1px] text-[var(--text-nav)]">
-                8:30 AM &nbsp;&middot;&nbsp; New Patient
+                {nextUp ? `${nextUp.time} \u00B7 ${nextUp.type}` : "No appointments today"}
               </span>
             </div>
 

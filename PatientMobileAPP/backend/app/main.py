@@ -24,6 +24,7 @@ from app.labels import router as labels_router
 from app.prep import router as prep_router
 from app.doctorapp_client import close_client as _close_doctorapp_client
 from app.triage import router as triage_router
+from app.profile import router as profile_router
 from app.medgemma import call_medgemma
 from app.parser import parse_translate_response
 from app.prompt import build_messages
@@ -52,6 +53,7 @@ app.include_router(check_in_router)
 app.include_router(labels_router)
 app.include_router(prep_router)
 app.include_router(triage_router)
+app.include_router(profile_router)
 
 
 @app.exception_handler(RequestValidationError)

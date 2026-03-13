@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
+  ActivityIndicator,
   Dimensions,
   Modal,
   Pressable,
@@ -14,6 +15,11 @@ import { LinearGradient } from "expo-linear-gradient";
 import { AppIcon } from "../../components/AppIcon";
 import { Colors } from "../../constants/Colors";
 import { Fonts } from "../../constants/Typography";
+import {
+  listCampaigns,
+  createContribution,
+  type CampaignResponse,
+} from "../../services/api";
 
 const SCREEN_BG = "#F6F8F6";
 const CARD_BG = "#FFFFFF";
@@ -36,18 +42,29 @@ interface CommunityRequest {
   daysAgo: number;
 }
 
-const REQUESTS: CommunityRequest[] = [
-  { id: "r01", title: "Iron supplements for anemia recovery", description: "I've been diagnosed with iron-deficiency anemia and need daily supplements to rebuild my hemoglobin levels before my next check-up.", aboutMe: "I'm a 28-year-old nursing student and single mom from Atlanta. I was diagnosed with severe anemia after months of fatigue that I kept dismissing as stress.", category: "Supplements", requester: "Amara J.", initials: "AJ", amount: 28, raised: 18, daysAgo: 3 },
-  { id: "r02", title: "Heating pad for endometriosis flare", description: "Currently in a severe endo flare and the heat therapy is the only thing keeping me functional enough to work.", aboutMe: "I'm a 32-year-old graphic designer living with stage III endometriosis. It took 7 years to get my diagnosis. I advocate for other women going through the same struggle.", category: "Pain Mgmt", requester: "Keisha R.", initials: "KR", amount: 35, raised: 35, daysAgo: 1 },
-  { id: "r03", title: "Prenatal vitamins (3-month supply)", description: "My OB recommended these specific prenatals but they're not covered by my insurance plan.", aboutMe: "I'm expecting my first child and want to give her the best start. I work part-time as a teacher's aide while finishing my degree.", category: "Supplements", requester: "Maria L.", initials: "ML", amount: 42, raised: 28, daysAgo: 5 },
-  { id: "r04", title: "Blood glucose test strips", description: "I need to monitor my glucose levels 4x daily as directed by my endocrinologist, but the strips add up fast.", aboutMe: "I'm a 45-year-old grandmother managing Type 2 diabetes. I was diagnosed two years ago and I'm working hard to get my A1C under control.", category: "Monitoring", requester: "Denise W.", initials: "DW", amount: 22, raised: 12, daysAgo: 2 },
-  { id: "r05", title: "Compression socks for DVT prevention", description: "Post-surgery requirement to prevent blood clots during recovery. My surgeon says I need medical-grade compression.", aboutMe: "I'm a 38-year-old fitness instructor who just had knee surgery. The irony isn't lost on me - I help people stay healthy but need help recovering myself.", category: "Recovery", requester: "Tanya B.", initials: "TB", amount: 18, raised: 18, daysAgo: 7 },
-  { id: "r06", title: "Post-surgical wound care kit", description: "I need sterile bandages, antiseptic, and wound closure strips for at-home care after my laparoscopic procedure.", aboutMe: "I'm a 29-year-old social worker recovering from a laparoscopic procedure to remove ovarian cysts. Every day I help others - now I'm asking for a little help too.", category: "Recovery", requester: "Jasmine C.", initials: "JC", amount: 55, raised: 30, daysAgo: 4 },
-  { id: "r07", title: "Migraine cold therapy cap", description: "I suffer from chronic migraines 3-4 times a week and cold compression is one of the few things that provides relief.", aboutMe: "I'm a 34-year-old freelance writer dealing with chronic migraines since my teens. Some days I can barely look at a screen, which makes working incredibly challenging.", category: "Pain Mgmt", requester: "Lena P.", initials: "LP", amount: 32, raised: 8, daysAgo: 1 },
-  { id: "r08", title: "Fiber supplement for GI management", description: "My gastroenterologist recommended daily fiber supplementation to manage IBS symptoms and reduce flare frequency.", aboutMe: "I'm a 26-year-old barista managing IBS-C. It affects every part of my life, from what I eat to whether I can make it through a full shift.", category: "Supplements", requester: "Fatima N.", initials: "FN", amount: 15, raised: 15, daysAgo: 6 },
-  { id: "r09", title: "Pulse oximeter for home monitoring", description: "My pulmonologist wants me tracking my oxygen saturation daily at home following my asthma hospitalization.", aboutMe: "I'm a 41-year-old mom of three with severe asthma. After a scary ER visit last month, my doctor wants me monitoring at home so we can catch drops early.", category: "Monitoring", requester: "Sharon K.", initials: "SK", amount: 38, raised: 22, daysAgo: 2 },
-  { id: "r10", title: "Anti-nausea wristbands (pair)", description: "I'm dealing with severe nausea from my medication regimen and these acupressure bands help without adding more meds.", aboutMe: "I'm a 30-year-old artist going through treatment that leaves me nauseous most days. I'd rather not add another prescription to the pile.", category: "Pain Mgmt", requester: "Nina T.", initials: "NT", amount: 12, raised: 4, daysAgo: 1 },
-];
+function campaignToRequest(c: CampaignResponse & { total_raised?: number }): CommunityRequest {
+  const created = new Date(c.created_at);
+  const now = new Date();
+  const daysAgo = Math.max(0, Math.floor((now.getTime() - created.getTime()) / 86400000));
+  const initials = c.owner_identifier
+    .split(/\s+/)
+    .map((w) => w[0])
+    .join("")
+    .toUpperCase()
+    .slice(0, 2) || "??";
+  return {
+    id: c.id,
+    title: c.title,
+    description: c.description,
+    aboutMe: c.about_me ?? "",
+    category: c.category ?? "Other",
+    requester: c.owner_identifier,
+    initials,
+    amount: c.goal_amount,
+    raised: (c as { total_raised?: number }).total_raised ?? 0,
+    daysAgo,
+  };
+}
 
 type CategoryIconName = Parameters<typeof AppIcon>[0]["name"];
 
@@ -161,10 +178,12 @@ function RequestCard({
   item,
   index,
   shouldAnimate,
+  onContribute,
 }: {
   item: CommunityRequest;
   index: number;
   shouldAnimate: boolean;
+  onContribute: () => void;
 }) {
   const pct = Math.round((item.raised / item.amount) * 100);
   const fulfilled = item.raised >= item.amount;
@@ -222,7 +241,7 @@ function RequestCard({
           </View>
 
           {!fulfilled && (
-            <Pressable style={styles.donateBtn}>
+            <Pressable style={styles.donateBtn} onPress={onContribute}>
               <AppIcon name="heart" size={14} color="#fff" />
               <Text style={styles.donateBtnText}>Contribute</Text>
             </Pressable>
@@ -244,10 +263,42 @@ function RequestCard({
 export default function CommunityScreen() {
   const hasAnimated = useRef(false);
   const shouldAnimateOnMount = !hasAnimated.current;
+  const [requests, setRequests] = useState<CommunityRequest[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     hasAnimated.current = true;
   }, []);
+
+  const loadCampaigns = useCallback(async () => {
+    try {
+      const campaigns = await listCampaigns();
+      setRequests(campaigns.map((c) => campaignToRequest(c)));
+    } catch {
+      /* backend unavailable */
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadCampaigns();
+  }, [loadCampaigns]);
+
+  const handleContribute = useCallback(
+    async (campaignId: string) => {
+      try {
+        await createContribution(campaignId, {
+          contributor_identifier: "anonymous",
+          amount: 5,
+        });
+        await loadCampaigns();
+      } catch {
+        /* handle error silently */
+      }
+    },
+    [loadCampaigns],
+  );
 
   const renderItem = useCallback(
     ({ item, index }: { item: CommunityRequest; index: number }) => (
@@ -255,18 +306,33 @@ export default function CommunityScreen() {
         item={item}
         index={index}
         shouldAnimate={shouldAnimateOnMount}
+        onContribute={() => handleContribute(item.id)}
       />
     ),
-    [shouldAnimateOnMount],
+    [shouldAnimateOnMount, handleContribute],
   );
+
+  if (loading) {
+    return (
+      <View style={[styles.container, { justifyContent: "center", alignItems: "center" }]}>
+        <ActivityIndicator size="large" color={Colors.brand} />
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
       <FlashList
-        data={REQUESTS}
+        data={requests}
         renderItem={renderItem}
         keyExtractor={(item) => item.id}
+        estimatedItemSize={200}
         contentContainerStyle={styles.listContent}
+        ListEmptyComponent={
+          <View style={{ alignItems: "center", paddingTop: 40 }}>
+            <Text style={styles.headerSub}>No community campaigns yet</Text>
+          </View>
+        }
         ListHeaderComponent={
           <Animated.View
             entering={

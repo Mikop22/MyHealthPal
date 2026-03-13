@@ -57,6 +57,8 @@ def create_campaign(payload: CampaignCreate) -> CampaignResponse:
             "goal_amount": payload.goal_amount,
             "status": "active",
             "deadline": payload.deadline,
+            "category": payload.category,
+            "about_me": payload.about_me,
             "created_at": _utc_now_iso(),
         }
         data["campaigns"].append(campaign)
@@ -64,10 +66,18 @@ def create_campaign(payload: CampaignCreate) -> CampaignResponse:
         return CampaignResponse(**campaign)
 
 
-@router.get("", response_model=list[CampaignResponse])
-def list_campaigns() -> list[CampaignResponse]:
+@router.get("", response_model=list[CampaignDetailResponse])
+def list_campaigns() -> list[CampaignDetailResponse]:
     data = _load_data()
-    return [CampaignResponse(**campaign) for campaign in data["campaigns"]]
+    result = []
+    for campaign in data["campaigns"]:
+        total_raised = sum(
+            contribution["amount"]
+            for contribution in data["contributions"]
+            if contribution["campaign_id"] == campaign["id"]
+        )
+        result.append(CampaignDetailResponse(**campaign, total_raised=total_raised))
+    return result
 
 
 @router.get("/{campaign_id}", response_model=CampaignDetailResponse)
