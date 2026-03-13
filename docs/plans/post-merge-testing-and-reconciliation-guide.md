@@ -188,9 +188,8 @@ DOCTORAPP_BASE_URL=http://localhost:8001
 
 **What needs to happen:**
 - Decide on a port convention. Recommended: DoctorAPP on `8000`, PatientMobileAPP on `8080`.
-- Update `PatientMobileAPP/backend/.env.example` to reflect the correct DoctorAPP URL (e.g., `http://localhost:8000`).
+- Update **both** `PatientMobileAPP/backend/.env.example` (template) **and** `PatientMobileAPP/backend/.env` (runtime) to reflect the correct DoctorAPP URL (e.g., `http://localhost:8000`). The template and runtime file must stay in sync.
 - Update the default in `PatientMobileAPP/backend/app/doctorapp_client.py` to match (or remove the default and require explicit configuration).
-- Ensure `DOCTORAPP_BASE_URL` is set in `PatientMobileAPP/backend/.env`.
 - Update the mobile frontend's `EXPO_PUBLIC_API_URL` to point to the PatientMobileAPP backend port (e.g., `http://localhost:8080`).
 
 ---
@@ -237,13 +236,13 @@ DOCTORAPP_BASE_URL=http://localhost:8001
 
 ### Issue 5 — Hardcoded URL in apiSync.ts
 
-**Problem:** `PatientMobileAPP/frontend/mobile-app/services/apiSync.ts` hardcodes `http://localhost:8000` without environment variable support, unlike `api.ts` which reads `EXPO_PUBLIC_API_URL`.
+**Problem:** `PatientMobileAPP/frontend/mobile-app/services/apiSync.ts` hardcodes `http://localhost:8000` without environment variable support, unlike `api.ts` which reads `EXPO_PUBLIC_API_URL`. If you follow the recommended port convention (PatientMobileAPP backend on `8080`), this hardcoded URL would point to DoctorAPP instead of the PatientMobileAPP backend.
 
 ```typescript
-// apiSync.ts — hardcoded
+// apiSync.ts — hardcoded, will point to the WRONG service if backends run on different ports
 const API_BASE = "http://localhost:8000";
 
-// api.ts — configurable
+// api.ts — configurable, can be set to the correct backend port
 const API_BASE =
     (typeof process !== "undefined" && process.env?.EXPO_PUBLIC_API_URL) ||
     "http://localhost:8000";
