@@ -92,32 +92,32 @@ export function GlassCanvas() {
         style={StyleSheet.absoluteFill}
       />
 
-      {/* Teal blob */}
+      {/* Blob 1 — aligned with DoctorAPP .blob-1 (#B8E0B0) */}
       <Animated.View
         style={[
           styles.blob,
-          { width: 520, height: 520, borderRadius: 260, backgroundColor: Colors.canvas.teal },
-          blurStyle(130),
+          { width: 520, height: 520, borderRadius: 260, backgroundColor: Colors.canvas.blob1, opacity: 0.5 },
+          blurStyle(120),
           b1Style,
         ]}
       />
 
-      {/* Lavender blob */}
+      {/* Blob 2 — aligned with DoctorAPP .blob-2 (#A8D8C8) */}
       <Animated.View
         style={[
           styles.blob,
-          { width: 420, height: 420, borderRadius: 210, backgroundColor: Colors.canvas.lavender },
-          blurStyle(110),
+          { width: 460, height: 460, borderRadius: 230, backgroundColor: Colors.canvas.blob2, opacity: 0.5 },
+          blurStyle(130),
           b2Style,
         ]}
       />
 
-      {/* Gold blob */}
+      {/* Blob 3 — aligned with DoctorAPP .blob-3 (#C0E8B8) */}
       <Animated.View
         style={[
           styles.blob,
-          { width: 320, height: 320, borderRadius: 160, backgroundColor: Colors.canvas.gold },
-          blurStyle(90),
+          { width: 440, height: 440, borderRadius: 220, backgroundColor: Colors.canvas.blob3, opacity: 0.5 },
+          blurStyle(120),
           b3Style,
         ]}
       />

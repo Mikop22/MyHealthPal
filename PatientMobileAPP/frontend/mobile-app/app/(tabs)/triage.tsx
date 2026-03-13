@@ -272,7 +272,7 @@ export default function TriageScreen() {
             <TextInput
               style={styles.textInput}
               placeholder={PLACEHOLDER_TEXT}
-              placeholderTextColor={TEXT_TERTIARY}
+              placeholderTextColor={Colors.text.muted}
               multiline
               numberOfLines={5}
               textAlignVertical="top"
@@ -291,32 +291,37 @@ export default function TriageScreen() {
               ]}
               disabled={!inputText.trim()}
             >
-              <AppIcon name="sparkles" size={18} color="#fff" />
-              <Text style={styles.primaryBtnText}>Analyze with MedGemma</Text>
+              <LinearGradient
+                colors={inputText.trim() ? [Colors.brandLight, Colors.brand] : ["rgba(200, 230, 210, 0.4)", "rgba(200, 230, 210, 0.4)"]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={styles.analyzeBtnGradient}
+              >
+                <AppIcon name="sparkles" size={20} color={inputText.trim() ? "#fff" : Colors.text.muted} />
+                <Text style={[styles.analyzeBtnText, !inputText.trim() && styles.analyzeBtnTextDisabled]}>
+                  Analyze with MedGemma
+                </Text>
+              </LinearGradient>
             </Pressable>
           )}
 
           {hasCards && (
             <Pressable onPress={handleReset} style={styles.resetBtn}>
-              <AppIcon name="refresh" size={16} color={TEXT_SECONDARY} />
+              <AppIcon name="refresh" size={16} color={Colors.text.secondary} />
               <Text style={styles.resetBtnText}>Start over</Text>
             </Pressable>
           )}
 
           {loading && (
-            <SurfaceCard style={styles.feedbackCard}>
-              <ActivityIndicator size="large" color={Colors.accent} />
-              <Text style={styles.loadingText}>
-                MedGemma is analyzing your symptoms...
-              </Text>
-            </SurfaceCard>
+            <View style={styles.loadingWrap}>
+              <ActivityIndicator size="large" color={Colors.brand} />
+              <Text style={styles.loadingText}>MedGemma is analyzing your symptoms…</Text>
+            </View>
           )}
 
           {error && !loading && (
-            <SurfaceCard style={styles.feedbackCard}>
-              <View style={styles.errorIconWrap}>
-                <AppIcon name="alert-circle" size={24} color={Colors.accent} />
-              </View>
+            <View style={styles.errorWrap}>
+              <AppIcon name="alert-circle" size={32} color={Colors.semantic.error} />
               <Text style={styles.errorText}>{error}</Text>
               <Pressable onPress={handleAnalyze} style={styles.retryBtn}>
                 <Text style={styles.retryBtnText}>Retry</Text>
@@ -427,13 +432,7 @@ export default function TriageScreen() {
               ) : (
                 <SurfaceCard style={styles.doneCard}>
                   <View style={styles.doneInner}>
-                    <View style={styles.doneIconWrap}>
-                      <AppIcon
-                        name="checkmark-done-circle"
-                        size={36}
-                        color={Colors.accent}
-                      />
-                    </View>
+                    <AppIcon name="checkmark-done-circle" size={44} color={Colors.semantic.success} />
                     <Text style={styles.doneTitle}>All Symptoms Reviewed</Text>
                     <Text style={styles.doneSub}>
                       {symptoms.length} symptoms processed and saved
@@ -452,8 +451,13 @@ export default function TriageScreen() {
                   }}
                   style={[styles.secondaryBtn, styles.actionBtn]}
                 >
-                  <AppIcon name="close" size={18} color={TEXT_PRIMARY} />
-                  <Text style={styles.secondaryBtnText}>Dismiss</Text>
+                  <LinearGradient
+                    colors={["rgba(240, 253, 244, 0.4)", "rgba(220, 252, 231, 0.2)"]}
+                    style={[styles.actionBtnGradient, styles.dismissBtnBorder]}
+                  >
+                    <AppIcon name="close" size={20} color={Colors.text.secondary} />
+                    <Text style={styles.dismissBtnText}>Dismiss</Text>
+                  </LinearGradient>
                 </Pressable>
                 <Pressable
                   onPress={() => {
@@ -483,9 +487,12 @@ export default function TriageScreen() {
           {LONDON_CLINICS.map((clinic) => (
             <Pressable key={clinic.name} style={styles.clinicCard}>
               <View style={styles.clinicRow}>
-                <View style={styles.clinicIconPill}>
-                  <AppIcon name="location" size={20} color={Colors.accent} />
-                </View>
+                <LinearGradient
+                  colors={["rgba(74,222,128,0.25)", "rgba(34,197,94,0.12)"]}
+                  style={styles.clinicIconPill}
+                >
+                  <AppIcon name="location" size={20} color={Colors.brand} />
+                </LinearGradient>
                 <View style={styles.clinicInfo}>
                   <Text style={styles.clinicName}>{clinic.name}</Text>
                   <Text style={styles.clinicAddr}>{clinic.address}</Text>
@@ -535,14 +542,13 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 24,
     fontFamily: Fonts.bold,
-    color: TEXT_PRIMARY,
-    letterSpacing: -0.4,
+    color: Colors.text.primary,
     marginBottom: 4,
   },
   sectionSub: {
     fontSize: 14,
     fontFamily: Fonts.regular,
-    color: TEXT_SECONDARY,
+    color: Colors.text.muted,
     marginBottom: 18,
   },
   surfaceCard: {
@@ -561,9 +567,10 @@ const styles = StyleSheet.create({
   },
   textInput: {
     fontSize: 15,
-    lineHeight: 23,
-    color: TEXT_PRIMARY,
-    minHeight: 124,
+    lineHeight: 22,
+    color: Colors.text.primary,
+    padding: 12,
+    minHeight: 120,
     fontFamily: Fonts.regular,
   },
   primaryBtn: {
@@ -611,6 +618,8 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.semiBold,
     color: TEXT_PRIMARY,
   },
+  analyzeBtnText: { fontSize: 16, fontWeight: "700", color: "#fff" },
+  analyzeBtnTextDisabled: { color: Colors.text.muted },
   resetBtn: {
     flexDirection: "row",
     alignItems: "center",
@@ -650,10 +659,19 @@ const styles = StyleSheet.create({
     textAlign: "center",
     lineHeight: 21,
   },
+  resetBtnText: { fontSize: 14, fontWeight: "600", color: Colors.text.secondary },
+
+  /* ── Loading ── */
+  loadingWrap: { alignItems: "center", paddingVertical: 32, gap: 14 },
+  loadingText: { fontSize: 15, fontWeight: "500", color: Colors.text.muted },
+
+  /* ── Error ── */
+  errorWrap: { alignItems: "center", paddingVertical: 24, gap: 10 },
+  errorText: { fontSize: 14, color: Colors.text.body, textAlign: "center", paddingHorizontal: 16 },
   retryBtn: {
-    backgroundColor: Colors.accent,
-    paddingHorizontal: 22,
-    paddingVertical: 12,
+    backgroundColor: Colors.brand,
+    paddingHorizontal: 24,
+    paddingVertical: 10,
     borderRadius: 14,
     marginTop: 2,
     shadowColor: Colors.accent,
@@ -693,54 +711,39 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   severityBadge: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    backgroundColor: Colors.accent,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: Colors.brand,
     alignItems: "center",
     justifyContent: "center",
   },
-  severityNum: {
-    color: "#fff",
-    fontFamily: Fonts.bold,
-    fontSize: 15,
-  },
-  severityLabel: {
-    fontSize: 13,
-    fontFamily: Fonts.semiBold,
-    color: TEXT_SECONDARY,
-  },
+  severityNum: { color: "#fff", fontWeight: "800", fontSize: 15 },
+  severityLabel: { fontSize: 13, fontWeight: "600", color: Colors.text.muted },
   symptomLabel: {
-    fontSize: 18,
-    fontFamily: Fonts.semiBold,
-    lineHeight: 25,
-    color: TEXT_PRIMARY,
-    marginBottom: 8,
-    letterSpacing: -0.2,
+    fontSize: 17,
+    fontWeight: "600",
+    lineHeight: 24,
+    color: Colors.text.primary,
+    marginBottom: 6,
   },
   symptomExplanation: {
     fontSize: 14,
-    lineHeight: 21,
-    color: TEXT_SECONDARY,
-    marginBottom: 14,
-  },
-  capsuleWrap: {
-    flexDirection: "row",
-    gap: 5,
+    lineHeight: 20,
+    color: Colors.text.secondary,
+    marginBottom: 12,
   },
   capsuleSegment: {
     flex: 1,
     height: 8,
     borderRadius: 999,
     overflow: "hidden",
-    backgroundColor: "#E7ECE8",
+    backgroundColor: "rgba(200, 230, 210, 0.4)",
   },
-  capsuleSegmentInner: {
-    flex: 1,
-  },
-  capsuleSegmentEmpty: {
-    backgroundColor: "#E7ECE8",
-  },
+  capsuleSegmentInner: { flex: 1 },
+  capsuleSegmentEmpty: { backgroundColor: "rgba(200, 230, 210, 0.4)" },
+
+  /* Swipe overlays */
   swipeBadge: {
     position: "absolute",
     top: 16,
@@ -752,21 +755,14 @@ const styles = StyleSheet.create({
     paddingVertical: 7,
     borderRadius: 999,
   },
-  confirmBadge: {
-    right: 16,
-    backgroundColor: Colors.accent,
-  },
-  dismissBadge: {
-    left: 16,
-    backgroundColor: "#344054",
-  },
-  swipeBadgeText: {
-    color: "#fff",
-    fontSize: 12,
-    fontFamily: Fonts.bold,
-    letterSpacing: 0.8,
-  },
-  btnRow: {
+  confirmBadge: { right: 16, backgroundColor: Colors.brand },
+  dismissBadge: { left: 16, backgroundColor: Colors.text.secondary },
+  swipeBadgeText: { color: "#fff", fontSize: 12, fontWeight: "700", letterSpacing: 0.8 },
+
+  /* Button fallbacks */
+  btnRow: { flexDirection: "row", gap: 12, justifyContent: "center" },
+  actionBtn: { flex: 1, borderRadius: 16, overflow: "hidden" },
+  actionBtnGradient: {
     flexDirection: "row",
     gap: 12,
     justifyContent: "center",
@@ -829,6 +825,20 @@ const styles = StyleSheet.create({
     shadowRadius: 24,
     elevation: 3,
   },
+  dismissBtnBorder: { borderWidth: 1.5, borderColor: "rgba(0,0,0,0.1)" },
+  dismissBtnText: { fontSize: 15, fontWeight: "700", color: Colors.text.secondary },
+  confirmBtnText: { fontSize: 15, fontWeight: "700", color: "#fff" },
+
+  /* Done state */
+  doneCard: { padding: 0 },
+  doneCardAccent: { borderWidth: 1.5, borderColor: "rgba(0, 0, 0, 0.15)" },
+  doneInner: { alignItems: "center", padding: 32 },
+  doneTitle: { fontSize: 18, fontWeight: "700", color: Colors.text.primary, marginTop: 12 },
+  doneSub: { fontSize: 14, color: Colors.text.muted, marginTop: 4 },
+
+  /* ── Clinics ── */
+  mapContainer: { marginBottom: 14, borderRadius: 20, overflow: "hidden" },
+  clinicCard: { marginBottom: 10, padding: 0 },
   clinicRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -842,26 +852,14 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#F4F7F5",
+    borderWidth: 1,
+    borderColor: "rgba(68, 173, 79, 0.2)",
   },
-  clinicInfo: {
-    flex: 1,
-  },
-  clinicName: {
-    fontSize: 15,
-    fontFamily: Fonts.semiBold,
-    color: TEXT_PRIMARY,
-    letterSpacing: -0.1,
-  },
-  clinicAddr: {
-    fontSize: 13,
-    fontFamily: Fonts.regular,
-    color: TEXT_SECONDARY,
-    marginTop: 3,
-    lineHeight: 18,
-  },
+  clinicInfo: { flex: 1 },
+  clinicName: { fontSize: 15, fontWeight: "600", color: Colors.text.primary },
+  clinicAddr: { fontSize: 13, color: Colors.text.muted, marginTop: 2 },
   distBadge: {
-    backgroundColor: "rgba(34, 197, 94, 0.10)",
+    backgroundColor: "rgba(68, 173, 79, 0.08)",
     paddingHorizontal: 10,
     paddingVertical: 6,
     borderRadius: 999,
@@ -871,4 +869,5 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.bold,
     color: Colors.accent,
   },
+  distText: { fontSize: 12, fontWeight: "700", color: Colors.brand },
 });

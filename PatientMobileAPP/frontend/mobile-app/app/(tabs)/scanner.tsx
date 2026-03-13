@@ -200,24 +200,22 @@ export default function ScannerScreen() {
             <View style={styles.handle} />
 
             <View style={styles.headerRow}>
-              <View style={styles.headerIconWrap}>
-                <AppIcon
-                  name={error ? "alert-circle" : "checkmark-circle"}
-                  size={22}
-                  color={error ? TEXT_SECONDARY : Colors.accent}
-                />
-              </View>
+              <AppIcon
+                name={error ? "alert-circle" : "checkmark-circle"}
+                size={28}
+                color={error ? Colors.text.secondary : Colors.brand}
+              />
               <Text style={styles.headerTitle}>
                 {loading ? "Analyzing..." : error ? "Scan Failed" : "Scan Complete"}
               </Text>
               <Pressable onPress={handleDismiss} style={styles.closeBtn}>
-                <AppIcon name="close" size={18} color={TEXT_PRIMARY} />
+                <AppIcon name="close" size={20} color={Colors.text.secondary} />
               </Pressable>
             </View>
 
             {loading && (
               <View style={styles.loadingWrap}>
-                <ActivityIndicator size="large" color={Colors.accent} />
+                <ActivityIndicator size="large" color={Colors.brand} />
                 <Text style={styles.loadingText}>
                   MedGemma is reading your document...
                 </Text>
@@ -226,9 +224,7 @@ export default function ScannerScreen() {
 
             {error && !loading && (
               <View style={styles.errorWrap}>
-                <View style={styles.headerIconWrap}>
-                  <AppIcon name="alert-circle" size={22} color={Colors.accent} />
-                </View>
+                <AppIcon name="alert-circle" size={40} color={Colors.text.muted} />
                 <Text style={styles.errorText}>{error}</Text>
                 <Pressable onPress={handleRetry} style={styles.retryBtn}>
                   <AppIcon name="refresh" size={16} color="#fff" />
@@ -248,13 +244,12 @@ export default function ScannerScreen() {
                   const icons = ["medical", "alert-circle", "fitness"] as const;
                   return (
                     <View key={i} style={styles.bulletRow}>
-                      <View style={styles.bulletIconWrap}>
-                        <AppIcon
-                          name={icons[i % icons.length]}
-                          size={18}
-                          color={Colors.accent}
-                        />
-                      </View>
+                      <AppIcon
+                        name={icons[i % icons.length]}
+                        size={20}
+                        color={Colors.text.secondary}
+                        style={styles.bulletIcon}
+                      />
                       <Text style={styles.bulletText}>{bullet}</Text>
                     </View>
                   );
@@ -393,8 +388,8 @@ const styles = StyleSheet.create({
   handle: {
     width: 42,
     height: 4,
-    borderRadius: 999,
-    backgroundColor: "#D0D5DD",
+    borderRadius: 2,
+    backgroundColor: "rgba(200, 230, 210, 0.5)",
     alignSelf: "center",
     marginBottom: 18,
   },
@@ -415,15 +410,14 @@ const styles = StyleSheet.create({
     flex: 1,
     marginLeft: 12,
     fontSize: 22,
-    fontFamily: Fonts.bold,
-    color: TEXT_PRIMARY,
-    letterSpacing: -0.4,
+    fontWeight: "700",
+    color: Colors.text.primary,
   },
   closeBtn: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    backgroundColor: "#F2F4F7",
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: "rgba(200, 230, 210, 0.3)",
     alignItems: "center",
     justifyContent: "center",
   },
@@ -434,9 +428,8 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     fontSize: 15,
-    fontFamily: Fonts.medium,
-    color: TEXT_SECONDARY,
-    textAlign: "center",
+    fontWeight: "500",
+    color: Colors.text.secondary,
   },
   errorWrap: {
     alignItems: "center",
@@ -445,8 +438,7 @@ const styles = StyleSheet.create({
   },
   errorText: {
     fontSize: 15,
-    fontFamily: Fonts.regular,
-    color: TEXT_PRIMARY,
+    color: Colors.text.secondary,
     textAlign: "center",
     lineHeight: 22,
     paddingHorizontal: 12,
@@ -454,8 +446,8 @@ const styles = StyleSheet.create({
   retryBtn: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
-    backgroundColor: Colors.accent,
+    gap: 6,
+    backgroundColor: Colors.brand,
     paddingHorizontal: 24,
     paddingVertical: 14,
     borderRadius: 16,
@@ -475,9 +467,9 @@ const styles = StyleSheet.create({
     flexGrow: 0,
   },
   sectionLabel: {
-    fontSize: 11,
-    fontFamily: Fonts.bold,
-    color: TEXT_SECONDARY,
+    fontSize: 12,
+    fontWeight: "700",
+    color: Colors.text.secondary,
     textTransform: "uppercase",
     letterSpacing: 1.3,
     marginBottom: 14,
@@ -498,13 +490,12 @@ const styles = StyleSheet.create({
   },
   bulletText: {
     flex: 1,
-    fontSize: 15,
-    lineHeight: 23,
-    color: TEXT_PRIMARY,
-    fontFamily: Fonts.regular,
+    fontSize: 16,
+    lineHeight: 24,
+    color: Colors.text.primary,
   },
   swapCard: {
-    backgroundColor: Colors.accent,
+    backgroundColor: Colors.brand,
     borderRadius: 20,
     padding: 20,
     marginTop: 10,

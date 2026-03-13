@@ -96,10 +96,24 @@ export default function TabsLayout() {
           backgroundColor: "transparent",
         },
         tabBarStyle: {
+<<<<<<< HEAD
           backgroundColor: "#FFFFFF",
           borderTopWidth: StyleSheet.hairlineWidth,
           borderTopColor: "rgba(15, 23, 42, 0.10)",
           height: 75 + insets.bottom,
+=======
+          backgroundColor:
+            Platform.OS === "web" ? "rgba(255,255,255,0.06)" : "transparent",
+          borderTopColor: Colors.tabBar.border,
+          borderTopWidth: 1,
+          ...(Platform.OS === "web"
+            ? ({
+              backdropFilter: "blur(20px) saturate(120%)",
+              WebkitBackdropFilter: "blur(20px) saturate(120%)",
+            } as Record<string, string>)
+            : {}),
+          height: Platform.OS === "web" ? 68 : 72,
+>>>>>>> 48bb07f9ca3b8fffa3be953e30da10c96a084e3b
           paddingTop: 8,
           paddingBottom: insets.bottom,
           shadowColor: "#0F172A",
@@ -114,6 +128,25 @@ export default function TabsLayout() {
           paddingTop: 2,
           paddingBottom: 2,
         },
+<<<<<<< HEAD
+=======
+        tabBarLabelStyle: {
+          fontSize: 11,
+          fontWeight: "600",
+          letterSpacing: 0.2,
+        },
+        tabBarBackground: () =>
+          Platform.OS !== "web" ? (
+            <View style={styles.tabBarBackground}>
+              <BlurView
+                intensity={54}
+                tint="light"
+                style={{ position: "absolute", inset: 0 } as never}
+              />
+              <View style={styles.tabBarOverlay} />
+            </View>
+          ) : (null as unknown as React.ReactElement),
+>>>>>>> 48bb07f9ca3b8fffa3be953e30da10c96a084e3b
       }}
     >
       {TABS.map((tab) => (
