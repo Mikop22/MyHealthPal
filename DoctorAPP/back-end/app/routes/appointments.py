@@ -12,7 +12,9 @@ from app.models.prep_episode import PrepEpisode, PrepStatus
 from app.services.email_service import send_appointment_email
 from app.config import settings
 
-# How long an invite token remains valid before it expires
+# How long an invite token remains valid.  Set to 14 days so patients have
+# enough time to complete mobile prep before their appointment, while still
+# limiting the window of exposure if a link is leaked.
 INVITE_TOKEN_TTL_DAYS = 14
 
 router = APIRouter(prefix="/api/v1", tags=["appointments"])

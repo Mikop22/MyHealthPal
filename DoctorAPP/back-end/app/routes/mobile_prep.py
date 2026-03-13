@@ -384,10 +384,11 @@ async def submit_prep(token: str, request: Request, background_tasks: Background
         )
 
         # Persist analysis response and mark ready for review
+        final_status = PrepStatus.ready_for_review.value
         db.prep_episodes.update_one(
             {"invite_token": token},
             {"$set": {
-                "status": PrepStatus.ready_for_review.value,
+                "status": final_status,
                 "analysis_response": analysis.model_dump(),
                 "updated_at": _now_iso(),
             }},
@@ -405,16 +406,17 @@ async def submit_prep(token: str, request: Request, background_tasks: Background
         logger.error("Analysis pipeline failed for token %s: %s", token, exc)
         # Mark status as submitted (analysis failed) so the summary is still
         # available and the prep can be retried or reviewed manually.
+        final_status = PrepStatus.submitted.value
         db.prep_episodes.update_one(
             {"invite_token": token},
             {"$set": {
-                "status": PrepStatus.submitted.value,
+                "status": final_status,
                 "updated_at": _now_iso(),
             }},
         )
 
     return SubmitResponse(
-        status=PrepStatus.analysis_running.value,
+        status=final_status,
         summary_ready=True,
         prep_episode_id=prep["id"],
     )

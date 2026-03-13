@@ -40,6 +40,17 @@ def _build_appointment_email(
         </p>
 """
 
+    if mobile_link:
+        intro_text = ""
+        cta_bg = "#e5e7eb"
+        cta_color = "#334155"
+        cta_label = "Web Form (Fallback)"
+    else:
+        intro_text = "Please complete your patient intake form before your appointment:"
+        cta_bg = "linear-gradient(135deg, #7c3aed, #6d28d9)"
+        cta_color = "#fff"
+        cta_label = "Complete Patient Form"
+
     html = f"""\
     <html>
     <body style="font-family: 'Segoe UI', Arial, sans-serif; background: #f8f8fc; padding: 40px 0;">
@@ -63,13 +74,13 @@ def _build_appointment_email(
         {mobile_section}
 
         <p style="color: #334155; font-size: 16px; line-height: 1.6;">
-          {"" if mobile_link else "Please complete your patient intake form before your appointment:"}
+          {intro_text}
         </p>
 
         <div style="text-align: center; margin: 32px 0;">
           <a href="{form_url}"
-             style="display: inline-block; background: {'#e5e7eb' if mobile_link else 'linear-gradient(135deg, #7c3aed, #6d28d9)'}; color: {'#334155' if mobile_link else '#fff'}; text-decoration: none; padding: 14px 32px; border-radius: 12px; font-size: 16px; font-weight: 600;">
-            {"Web Form (Fallback)" if mobile_link else "Complete Patient Form"}
+             style="display: inline-block; background: {cta_bg}; color: {cta_color}; text-decoration: none; padding: 14px 32px; border-radius: 12px; font-size: 16px; font-weight: 600;">
+            {cta_label}
           </a>
         </div>
 
