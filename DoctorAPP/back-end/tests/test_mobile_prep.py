@@ -10,7 +10,7 @@ in test_intake.py, test_dashboard.py, and test_webhook.py.
 from __future__ import annotations
 
 from copy import deepcopy
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 import pytest
 from fastapi.testclient import TestClient
@@ -443,6 +443,47 @@ class TestSubmitPrep:
         # The last update_one sets status back to submitted on failure.
         last_update = mock_coll.update_one.call_args_list[-1][0][1]["$set"]
         assert last_update["status"] == "submitted"
+
+    def test_analysis_success_sets_ready_for_review_and_persists_results(self):
+        """Deterministically test the successful analysis path with Mongo updates."""
+        doc = {
+            **BASE_PREP_DOC,
+            "status": "in_progress",
+            "checkin_payload": {
+                "raw_text": "Persistent headache",
+                "extracted_symptoms": [],
+                "confirmed_symptoms": [],
+                "dismissed_symptoms": [],
+            },
+        }
+        client, mock_coll = _make_client(prep_doc=doc)
+
+        fake_analysis = {
+            "summary": "Patient reports persistent headache.",
+            "questions": ["When did the headache start?"],
+            "triage": "low",
+        }
+
+        # Mock the analysis pipeline so it succeeds deterministically.
+        with patch("app.routes.mobile_prep.analyze_patient_pipeline", return_value=fake_analysis):
+            resp = client.post(f"/api/v1/mobile-prep/{TOKEN}/submit")
+
+        assert resp.status_code == 200
+        body = resp.json()
+        # On successful analysis, the prep episode should be ready for review.
+        assert body["status"] == "ready_for_review"
+        assert body["summary_ready"] is True
+
+        # The final update on the prep document should record the analysis result
+        # and set the status to ready_for_review.
+        last_prep_update = mock_coll.update_one.call_args_list[-1][0][1]["$set"]
+        assert last_prep_update["status"] == "ready_for_review"
+        assert last_prep_update["analysis_response"] == fake_analysis
+
+        # The linked appointment document should also have its analysis_result updated.
+        appointments_coll = client.app.state.mongo["appointments"]
+        last_appt_update = appointments_coll.update_one.call_args_list[-1][0][1]["$set"]
+        assert last_appt_update["analysis_result"] == fake_analysis
 
 
 # ===========================================================================
