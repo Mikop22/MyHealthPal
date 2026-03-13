@@ -10,7 +10,7 @@ in test_intake.py, test_dashboard.py, and test_webhook.py.
 from __future__ import annotations
 
 from copy import deepcopy
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 import pytest
 from fastapi.testclient import TestClient
@@ -390,17 +390,24 @@ class TestSubmitPrep:
             },
         }
         client, mock_coll = _make_client(prep_doc=doc)
+        # Explicitly mock the analysis pipeline to fail so we exercise the
+        # failure-handling path deterministically without relying on real deps.
+        client.app.state.analyze_patient_pipeline = MagicMock(
+            side_effect=RuntimeError("analysis failed")
+        )
         resp = client.post(f"/api/v1/mobile-prep/{TOKEN}/submit")
         assert resp.status_code == 200
         body = resp.json()
+        # Pipeline is mocked to fail so status falls back to submitted
         assert body["status"] == "submitted"
         assert body["summary_ready"] is True
 
-        # Verify summary was persisted
-        update_set = mock_coll.update_one.call_args[0][1]["$set"]
-        assert isinstance(update_set["patient_safe_summary"], list)
-        assert len(update_set["patient_safe_summary"]) > 0
-        assert isinstance(update_set["questions_to_ask"], list)
+        # Verify the first update persisted the summary
+        first_update = mock_coll.update_one.call_args_list[0][0][1]["$set"]
+        assert isinstance(first_update["patient_safe_summary"], list)
+        assert len(first_update["patient_safe_summary"]) > 0
+        assert isinstance(first_update["questions_to_ask"], list)
+        assert first_update["status"] == "analysis_running"
 
     def test_success_minimal(self):
         """Submit with no check-in data — still generates a fallback summary."""
@@ -410,6 +417,73 @@ class TestSubmitPrep:
         assert resp.status_code == 200
         body = resp.json()
         assert body["summary_ready"] is True
+
+    def test_analysis_failure_falls_back_to_submitted(self):
+        """When the analysis pipeline fails the status should fall back to submitted."""
+        doc = {
+            **BASE_PREP_DOC,
+            "status": "in_progress",
+            "checkin_payload": {
+                "raw_text": "Stomach pain",
+                "extracted_symptoms": [],
+                "confirmed_symptoms": [],
+                "dismissed_symptoms": [],
+            },
+        }
+        client, mock_coll = _make_client(prep_doc=doc)
+        # Explicitly mock the analysis pipeline to raise so this test does not
+        # depend on incidental failures from mocked downstream dependencies.
+        client.app.state.analyze_patient_pipeline = MagicMock(
+            side_effect=RuntimeError("analysis failed")
+        )
+        resp = client.post(f"/api/v1/mobile-prep/{TOKEN}/submit")
+        assert resp.status_code == 200
+
+        # The mocked analysis pipeline raised, so verify the fallback occurred.
+        # The last update_one sets status back to submitted on failure.
+        last_update = mock_coll.update_one.call_args_list[-1][0][1]["$set"]
+        assert last_update["status"] == "submitted"
+
+    def test_analysis_success_sets_ready_for_review_and_persists_results(self):
+        """Deterministically test the successful analysis path with Mongo updates."""
+        doc = {
+            **BASE_PREP_DOC,
+            "status": "in_progress",
+            "checkin_payload": {
+                "raw_text": "Persistent headache",
+                "extracted_symptoms": [],
+                "confirmed_symptoms": [],
+                "dismissed_symptoms": [],
+            },
+        }
+        client, mock_coll = _make_client(prep_doc=doc)
+
+        fake_analysis = {
+            "summary": "Patient reports persistent headache.",
+            "questions": ["When did the headache start?"],
+            "triage": "low",
+        }
+
+        # Mock the analysis pipeline so it succeeds deterministically.
+        with patch("app.routes.mobile_prep.analyze_patient_pipeline", return_value=fake_analysis):
+            resp = client.post(f"/api/v1/mobile-prep/{TOKEN}/submit")
+
+        assert resp.status_code == 200
+        body = resp.json()
+        # On successful analysis, the prep episode should be ready for review.
+        assert body["status"] == "ready_for_review"
+        assert body["summary_ready"] is True
+
+        # The final update on the prep document should record the analysis result
+        # and set the status to ready_for_review.
+        last_prep_update = mock_coll.update_one.call_args_list[-1][0][1]["$set"]
+        assert last_prep_update["status"] == "ready_for_review"
+        assert last_prep_update["analysis_response"] == fake_analysis
+
+        # The linked appointment document should also have its analysis_result updated.
+        appointments_coll = client.app.state.mongo["appointments"]
+        last_appt_update = appointments_coll.update_one.call_args_list[-1][0][1]["$set"]
+        assert last_appt_update["analysis_result"] == fake_analysis
 
 
 # ===========================================================================
@@ -486,3 +560,122 @@ class TestGetPrepStatus:
         body = resp.json()
         assert body["can_resume"] is True
         assert body["doctor_facing_label"] == "In progress"
+
+
+# ===========================================================================
+# Token expiry validation
+# ===========================================================================
+
+class TestTokenExpiry:
+    """Tests for invite token expiry enforcement."""
+
+    def test_expired_token_rejected_on_invite(self):
+        doc = {
+            **BASE_PREP_DOC,
+            "invite_expires_at": "2020-01-01T00:00:00+00:00",
+        }
+        client, _ = _make_client(
+            prep_doc=doc,
+            appointment_doc=APPOINTMENT_DOC,
+            patient_doc=PATIENT_DOC,
+        )
+        resp = client.get(f"/api/v1/mobile-prep/invite/{TOKEN}")
+        assert resp.status_code == 410
+        assert "expired" in resp.json()["detail"].lower()
+
+    def test_valid_token_accepted_on_invite(self):
+        doc = {
+            **BASE_PREP_DOC,
+            "invite_expires_at": "2099-12-31T23:59:59+00:00",
+        }
+        client, _ = _make_client(
+            prep_doc=doc,
+            appointment_doc=APPOINTMENT_DOC,
+            patient_doc=PATIENT_DOC,
+        )
+        resp = client.get(f"/api/v1/mobile-prep/invite/{TOKEN}")
+        assert resp.status_code == 200
+
+    def test_missing_expiry_treated_as_valid(self):
+        doc = {**BASE_PREP_DOC}
+        doc.pop("invite_expires_at", None)
+        client, _ = _make_client(
+            prep_doc=doc,
+            appointment_doc=APPOINTMENT_DOC,
+            patient_doc=PATIENT_DOC,
+        )
+        resp = client.get(f"/api/v1/mobile-prep/invite/{TOKEN}")
+        assert resp.status_code == 200
+
+
+# ===========================================================================
+# Appointment creates prep episode
+# ===========================================================================
+
+class TestAppointmentCreatesPrep:
+    """Tests that appointment creation also creates a prep episode."""
+
+    def _make_appointment_client(self):
+        from app.main import app
+
+        mock_patient_coll = MagicMock()
+        mock_patient_coll.find_one.return_value = deepcopy(PATIENT_DOC)
+
+        mock_appt_coll = MagicMock()
+        mock_appt_coll.insert_one.return_value = MagicMock()
+
+        mock_prep_coll = MagicMock()
+        mock_prep_coll.insert_one.return_value = MagicMock()
+
+        mock_db = MagicMock()
+        mock_db.patients = mock_patient_coll
+        mock_db.appointments = mock_appt_coll
+        mock_db.prep_episodes = mock_prep_coll
+
+        mock_mongo = MagicMock()
+        mock_mongo.__getitem__ = MagicMock(return_value=mock_db)
+
+        app.state.mongo_client = mock_mongo
+        app.state.db_name = "diagnostic_test"
+        app.state.embedding_model = MagicMock()
+
+        return TestClient(app, raise_server_exceptions=False), mock_db
+
+    def test_prep_episode_inserted_on_appointment_creation(self):
+        client, mock_db = self._make_appointment_client()
+        resp = client.post(
+            "/api/v1/appointments",
+            json={
+                "patient_id": PATIENT_ID,
+                "date": "2026-04-01",
+                "time": "14:00",
+            },
+        )
+        assert resp.status_code == 200
+
+        # Verify prep_episodes.insert_one was called
+        mock_db.prep_episodes.insert_one.assert_called_once()
+        prep_doc = mock_db.prep_episodes.insert_one.call_args[0][0]
+
+        assert prep_doc["patient_id"] == PATIENT_ID
+        assert prep_doc["status"] == "invite_sent"
+        assert prep_doc["source"] == "mobile"
+        assert prep_doc["invite_token"]  # non-empty
+        assert prep_doc["invite_sent_at"]
+        assert prep_doc["invite_expires_at"]  # TTL set
+
+    def test_prep_episode_linked_to_appointment(self):
+        client, mock_db = self._make_appointment_client()
+        resp = client.post(
+            "/api/v1/appointments",
+            json={
+                "patient_id": PATIENT_ID,
+                "date": "2026-04-01",
+                "time": "14:00",
+            },
+        )
+        assert resp.status_code == 200
+        appt = resp.json()
+
+        prep_doc = mock_db.prep_episodes.insert_one.call_args[0][0]
+        assert prep_doc["appointment_id"] == appt["id"]

@@ -14,11 +14,51 @@ def _build_appointment_email(
     appointment_date: str,
     appointment_time: str,
     form_url: str,
+    mobile_link: str = "",
 ) -> MIMEMultipart:
     """Build an HTML appointment email."""
     msg = MIMEMultipart("alternative")
     msg["Subject"] = f"Diagnostic — Your Appointment on {appointment_date}"
     msg["From"] = settings.SMTP_USER
+
+    mobile_section = ""
+    if mobile_link:
+        mobile_section = f"""\
+        <p style="color: #334155; font-size: 16px; line-height: 1.6;">
+          <strong>Preferred:</strong> Open the link below in the MyHealthPal mobile app to prepare for your visit:
+        </p>
+
+        <div style="text-align: center; margin: 24px 0;">
+          <a href="{mobile_link}"
+             style="display: inline-block; background: linear-gradient(135deg, #7c3aed, #6d28d9); color: #fff; text-decoration: none; padding: 14px 32px; border-radius: 12px; font-size: 16px; font-weight: 600;">
+            Prepare in MyHealthPal App
+          </a>
+        </div>
+
+        <p style="color: #334155; font-size: 14px; line-height: 1.6;">
+          Or use the web form as a fallback:
+        </p>
+"""
+
+    if mobile_link:
+        intro_text = ""
+        cta_bg = "#e5e7eb"
+        cta_color = "#334155"
+        cta_label = "Web Form (Fallback)"
+    else:
+        intro_text = "Please complete your patient intake form before your appointment:"
+        cta_bg = "linear-gradient(135deg, #7c3aed, #6d28d9)"
+        cta_color = "#fff"
+        cta_label = "Complete Patient Form"
+
+    if intro_text:
+        intro_section = f"""\
+        <p style="color: #334155; font-size: 16px; line-height: 1.6;">
+          {intro_text}
+        </p>
+"""
+    else:
+        intro_section = ""
 
     html = f"""\
     <html>
@@ -40,14 +80,14 @@ def _build_appointment_email(
           </p>
         </div>
 
-        <p style="color: #334155; font-size: 16px; line-height: 1.6;">
-          Please complete your patient intake form before your appointment:
-        </p>
+        {mobile_section}
+
+        {intro_section}
 
         <div style="text-align: center; margin: 32px 0;">
           <a href="{form_url}"
-             style="display: inline-block; background: linear-gradient(135deg, #7c3aed, #6d28d9); color: #fff; text-decoration: none; padding: 14px 32px; border-radius: 12px; font-size: 16px; font-weight: 600;">
-            Complete Patient Form
+             style="display: inline-block; background: {cta_bg}; color: {cta_color}; text-decoration: none; padding: 14px 32px; border-radius: 12px; font-size: 16px; font-weight: 600;">
+            {cta_label}
           </a>
         </div>
 
@@ -59,9 +99,17 @@ def _build_appointment_email(
     </html>
     """
 
+    mobile_text = ""
+    if mobile_link:
+        mobile_text = (
+            f"Preferred — open in MyHealthPal app: {mobile_link}\n\n"
+            f"Or use the web form as a fallback:\n"
+        )
+
     text = (
         f"Hi {patient_name},\n\n"
         f"Your appointment is scheduled for {appointment_date} at {appointment_time}.\n\n"
+        f"{mobile_text}"
         f"Please complete your patient form: {form_url}\n\n"
         f"— Diagnostic"
     )
@@ -77,6 +125,7 @@ async def send_appointment_email(
     appointment_date: str,
     appointment_time: str,
     form_url: str,
+    mobile_link: str = "",
 ) -> bool:
     """Send appointment confirmation email with patient form link.
 
@@ -91,11 +140,12 @@ async def send_appointment_email(
             f"[EMAIL STUB] To: {patient_email} | "
             f"Appointment: {appointment_date} {appointment_time} | "
             f"Form: {form_url}"
+            + (f" | Mobile: {mobile_link}" if mobile_link else "")
         )
         return False
 
     msg = _build_appointment_email(
-        patient_name, appointment_date, appointment_time, form_url
+        patient_name, appointment_date, appointment_time, form_url, mobile_link
     )
     msg["To"] = patient_email
 

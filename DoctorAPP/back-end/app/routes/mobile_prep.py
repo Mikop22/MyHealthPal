@@ -18,6 +18,7 @@ GET  /{token}/status          — lightweight status polling
 
 from __future__ import annotations
 
+import logging
 from datetime import datetime, timezone
 from typing import Optional
 
@@ -30,6 +31,7 @@ from app.models.prep_episode import (
     DocumentsPayload,
     HealthDataPayload,
     InviteResolutionResponse,
+    PrepEpisode,
     PrepStatus,
     PrepStatusResponse,
     SaveResponse,
@@ -38,6 +40,10 @@ from app.models.prep_episode import (
     SummaryResponse,
 )
 from app.services.patient_safe_summary import generate_patient_safe_summary
+from app.services.prep_transform import prep_episode_to_patient_payload
+from app.services.analysis_pipeline import analyze_patient_pipeline
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/v1/mobile-prep", tags=["mobile-prep"])
 
@@ -56,6 +62,23 @@ def _get_db(request: Request):
 
 def _find_prep_by_token(db, token: str) -> Optional[dict]:
     return db.prep_episodes.find_one({"invite_token": token}, {"_id": 0})
+
+
+def _is_token_expired(prep: dict) -> bool:
+    """Return True when the invite token has passed its expiry timestamp."""
+    expires = prep.get("invite_expires_at")
+    if not expires:
+        return False
+    try:
+        expires_dt = datetime.fromisoformat(expires)
+        return datetime.now(timezone.utc) >= expires_dt
+    except (ValueError, TypeError):
+        logger.warning(
+            "Invalid invite_expires_at value '%s' for prep episode with token '%s'; treating as expired.",
+            expires,
+            prep.get("invite_token"),
+        )
+        return True
 
 
 def _find_appointment(db, appointment_id: str) -> Optional[dict]:
@@ -96,6 +119,9 @@ async def resolve_invite(token: str, request: Request):
     prep = _find_prep_by_token(db, token)
     if not prep:
         raise HTTPException(status_code=404, detail="Invite token not found.")
+
+    if _is_token_expired(prep):
+        raise HTTPException(status_code=410, detail="Invite token has expired.")
 
     # Mark first open
     if not prep.get("invite_opened_at"):
@@ -313,8 +339,10 @@ async def submit_prep(token: str, request: Request):
 
     Steps:
         1. Generate patient-safe summary + questions
-        2. Mark status ``submitted``
-        3. (Future) trigger the analysis pipeline asynchronously
+        2. Mark status ``analysis_running``
+        3. Transform prep into analysis payload
+        4. Run the analysis pipeline
+        5. Persist analysis_response and mark ``ready_for_review``
     """
     db = _get_db(request)
     prep = _find_prep_by_token(db, token)
@@ -336,10 +364,12 @@ async def submit_prep(token: str, request: Request):
     )
 
     now = _now_iso()
+
+    # Mark status as analysis_running while we run the pipeline
     db.prep_episodes.update_one(
         {"invite_token": token},
         {"$set": {
-            "status": PrepStatus.submitted.value,
+            "status": PrepStatus.analysis_running.value,
             "submitted_at": now,
             "patient_safe_summary": safe_output["summary"],
             "questions_to_ask": safe_output["questions_to_ask"],
@@ -347,8 +377,51 @@ async def submit_prep(token: str, request: Request):
         }},
     )
 
+    # Transform prep episode into analysis payload and run pipeline
+    episode = PrepEpisode(**{**prep, "status": PrepStatus.analysis_running.value})
+    patient_payload = prep_episode_to_patient_payload(episode)
+
+    try:
+        analysis = await analyze_patient_pipeline(
+            payload=patient_payload,
+            mongo_client=request.app.state.mongo_client,
+            embedding_model=request.app.state.embedding_model,
+        )
+
+        # Persist analysis response and mark ready for review
+        final_status = PrepStatus.ready_for_review.value
+        db.prep_episodes.update_one(
+            {"invite_token": token},
+            {"$set": {
+                "status": final_status,
+                "analysis_response": analysis.model_dump(),
+                "updated_at": _now_iso(),
+            }},
+        )
+
+        # Also update the corresponding appointment with the analysis result
+        db.appointments.update_one(
+            {"id": prep["appointment_id"]},
+            {"$set": {
+                "status": "completed",
+                "analysis_result": analysis.model_dump(),
+            }},
+        )
+    except Exception as exc:
+        logger.exception("Analysis pipeline failed for token %s: %s", token, exc)
+        # Mark status as submitted (analysis failed) so the summary is still
+        # available and the prep can be reviewed manually even if analysis failed.
+        final_status = PrepStatus.submitted.value
+        db.prep_episodes.update_one(
+            {"invite_token": token},
+            {"$set": {
+                "status": final_status,
+                "updated_at": _now_iso(),
+            }},
+        )
+
     return SubmitResponse(
-        status=PrepStatus.submitted.value,
+        status=final_status,
         summary_ready=True,
         prep_episode_id=prep["id"],
     )

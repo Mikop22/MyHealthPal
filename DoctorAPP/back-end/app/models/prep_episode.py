@@ -107,6 +107,7 @@ class PrepEpisode(BaseModel):
     source: str = "mobile"  # "mobile" | "web_fallback"
 
     invite_sent_at: Optional[str] = None
+    invite_expires_at: Optional[str] = None
     invite_opened_at: Optional[str] = None
     started_at: Optional[str] = None
     submitted_at: Optional[str] = None

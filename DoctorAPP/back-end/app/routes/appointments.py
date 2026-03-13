@@ -3,13 +3,19 @@
 from __future__ import annotations
 
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 from fastapi import APIRouter, Request, HTTPException
 from app.models.patient_management import AppointmentCreate, AppointmentRecord
 from app.models.patient import AnalysisResponse
+from app.models.prep_episode import PrepEpisode, PrepStatus
 from app.services.email_service import send_appointment_email
 from app.config import settings
+
+# How long an invite token remains valid.  Set to 14 days so patients have
+# enough time to complete mobile prep before their appointment, while still
+# limiting the window of exposure if a link is leaked.
+INVITE_TOKEN_TTL_DAYS = 14
 
 router = APIRouter(prefix="/api/v1", tags=["appointments"])
 
@@ -41,14 +47,35 @@ async def create_appointment(body: AppointmentCreate, request: Request):
     # Save to MongoDB
     db.appointments.insert_one(record.model_dump())
 
+    # --- Create the prep episode for mobile intake ---
+    invite_token = str(uuid.uuid4())
+    expires_at = (
+        datetime.now(timezone.utc) + timedelta(days=INVITE_TOKEN_TTL_DAYS)
+    ).isoformat()
+
+    prep = PrepEpisode(
+        id=str(uuid.uuid4()),
+        patient_id=body.patient_id,
+        appointment_id=appointment_id,
+        invite_token=invite_token,
+        status=PrepStatus.invite_sent,
+        source="mobile",
+        invite_sent_at=now,
+        invite_expires_at=expires_at,
+        created_at=now,
+        updated_at=now,
+    )
+    db.prep_episodes.insert_one(prep.model_dump(mode="json"))
+
     # Update patient status
     db.patients.update_one(
         {"id": body.patient_id},
         {"$set": {"status": "In Progress"}},
     )
 
-    # Build form URL and send email
+    # Build form URL (web fallback) and mobile deep link
     form_url = f"{settings.FRONTEND_URL}/intake/{form_token}"
+    mobile_link = f"myhealthpal://onboarding?token={invite_token}"
 
     await send_appointment_email(
         patient_email=patient["email"],
@@ -56,6 +83,7 @@ async def create_appointment(body: AppointmentCreate, request: Request):
         appointment_date=body.date,
         appointment_time=body.time,
         form_url=form_url,
+        mobile_link=mobile_link,
     )
 
     return record
