@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import {
+  ActivityIndicator,
   StyleSheet,
   Text,
   TextInput,
@@ -24,9 +25,14 @@ import { AppIcon } from "../../components/AppIcon";
 import { Colors } from "../../constants/Colors";
 import { Fonts } from "../../constants/Typography";
 import { usePatientStore } from "../../store/patientStore";
-
-const GOAL = 2000;
-const INITIAL_RAISED = 1240;
+import {
+  createCampaign,
+  getCampaign,
+  createContribution,
+  listContributions,
+  type CampaignDetailResponse,
+  type ContributionResponse,
+} from "../../services/api";
 
 const SCREEN_BG = "#F6F8F6";
 const CARD_BG = "#FFFFFF";
@@ -34,14 +40,6 @@ const TEXT_PRIMARY = "#101828";
 const TEXT_SECONDARY = "#667085";
 const TEXT_TERTIARY = "#98A2B3";
 const DIVIDER = "rgba(15, 23, 42, 0.08)";
-
-const MOCK_DONORS = [
-  { id: "d1", initials: "AK", amount: 50, timeAgo: "2 h ago" },
-  { id: "d2", initials: "RS", amount: 25, timeAgo: "5 h ago" },
-  { id: "d3", initials: "JM", amount: 100, timeAgo: "1 d ago" },
-  { id: "d4", initials: "LP", amount: 15, timeAgo: "2 d ago" },
-  { id: "d5", initials: "NK", amount: 75, timeAgo: "3 d ago" },
-];
 
 const QR_N = 21;
 
@@ -225,30 +223,86 @@ function DonorBadge({ initials }: { initials: string }) {
 }
 
 export default function FundingScreen() {
-  const [raised, setRaised] = useState(INITIAL_RAISED);
+  const [campaign, setCampaign] = useState<CampaignDetailResponse | null>(null);
+  const [contributions, setContributions] = useState<ContributionResponse[]>([]);
+  const [loading, setLoading] = useState(true);
   const [barWidth, setBarWidth] = useState(0);
-  const progress = useSharedValue(INITIAL_RAISED / GOAL);
-  const isFunded = raised >= GOAL;
+  const progress = useSharedValue(0);
   const hasAnimated = useRef(false);
 
   const { fundingProfile, setAboutMe, setCaseDescription } = usePatientStore();
 
+  const raised = campaign?.total_raised ?? 0;
+  const goal = campaign?.goal_amount ?? 1;
+  const isFunded = raised >= goal;
+  const pct = Math.min(Math.round((raised / goal) * 100), 100);
+
+  const loadCampaignData = useCallback(async (campaignId: string) => {
+    try {
+      const [detail, contribs] = await Promise.all([
+        getCampaign(campaignId),
+        listContributions(campaignId),
+      ]);
+      setCampaign(detail);
+      setContributions(contribs);
+    } catch {
+      /* backend unavailable */
+    }
+  }, []);
+
   useEffect(() => {
-    progress.value = withTiming(Math.min(raised / GOAL, 1), {
+    let cancelled = false;
+    (async () => {
+      try {
+        const { listCampaigns } = await import("../../services/api");
+        const campaigns = await listCampaigns();
+        if (cancelled) return;
+        if (campaigns.length > 0) {
+          await loadCampaignData(campaigns[0].id);
+        }
+      } catch {
+        /* backend unavailable */
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [loadCampaignData]);
+
+  useEffect(() => {
+    progress.value = withTiming(Math.min(raised / goal, 1), {
       duration: 800,
       easing: Easing.out(Easing.cubic),
     });
-  }, [raised]);
+  }, [raised, goal]);
 
-  const simulateDonation = useCallback(() => {
-    const amounts = [25, 50, 75, 100, 150, 200];
-    const add = amounts[Math.floor(Math.random() * amounts.length)];
-    setRaised((prev) => Math.min(prev + add, GOAL));
-  }, []);
+  const handleDonate = useCallback(async () => {
+    if (!campaign) return;
+    try {
+      await createContribution(campaign.id, {
+        contributor_identifier: "anonymous",
+        amount: 25,
+      });
+      await loadCampaignData(campaign.id);
+    } catch {
+      /* handle error silently */
+    }
+  }, [campaign, loadCampaignData]);
 
-  const fillToGoal = useCallback(() => setRaised(GOAL), []);
-
-  const pct = Math.min(Math.round((raised / GOAL) * 100), 100);
+  const handleCreateCampaign = useCallback(async () => {
+    try {
+      const created = await createCampaign({
+        owner_identifier: "current_user",
+        title: fundingProfile.caseDescription || "Medical Funding Campaign",
+        description: fundingProfile.aboutMe || "Help support my medical needs",
+        goal_amount: 2000,
+        about_me: fundingProfile.aboutMe || undefined,
+      });
+      await loadCampaignData(created.id);
+    } catch {
+      /* handle error silently */
+    }
+  }, [fundingProfile, loadCampaignData]);
 
   useEffect(() => {
     hasAnimated.current = true;
@@ -278,7 +332,7 @@ export default function FundingScreen() {
             <Text style={s.pageHeaderTitle}>Funding</Text>
             <Text style={s.pageHeaderSub}>Your active campaigns</Text>
           </View>
-          <Pressable style={s.createCampaignBtn}>
+          <Pressable style={s.createCampaignBtn} onPress={handleCreateCampaign}>
             <AppIcon name="add" size={14} color="#fff" />
             <Text style={s.createCampaignBtnText}>New</Text>
           </Pressable>
@@ -340,9 +394,9 @@ export default function FundingScreen() {
                 <AppIcon name="medical" size={22} color={Colors.brand} />
               </LinearGradient>
               <View style={{ flex: 1 }}>
-                <Text style={s.campaignTitle}>MRI Diagnostic Imaging</Text>
+                <Text style={s.campaignTitle}>{campaign?.title ?? "No Campaign"}</Text>
                 <Text style={s.campaignSub}>
-                  Pelvic MRI | Suspected endometriosis
+                  {campaign?.description ?? "Create a campaign to get started"}
                 </Text>
               </View>
             </View>
@@ -354,7 +408,7 @@ export default function FundingScreen() {
               </View>
               <View style={s.statDivider} />
               <View style={s.statItem}>
-                <Text style={s.statValue}>${GOAL.toLocaleString()}</Text>
+                <Text style={s.statValue}>${goal.toLocaleString()}</Text>
                 <Text style={s.statCaption}>goal</Text>
               </View>
               <View style={s.statDivider} />
@@ -371,14 +425,11 @@ export default function FundingScreen() {
               height={6}
             />
 
-            {!isFunded && (
+            {!isFunded && campaign && (
               <View style={s.btnRow}>
-                <Pressable onPress={simulateDonation} style={s.donateBtn}>
+                <Pressable onPress={handleDonate} style={s.donateBtn}>
                   <AppIcon name="heart" size={16} color="#fff" />
-                  <Text style={s.donateBtnText}>Simulate Donation</Text>
-                </Pressable>
-                <Pressable onPress={fillToGoal} style={s.fillBtn}>
-                  <Text style={s.fillBtnText}>Fill 100%</Text>
+                  <Text style={s.donateBtnText}>Contribute $25</Text>
                 </Pressable>
               </View>
             )}
@@ -391,20 +442,25 @@ export default function FundingScreen() {
               <AppIcon name="heart" size={13} color={Colors.text.muted} />
               <Text style={s.sectionLabel}>RECENT SUPPORTERS</Text>
             </View>
-            {MOCK_DONORS.map((d, idx) => (
+            {contributions.length === 0 && (
+              <Text style={s.emptyText}>No supporters yet</Text>
+            )}
+            {contributions.map((c, idx) => (
               <View
-                key={d.id}
+                key={c.id}
                 style={[
                   s.donorRow,
-                  idx === MOCK_DONORS.length - 1 && s.donorRowLast,
+                  idx === contributions.length - 1 && s.donorRowLast,
                 ]}
               >
-                <DonorBadge initials={d.initials} />
+                <DonorBadge initials={c.contributor_identifier.slice(0, 2).toUpperCase()} />
                 <View style={{ flex: 1 }}>
-                  <Text style={s.donorName}>Anonymous Supporter</Text>
-                  <Text style={s.donorTime}>{d.timeAgo}</Text>
+                  <Text style={s.donorName}>Supporter</Text>
+                  <Text style={s.donorTime}>{new Date(c.created_at).toLocaleDateString()}</Text>
                 </View>
-                <Text style={s.donorAmount}>+${d.amount}</Text>
+                <Text style={s.donorAmount}>+${c.amount}</Text>
+              </View>
+            ))}
               </View>
             ))}
           </View>
@@ -702,6 +758,15 @@ const s = StyleSheet.create({
   donorRowLast: {
     marginBottom: 0,
     paddingBottom: 0,
+    borderBottomWidth: 0,
+  },
+  emptyText: {
+    fontSize: 14,
+    fontFamily: Fonts.regular,
+    color: TEXT_TERTIARY,
+    textAlign: "center",
+    paddingVertical: 16,
+  },
     borderBottomWidth: 0,
   },
   donorAvatar: {
