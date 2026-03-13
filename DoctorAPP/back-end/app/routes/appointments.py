@@ -65,7 +65,7 @@ async def create_appointment(body: AppointmentCreate, request: Request):
         created_at=now,
         updated_at=now,
     )
-    db.prep_episodes.insert_one(prep.model_dump())
+    db.prep_episodes.insert_one(prep.model_dump(mode="json"))
 
     # Update patient status
     db.patients.update_one(
