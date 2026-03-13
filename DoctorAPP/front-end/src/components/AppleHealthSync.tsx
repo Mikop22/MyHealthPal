@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
 import { QRCodeSVG } from "qrcode.react";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -41,16 +41,11 @@ const POLL_INTERVAL_MS = 2000;
 // ─── Device Detection ────────────────────────────────────────────────────────
 
 function useIsMobile(): boolean {
-  const [isMobile, setIsMobile] = useState(false);
-
-  useEffect(() => {
-    // Check via user-agent for iOS / Android devices
-    const ua = navigator.userAgent;
-    const mobile = /iPhone|iPad|iPod|Android/i.test(ua);
-    setIsMobile(mobile);
-  }, []);
-
-  return isMobile;
+  return useSyncExternalStore(
+    () => () => undefined,
+    () => /iPhone|iPad|iPod|Android/i.test(navigator.userAgent),
+    () => false,
+  );
 }
 
 // ─── Component ───────────────────────────────────────────────────────────────

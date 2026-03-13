@@ -11,6 +11,14 @@ interface GhostChartProps {
   color: string;
 }
 
+interface ChartDotProps {
+  cx?: number;
+  cy?: number;
+  payload?: {
+    flag?: string;
+  };
+}
+
 export function BiometricGhostChart({ title, data, baselineAvg, unit, color }: GhostChartProps) {
   const chartData = data.map((d) => ({
     date: new Date(d.date).toLocaleDateString("en-US", { month: "short", day: "numeric" }),
@@ -34,9 +42,10 @@ export function BiometricGhostChart({ title, data, baselineAvg, unit, color }: G
             label={{ value: `Baseline: ${baselineAvg} ${unit}`, position: "insideTopRight", style: { fontSize: 10, fill: "#94a3b8" } }} />
           <Area type="monotone" dataKey="value" fill={color} fillOpacity={0.08} stroke="none" />
           <Line type="monotone" dataKey="value" stroke={color} strokeWidth={2}
-            dot={(props: any) => {
+            dot={(props: ChartDotProps) => {
               const { cx, cy, payload } = props;
-              if (payload.flag) {
+              if (cx == null || cy == null) return null;
+              if (payload?.flag) {
                 return <circle key={`dot-${cx}-${cy}`} cx={cx} cy={cy} r={5} fill="#ef4444" stroke="#fff" strokeWidth={2} />;
               }
               return <circle key={`dot-${cx}-${cy}`} cx={cx} cy={cy} r={3} fill={color} stroke="#fff" strokeWidth={1.5} />;

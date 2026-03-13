@@ -1,8 +1,15 @@
+import os
+
 import pytest
 from fastapi.testclient import TestClient
 from app.main import app
 
 client = TestClient(app)
+
+pytestmark = pytest.mark.skipif(
+    os.environ.get("RUN_SUPABASE_INTEGRATION_TESTS") != "1",
+    reason="Set RUN_SUPABASE_INTEGRATION_TESTS=1 to run live Supabase label integration tests.",
+)
 
 def test_supabase_labels_integration():
     """Test pushing data to the Supabase labels table."""
