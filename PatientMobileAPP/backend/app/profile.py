@@ -7,6 +7,7 @@ so that no additional database dependency is required.
 from __future__ import annotations
 
 import json
+import logging
 import os
 import tempfile
 import threading
@@ -14,7 +15,9 @@ from pathlib import Path
 from typing import Optional
 
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/profile", tags=["profile"])
 _WRITE_LOCK = threading.Lock()
@@ -24,7 +27,7 @@ class ProfilePayload(BaseModel):
     age: Optional[int] = None
     sex: Optional[str] = None
     primary_language: Optional[str] = None
-    ethnicity: list[str] = []
+    ethnicity: list[str] = Field(default_factory=list)
     email: Optional[str] = None
 
 
@@ -39,8 +42,14 @@ def _load_profiles() -> dict[str, dict]:
     path = _data_path()
     if not path.exists():
         return {}
-    with path.open("r", encoding="utf-8") as f:
-        data = json.load(f)
+    try:
+        with path.open("r", encoding="utf-8") as f:
+            data = json.load(f)
+    except (OSError, json.JSONDecodeError, ValueError) as exc:
+        logger.warning("Could not read profile data: %s", exc)
+        raise HTTPException(
+            status_code=500, detail="Could not read profile data."
+        ) from exc
     if not isinstance(data, dict):
         return {}
     return data

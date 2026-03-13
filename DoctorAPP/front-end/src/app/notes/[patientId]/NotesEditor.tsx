@@ -13,6 +13,23 @@ export function NotesEditor({ patientId }: NotesEditorProps) {
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const latestContent = useRef(notes);
+  const noteIdRef = useRef<string | null>(null);
+  const savingRef = useRef(false);
+  const mountedRef = useRef(true);
+
+  // Keep noteIdRef in sync with state
+  useEffect(() => {
+    noteIdRef.current = noteId;
+  }, [noteId]);
+
+  // Track mounted state for cleanup
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      if (timerRef.current) clearTimeout(timerRef.current);
+    };
+  }, []);
 
   // Load existing notes on mount
   useEffect(() => {
@@ -23,6 +40,7 @@ export function NotesEditor({ patientId }: NotesEditorProps) {
         if (existing.length > 0) {
           setNotes(existing[0].content);
           setNoteId(existing[0].id);
+          noteIdRef.current = existing[0].id;
           latestContent.current = existing[0].content;
         }
       })
@@ -34,20 +52,25 @@ export function NotesEditor({ patientId }: NotesEditorProps) {
 
   const persist = useCallback(
     async (content: string) => {
-      setSaveStatus("saving");
+      if (savingRef.current) return;
+      savingRef.current = true;
+      if (mountedRef.current) setSaveStatus("saving");
       try {
-        if (noteId) {
-          await updatePatientNote(patientId, noteId, content);
+        if (noteIdRef.current) {
+          await updatePatientNote(patientId, noteIdRef.current, content);
         } else {
           const created = await savePatientNote(patientId, content);
-          setNoteId(created.id);
+          noteIdRef.current = created.id;
+          if (mountedRef.current) setNoteId(created.id);
         }
-        setSaveStatus("saved");
+        if (mountedRef.current) setSaveStatus("saved");
       } catch {
-        setSaveStatus("error");
+        if (mountedRef.current) setSaveStatus("error");
+      } finally {
+        savingRef.current = false;
       }
     },
-    [patientId, noteId],
+    [patientId],
   );
 
   const handleChange = (value: string) => {

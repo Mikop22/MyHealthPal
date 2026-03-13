@@ -46,7 +46,11 @@ def test_create_campaign_and_list_campaigns(monkeypatch, tmp_path):
     list_response = client.get("/campaigns")
 
     assert list_response.status_code == 200
-    assert list_response.json() == [created_campaign]
+    listed = list_response.json()
+    assert len(listed) == 1
+    assert listed[0]["id"] == created_campaign["id"]
+    assert listed[0]["title"] == created_campaign["title"]
+    assert listed[0]["total_raised"] == 0.0
 
 
 def test_get_campaign_by_id_returns_total_raised(monkeypatch, tmp_path):

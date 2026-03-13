@@ -29,6 +29,7 @@ const dotColor: Record<DotVariant, string> = {
 };
 
 interface ScheduleEntry {
+  id: string;
   time: string;
   name: string;
   type: string;
@@ -53,6 +54,7 @@ function mapAppointmentsToEntries(
 ): ScheduleEntry[] {
   const idToName = new Map(patients.map((p) => [p.id, p.name]));
   return appointments.map((appt, i) => ({
+    id: appt.id,
     time: appt.time || "TBD",
     name: idToName.get(appt.patient_id) ?? "Unknown Patient",
     type: appt.status === "completed" ? "Follow-up" : "Consultation",
@@ -112,7 +114,8 @@ function Divider({ strong }: { strong?: boolean }) {
 /* ── Page ── */
 
 export default async function SchedulePage() {
-  const today = new Date().toISOString().split("T")[0];
+  const now = new Date();
+  const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
   const [patients, rawAppointments] = await Promise.all([
     fetchPatients().catch(() => [] as PatientRecord[]),
     fetchAppointmentsByDate(today).catch(() => [] as AppointmentRecord[]),
@@ -221,7 +224,7 @@ export default async function SchedulePage() {
               );
 
               return (
-                <AnimatedRow key={appt.name} index={i}>
+                <AnimatedRow key={appt.id} index={i}>
                   {appt.patientId ? (
                     <Link href={`/dashboard/${appt.patientId}`} className={`${rowClass} cursor-pointer`}>
                       {rowContent}

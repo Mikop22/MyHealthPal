@@ -17,7 +17,6 @@ import { Colors } from "../../constants/Colors";
 import { Fonts } from "../../constants/Typography";
 import {
   listCampaigns,
-  getCampaign,
   createContribution,
   type CampaignResponse,
 } from "../../services/api";
@@ -274,17 +273,7 @@ export default function CommunityScreen() {
   const loadCampaigns = useCallback(async () => {
     try {
       const campaigns = await listCampaigns();
-      const withDetails = await Promise.all(
-        campaigns.map(async (c) => {
-          try {
-            const detail = await getCampaign(c.id);
-            return campaignToRequest(detail);
-          } catch {
-            return campaignToRequest(c);
-          }
-        }),
-      );
-      setRequests(withDetails);
+      setRequests(campaigns.map((c) => campaignToRequest(c)));
     } catch {
       /* backend unavailable */
     } finally {

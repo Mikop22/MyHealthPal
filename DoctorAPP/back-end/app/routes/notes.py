@@ -59,7 +59,7 @@ async def update_note(
 
     now = datetime.now(timezone.utc).isoformat()
     db.notes.update_one(
-        {"id": note_id},
+        {"id": note_id, "patient_id": patient_id},
         {"$set": {"content": body.content, "updated_at": now}},
     )
 

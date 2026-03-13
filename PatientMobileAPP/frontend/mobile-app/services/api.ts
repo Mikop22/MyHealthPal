@@ -187,11 +187,11 @@ export async function createCampaign(data: CampaignCreate): Promise<CampaignResp
     return body as CampaignResponse;
 }
 
-export async function listCampaigns(): Promise<CampaignResponse[]> {
+export async function listCampaigns(): Promise<CampaignDetailResponse[]> {
     const response = await fetch(`${API_BASE}/campaigns`);
     const body = await response.json().catch(() => []);
     if (!response.ok) throw new Error(body.detail || `Server error (${response.status})`);
-    return body as CampaignResponse[];
+    return body as CampaignDetailResponse[];
 }
 
 export async function getCampaign(campaignId: string): Promise<CampaignDetailResponse> {
