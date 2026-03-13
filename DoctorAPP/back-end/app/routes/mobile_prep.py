@@ -387,6 +387,7 @@ async def submit_prep(token: str, request: Request):
             mongo_client=request.app.state.mongo_client,
             embedding_model=request.app.state.embedding_model,
         )
+        analysis_payload = analysis.model_dump() if hasattr(analysis, "model_dump") else analysis
 
         # Persist analysis response and mark ready for review
         final_status = PrepStatus.ready_for_review.value
@@ -394,7 +395,7 @@ async def submit_prep(token: str, request: Request):
             {"invite_token": token},
             {"$set": {
                 "status": final_status,
-                "analysis_response": analysis.model_dump(),
+                "analysis_response": analysis_payload,
                 "updated_at": _now_iso(),
             }},
         )
@@ -404,7 +405,7 @@ async def submit_prep(token: str, request: Request):
             {"id": prep["appointment_id"]},
             {"$set": {
                 "status": "completed",
-                "analysis_result": analysis.model_dump(),
+                "analysis_result": analysis_payload,
             }},
         )
     except Exception as exc:

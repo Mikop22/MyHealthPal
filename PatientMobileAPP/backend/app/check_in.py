@@ -118,12 +118,13 @@ def _parse_action_plan(text: str) -> ActionPlanResponse:
     if not isinstance(questions_list, list):
         questions_list = [str(questions_list)] if questions_list else []
 
-    bullets = [str(b) for b in bullets if b][:5]
-    if len(bullets) < 3:
-        bullets.extend([""] * (3 - len(bullets)))
-    questions_list = [str(q) for q in questions_list if q][:5]
-    while len(questions_list) < 5:
-        questions_list.append("")
+    bullets = [str(b).strip() for b in bullets if str(b).strip()]
+    questions_list = [str(q).strip() for q in questions_list if str(q).strip()]
+
+    if not 3 <= len(bullets) <= 5:
+        raise ValueError("Expected 3 to 5 summary bullets.")
+    if len(questions_list) != 5:
+        raise ValueError("Expected exactly 5 questions.")
 
     return ActionPlanResponse(summary_bullets=bullets, questions=questions_list)
 

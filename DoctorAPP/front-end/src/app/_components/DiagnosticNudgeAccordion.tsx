@@ -43,10 +43,7 @@ function usePdfBlob(pmcid: string | null) {
 
   useEffect(() => {
     if (!pmcid) return;
-    if (blobCache.has(pmcid)) {
-      setUrl(blobCache.get(pmcid)!);
-      return;
-    }
+    if (blobCache.has(pmcid)) return;
     fetchAndCache(pmcid).then((blobUrl) => {
       if (blobUrl) setUrl(blobUrl);
       else setError(true);

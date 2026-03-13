@@ -82,11 +82,13 @@ def _make_client(prep_doc=None, appointment_doc=None, patient_doc=None):
     mock_db.prep_episodes = mock_prep_coll
     mock_db.appointments = mock_appt_coll
     mock_db.patients = mock_patient_coll
+    mock_db.__getitem__ = MagicMock(side_effect=lambda name: getattr(mock_db, name))
 
     mock_mongo = MagicMock()
     mock_mongo.__getitem__ = MagicMock(return_value=mock_db)
 
     app.state.mongo_client = mock_mongo
+    app.state.mongo = mock_db
     app.state.db_name = "diagnostic_test"
     app.state.embedding_model = MagicMock()
 
@@ -631,11 +633,13 @@ class TestAppointmentCreatesPrep:
         mock_db.patients = mock_patient_coll
         mock_db.appointments = mock_appt_coll
         mock_db.prep_episodes = mock_prep_coll
+        mock_db.__getitem__ = MagicMock(side_effect=lambda name: getattr(mock_db, name))
 
         mock_mongo = MagicMock()
         mock_mongo.__getitem__ = MagicMock(return_value=mock_db)
 
         app.state.mongo_client = mock_mongo
+        app.state.mongo = mock_db
         app.state.db_name = "diagnostic_test"
         app.state.embedding_model = MagicMock()
 

@@ -326,7 +326,6 @@ export default function CommunityScreen() {
         data={requests}
         renderItem={renderItem}
         keyExtractor={(item) => item.id}
-        estimatedItemSize={200}
         contentContainerStyle={styles.listContent}
         ListEmptyComponent={
           <View style={{ alignItems: "center", paddingTop: 40 }}>
