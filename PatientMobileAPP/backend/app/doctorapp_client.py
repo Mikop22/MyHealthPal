@@ -30,7 +30,7 @@ _client: Optional[httpx.AsyncClient] = None
 
 
 def _base_url() -> str:
-    return os.environ.get("DOCTORAPP_BASE_URL", "http://localhost:8001").rstrip("/")
+    return os.environ.get("DOCTORAPP_BASE_URL", "http://localhost:8000").rstrip("/")
 
 
 def _timeout() -> float:

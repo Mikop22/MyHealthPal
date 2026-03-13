@@ -17,6 +17,8 @@ class CampaignCreate(BaseModel):
     description: str
     goal_amount: float = Field(ge=0)
     deadline: Optional[str] = None
+    category: Optional[str] = None
+    about_me: Optional[str] = None
 
     @field_validator("owner_identifier", "title", "description")
     @classmethod
@@ -43,6 +45,8 @@ class CampaignResponse(BaseModel):
     goal_amount: float
     status: str
     deadline: Optional[str] = None
+    category: Optional[str] = None
+    about_me: Optional[str] = None
     created_at: str
 
 

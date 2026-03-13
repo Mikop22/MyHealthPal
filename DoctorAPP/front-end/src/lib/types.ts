@@ -122,3 +122,14 @@ export interface AppointmentRecord {
   created_at: string;
 }
 
+// --- Clinical Notes Types ---
+
+export interface ClinicalNote {
+  id: string;
+  patient_id: string;
+  appointment_id?: string;
+  content: string;
+  created_at: string;
+  updated_at: string;
+}
+
