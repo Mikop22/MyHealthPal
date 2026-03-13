@@ -473,7 +473,7 @@ export default function IntakePage() {
                 transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
                 className="font-medium leading-[1.1] tracking-[-0.1px] bg-linear-to-r from-[#368B3E] to-[#6DC94F] bg-clip-text text-transparent select-none pb-4 absolute top-0 w-full"
               >
-                My HealthPal
+                MyHealthPal
               </motion.h1>
               <div className="absolute top-[136px] w-full flex justify-center perspective-[1000px]">
                 <AnimatePresence mode="wait">

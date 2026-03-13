@@ -22,7 +22,7 @@ export default function DashboardPage() {
       <nav className="glass-nav flex h-16 shrink-0 items-center justify-between px-8">
         <div className="flex items-center gap-8">
           <Link href="/patients" className="gradient-logo text-[24px] font-medium tracking-[-0.1px]">
-            My HealthPal
+            MyHealthPal
           </Link>
           <div className="flex gap-2">
             <Link href="/patients" className="nav-pill-active flex items-center justify-center rounded-[20px] px-5 py-2">
