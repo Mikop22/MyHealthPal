@@ -73,7 +73,12 @@ def _is_token_expired(prep: dict) -> bool:
         expires_dt = datetime.fromisoformat(expires)
         return datetime.now(timezone.utc) >= expires_dt
     except (ValueError, TypeError):
-        return False
+        logger.warning(
+            "Invalid invite_expires_at value '%s' for prep episode with token '%s'; treating as expired.",
+            expires,
+            prep.get("invite_token"),
+        )
+        return True
 
 
 def _find_appointment(db, appointment_id: str) -> Optional[dict]:
