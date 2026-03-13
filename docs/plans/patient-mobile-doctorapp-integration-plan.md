@@ -662,3 +662,174 @@ Mitigation:
 4. DoctorAPP frontend: schedule modal + status badges
 5. DoctorAPP dashboard: prep package rendering + provenance separation
 6. patient-safe summary screen and final UX pass
+
+---
+
+## Architecture Review — Structured Feedback
+
+> Review conducted against the eight dimensions requested: completeness,
+> data contracts, auth, error handling, sequencing, scalability, gaps
+> vs assumptions, and quick wins / red flags.
+
+### 1. Completeness
+
+**Strengths**
+- End-to-end lifecycle well defined (invite → submit → review).
+- Provenance model (`patient_entered`, `device_imported`, etc.) adds
+  auditability that investors will notice.
+
+**Gaps to address**
+- **Token expiry**: The plan does not specify an invite-token TTL. Tokens
+  that never expire are a security and data-quality risk. Add a
+  `invite_expires_at` field to `PrepEpisode` and enforce it on
+  resolution.
+- **Concurrent editing**: No mention of what happens when a patient has
+  two tabs/devices open simultaneously. Consider `updated_at`-based
+  optimistic locking for saves.
+- **Offline support**: Mobile app may lose connectivity mid-prep. The
+  plan should explicitly state that local draft state is persisted
+  on-device and synced on reconnect.
+- **Notification delivery tracking**: The plan generates invite emails
+  but does not track bounces or delivery status. Surface a
+  `invite_delivery_status` field so clinic staff know whether the
+  patient actually received the link.
+
+### 2. Data Flow & Contracts
+
+**Strengths**
+- Payload examples are concrete and JSON-ready — easy to implement.
+- Provenance labeling is cleanly separated from data content.
+
+**Gaps to address**
+- **Error response schema**: Only happy-path payloads are defined.
+  Standardise error shapes, e.g.
+  `{"detail": "...", "code": "TOKEN_EXPIRED"}`.
+- **API versioning**: Endpoints use `/api/v1/` — good. Ensure the
+  mobile app pins to `v1` so breaking changes can be introduced in
+  `v2` without affecting deployed clients.
+- **Pagination**: `save-documents` accepts an unbounded list. Set a
+  `max_documents` limit (e.g. 20) to prevent abuse.
+- **Idempotency**: `save-checkin` and `save-documents` should be
+  idempotent (PUT semantics) so retries after network failure don't
+  create duplicates.
+
+### 3. Authentication & Authorization
+
+**Strengths**
+- Token-only flow is pragmatic for the first iteration and minimises
+  patient friction (no account creation required).
+
+**Red flags**
+- **Token as sole auth**: UUID v4 invite tokens are unguessable but
+  anyone with the link has full access. For demo this is acceptable;
+  for production, layer a short-lived JWT or OTP on top.
+- **No rate limiting**: The mobile-prep endpoints accept unlimited
+  requests per token. Add basic rate limiting (e.g. 60 req/min/token)
+  to prevent abuse.
+- **CORS policy**: DoctorAPP backend currently allows `*` origins. The
+  mobile-prep endpoints should restrict origins to the known mobile
+  app and web fallback domains before production.
+- **Token revocation**: No mechanism to invalidate a leaked token. Add
+  a `revoked` status to `PrepEpisode` and a staff-facing "revoke
+  invite" action.
+
+### 4. Error Handling & Resilience
+
+**Strengths**
+- Health data is optional and never blocks submission — good.
+- Dashboard is designed to be resilient to missing docs/health data.
+
+**Gaps to address**
+- **Retry / resume**: The plan mentions "resume behavior" for the
+  mobile app but does not specify the backend contract. The `start`
+  endpoint should return existing draft state so the client can
+  continue from where it left off (implemented in Phase 1 code).
+- **Analysis pipeline failure**: If the pipeline fails after submit,
+  the status remains `analysis_running` forever. Add a timeout-based
+  fallback that sets status to `analysis_failed` and surfaces a
+  retry action.
+- **Partial save validation**: `save-checkin` should validate minimum
+  content (e.g. `raw_text` must be non-empty) to prevent blank
+  submissions reaching the analysis pipeline.
+- **Network timeout guidance**: Mobile clients should implement
+  exponential backoff for save/submit calls, with clear UX for
+  "saving…" vs "failed to save" states.
+
+### 5. Sequencing & Dependencies
+
+**Strengths**
+- Five-phase plan is well-ordered with clear exit criteria per phase.
+- Backend-first approach is correct — mobile can develop against
+  mocked/stub endpoints in parallel.
+
+**Concerns**
+- **Phase 1 is large**: Prep episode model + eight endpoints + summary
+  service + transform layer is a lot for one phase. Consider splitting
+  into 1a (model + CRUD) and 1b (submit + summary + transform).
+- **Deep-link infrastructure**: Phase 2 assumes deep-link routing
+  works. On iOS this requires Associated Domains entitlement and an
+  `apple-app-site-association` file hosted on the web. This has a
+  non-trivial setup time and should be started in Phase 1 as a
+  parallel track.
+- **Email/SMS dependency**: Invite delivery requires a working SMTP
+  or SMS gateway. Ensure this is testable locally (the existing
+  `aiosmtplib` integration is already in place).
+
+### 6. Scalability Concerns
+
+**Strengths**
+- MongoDB is a good fit for the document-shaped prep episode model.
+- Analysis pipeline runs asynchronously (background task).
+
+**Concerns**
+- **Analysis pipeline is synchronous in the current intake route**:
+  The existing `POST /intake/{token}/submit` runs the full RAG
+  pipeline in-request. For mobile prep, analysis should be queued
+  (e.g. via a task queue or background worker) to avoid HTTP
+  timeouts.
+- **No caching layer**: Patient-safe summaries and status responses
+  will be polled frequently. Consider a short-TTL cache (even
+  in-memory) for `/status` and `/summary` endpoints.
+- **Document storage**: `save-documents` currently stores metadata
+  only. When actual file uploads are added, use object storage (S3)
+  with pre-signed URLs rather than storing blobs in MongoDB.
+- **Connection pooling**: MongoDB connection is shared via
+  `app.state`. This is fine for a demo but should use a connection
+  pool for production load.
+
+### 7. Gaps vs. Assumptions
+
+| Assumption | Status | Action needed |
+|---|---|---|
+| MongoDB Atlas is available and seeded | Assumed | Verify connection string in CI/deploy |
+| Email service (SMTP) works | Assumed | Add smoke test; provide fallback "copy link" |
+| Mobile deep-link routing is configured | Assumed | Requires iOS/Android platform config |
+| PatientMobileAPP can reach DoctorAPP backend | Assumed | Document network/CORS requirements |
+| Single patient per invite token | Assumed | Enforce uniqueness constraint on `invite_token` |
+| Analysis pipeline accepts partial data | Partially validated | Mock-data fallback exists; test edge cases |
+| Patient will have connectivity during prep | Assumed | Design offline-first local storage |
+
+### 8. Quick Wins & Red Flags
+
+**Strongest parts (Quick Wins)**
+- **PrepEpisode model** is clean and well-designed — single source of
+  truth for the entire mobile-prep lifecycle.
+- **Patient-safe summary separation** from clinician analysis is a
+  strong architectural decision that reduces liability risk.
+- **Incremental save endpoints** allow the patient to save progress
+  step-by-step, which is excellent UX.
+- **Provenance model** is a differentiator for investor demos —
+  clinicians can see exactly what came from the patient vs AI vs
+  device.
+
+**Riskiest parts (Red Flags)**
+- 🔴 **No auth beyond invite tokens**: Fine for demo, but must be
+  addressed before any real patient data flows through the system.
+- 🔴 **Synchronous analysis pipeline**: Will cause timeouts under
+  load. Queue-based processing is essential for production.
+- 🟡 **Deep-link setup complexity**: iOS Universal Links require
+  server-side config and Apple Developer account changes. This could
+  block the demo if not started early.
+- 🟡 **Email deliverability**: SMTP-based email may land in spam
+  folders. For the demo, consider a "copy invite link" fallback in
+  the DoctorAPP UI.
