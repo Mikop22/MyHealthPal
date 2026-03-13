@@ -22,12 +22,14 @@ import { LineChart } from "react-native-gifted-charts";
 import Svg, { Rect } from "react-native-svg";
 import { AppIcon } from "../../components/AppIcon";
 import { UniversalLiquidCard } from "../../components/UniversalLiquidCard";
+import { SectionHeader } from "../../components/SectionHeader";
+import { StatusBadge } from "../../components/StatusBadge";
 import {
   getMockBiometrics,
   type BiometricSeries,
 } from "../../providers/MockHealthKit";
 import { Colors } from "../../constants/Colors";
-import { Fonts } from "../../constants/Typography";
+import { Fonts, TypeScale } from "../../constants/Typography";
 
 const METRICS = getMockBiometrics();
 
@@ -55,14 +57,14 @@ function PulsingAlertBadge({ text }: { text: string }) {
   }, []);
 
   const glowStyle = useAnimatedStyle(() => ({
-    borderColor: `rgba(34,197,94,${glow.value * 0.8})`,
+    borderColor: `rgba(226,92,92,${glow.value * 0.6})`,
     shadowOpacity: glow.value * 0.4,
   }));
 
   return (
     <Animated.View style={[styles.alertBadge, glowStyle]}>
       <View style={styles.alertIconWrap}>
-        <AppIcon name="warning" size={20} color={Colors.accent} />
+        <AppIcon name="warning" size={20} color={Colors.semantic.error} />
       </View>
       <View style={styles.alertTextWrap}>
         <Text style={styles.alertTitle}>Clinically significant deviation</Text>
@@ -123,7 +125,7 @@ export default function VitalsScreen() {
       active.data.map((d) => ({
         value: d.value,
         label: d.date.split(" ")[1],
-        dataPointColor: d.flag ? Colors.accent : Colors.primary,
+        dataPointColor: d.flag ? Colors.semantic.error : Colors.brand,
         dataPointRadius: d.flag ? 7 : 4,
         customDataPoint: d.flag ? () => <PulsingDataPoint /> : undefined,
       })),
@@ -189,7 +191,7 @@ export default function VitalsScreen() {
                 >
                   {isActive ? (
                     <LinearGradient
-                      colors={["#22C55E", "#16A34A"]}
+                      colors={[Colors.brandLight, Colors.brand]}
                       start={{ x: 0, y: 0 }}
                       end={{ x: 1, y: 1 }}
                       style={styles.pill}
@@ -204,7 +206,7 @@ export default function VitalsScreen() {
                       <AppIcon
                         name={iconName}
                         size={14}
-                        color={Colors.forest[600]}
+                        color={Colors.text.secondary}
                       />
                       <Text style={styles.pillText}>{m.shortLabel}</Text>
                     </View>
@@ -245,14 +247,14 @@ export default function VitalsScreen() {
                   height={chartHeight}
                   curved
                   areaChart
-                  color={Colors.primary}
+                  color={Colors.brand}
                   thickness={3}
-                  startFillColor="rgba(22,101,52,0.30)"
+                  startFillColor="rgba(68, 173, 79, 0.25)"
                   endFillColor="rgba(255,255,255,0)"
                   startOpacity={0.4}
                   endOpacity={0}
                   hideDataPoints={false}
-                  dataPointsColor={Colors.primary}
+                  dataPointsColor={Colors.brand}
                   dataPointsHeight={8}
                   dataPointsWidth={8}
                   xAxisColor={Colors.forest[200]}
@@ -314,7 +316,7 @@ export default function VitalsScreen() {
                 <Text
                   style={[
                     styles.deltaValue,
-                    { color: isAnomaly ? Colors.accent : Colors.forest[600] },
+                    { color: isAnomaly ? Colors.semantic.error : Colors.semantic.success },
                   ]}
                 >
                   {deltaSign}
@@ -371,14 +373,14 @@ const styles = StyleSheet.create({
     gap: 6,
     paddingHorizontal: 16,
     paddingVertical: 10,
-    borderRadius: 20,
+    borderRadius: 16,
   },
   pillInactive: {
-    backgroundColor: Colors.forest[50],
+    backgroundColor: "rgba(68, 173, 79, 0.06)",
     borderWidth: 1,
-    borderColor: Colors.forest[200],
+    borderColor: "rgba(68, 173, 79, 0.12)",
   },
-  pillText: { fontSize: 14, fontWeight: "600", color: Colors.forest[700] },
+  pillText: { fontSize: 14, fontWeight: "600", color: Colors.text.secondary },
   pillTextActive: { color: "#fff" },
   underlineTrack: {
     height: 2.5,
@@ -390,24 +392,24 @@ const styles = StyleSheet.create({
   },
   underlineFill: {
     height: 2.5,
-    backgroundColor: Colors.accent,
+    backgroundColor: Colors.brand,
     borderRadius: 2,
   },
   chartCard: { padding: 20, marginBottom: 14 },
   chartTitle: {
-    fontSize: 16,
+    ...TypeScale.subheading,
     fontFamily: Fonts.bold,
-    color: Colors.primary,
+    color: Colors.text.primary,
     marginBottom: 16,
   },
   riskZoneWrap: { position: "relative", marginBottom: 8 },
   chartWrap: { marginLeft: -8 },
-  axisText: { fontSize: 11, color: Colors.forest[500] },
+  axisText: { fontSize: 11, color: Colors.text.muted },
   spikeOuter: {
     width: 16,
     height: 16,
     borderRadius: 8,
-    backgroundColor: "rgba(34,197,94,0.25)",
+    backgroundColor: "rgba(226, 92, 92, 0.20)",
     alignItems: "center",
     justifyContent: "center",
   },
@@ -415,7 +417,7 @@ const styles = StyleSheet.create({
     width: 10,
     height: 10,
     borderRadius: 5,
-    backgroundColor: Colors.accent,
+    backgroundColor: Colors.semantic.error,
     borderWidth: 2,
     borderColor: "#fff",
   },
@@ -433,12 +435,12 @@ const styles = StyleSheet.create({
     borderStyle: "dashed",
     borderColor: Colors.forest[400],
   },
-  legendLabel: { fontSize: 12, color: Colors.forest[500] },
+  legendLabel: { ...TypeScale.caption, color: Colors.text.muted },
   riskLegend: {
     width: 16,
     height: 8,
     borderRadius: 2,
-    backgroundColor: "rgba(239,68,68,0.2)",
+    backgroundColor: "rgba(226,92,92,0.2)",
     marginLeft: 8,
   },
   deltaCard: { padding: 20, marginBottom: 14 },
@@ -448,22 +450,22 @@ const styles = StyleSheet.create({
   deltaDivider: {
     width: 1,
     height: 40,
-    backgroundColor: Colors.forest[200],
+    backgroundColor: "rgba(200, 230, 210, 0.4)",
     marginHorizontal: 16,
   },
   deltaMetric: {
-    fontSize: 28,
+    ...TypeScale.title,
     fontWeight: "800",
-    color: Colors.primary,
+    color: Colors.text.primary,
   },
   deltaUnit: {
     fontSize: 15,
     fontWeight: "500",
-    color: Colors.forest[600],
+    color: Colors.text.muted,
   },
   deltaLabel: {
-    fontSize: 12,
-    color: Colors.forest[500],
+    ...TypeScale.caption,
+    color: Colors.text.muted,
     marginTop: 2,
   },
   deltaValue: { fontSize: 22, fontWeight: "700" },
@@ -476,9 +478,9 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderRadius: 16,
     borderWidth: 1.5,
-    borderColor: "rgba(34,197,94,0.4)",
-    backgroundColor: "rgba(34,197,94,0.06)",
-    shadowColor: Colors.accent,
+    borderColor: "rgba(226, 92, 92, 0.3)",
+    backgroundColor: Colors.semantic.errorBg,
+    shadowColor: Colors.semantic.error,
     shadowOffset: { width: 0, height: 0 },
     shadowRadius: 12,
   },
@@ -486,11 +488,20 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: "rgba(34,197,94,0.12)",
+    backgroundColor: "rgba(226, 92, 92, 0.10)",
     alignItems: "center",
     justifyContent: "center",
   },
   alertTextWrap: { flex: 1 },
-  alertTitle: { fontSize: 13, fontWeight: "700", color: Colors.primary },
-  alertSub: { fontSize: 12, color: Colors.forest[600], marginTop: 2 },
+  alertTitle: {
+    ...TypeScale.caption,
+    fontSize: 13,
+    fontWeight: "700",
+    color: Colors.semantic.error,
+  },
+  alertSub: {
+    ...TypeScale.caption,
+    color: Colors.text.secondary,
+    marginTop: 2,
+  },
 });
