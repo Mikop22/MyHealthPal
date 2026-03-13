@@ -36,19 +36,19 @@ export const Typography = {
     fontFamily: Fonts.bold,
     fontSize: FontSizes["4xl"],
     lineHeight: LineHeights["4xl"],
-    letterSpacing: -0.9,
+    letterSpacing: -0.8,
   },
   title: {
     fontFamily: Fonts.bold,
     fontSize: FontSizes["3xl"],
     lineHeight: LineHeights["3xl"],
-    letterSpacing: -0.6,
+    letterSpacing: -0.4,
   },
   sectionTitle: {
     fontFamily: Fonts.semiBold,
     fontSize: FontSizes.xl,
     lineHeight: LineHeights.xl,
-    letterSpacing: -0.2,
+    letterSpacing: -0.15,
   },
   body: {
     fontFamily: Fonts.regular,
@@ -66,13 +66,13 @@ export const Typography = {
     fontFamily: Fonts.medium,
     fontSize: FontSizes.sm,
     lineHeight: LineHeights.sm,
-    letterSpacing: 0.15,
+    letterSpacing: 0.1,
   },
   micro: {
     fontFamily: Fonts.medium,
     fontSize: FontSizes.xs,
     lineHeight: LineHeights.xs,
-    letterSpacing: 0.6,
+    letterSpacing: 0.2,
   },
   button: {
     fontFamily: Fonts.semiBold,

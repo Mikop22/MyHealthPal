@@ -355,7 +355,7 @@ export default function VitalsScreen() {
                 <StatusBadge
                   tone="warning"
                   icon="warning"
-                  label="Clinically significant deviation"
+                  label="Action recommended"
                 />
                 <PulsingAlertBadge text="Clinically significant deviation detected" />
               </View>
