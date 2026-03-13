@@ -51,6 +51,15 @@ def _build_appointment_email(
         cta_color = "#fff"
         cta_label = "Complete Patient Form"
 
+    if intro_text:
+        intro_section = f"""\
+        <p style="color: #334155; font-size: 16px; line-height: 1.6;">
+          {intro_text}
+        </p>
+"""
+    else:
+        intro_section = ""
+
     html = f"""\
     <html>
     <body style="font-family: 'Segoe UI', Arial, sans-serif; background: #f8f8fc; padding: 40px 0;">
@@ -73,9 +82,7 @@ def _build_appointment_email(
 
         {mobile_section}
 
-        <p style="color: #334155; font-size: 16px; line-height: 1.6;">
-          {intro_text}
-        </p>
+        {intro_section}
 
         <div style="text-align: center; margin: 32px 0;">
           <a href="{form_url}"
