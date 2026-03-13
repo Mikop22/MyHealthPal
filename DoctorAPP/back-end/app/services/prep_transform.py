@@ -28,10 +28,10 @@ from app.models.prep_episode import PrepEpisode
 def prep_episode_to_patient_payload(episode: PrepEpisode) -> PatientPayload:
     """Convert a PrepEpisode into a ``PatientPayload`` for the analysis pipeline.
 
-    The narrative comes from the check-in payload.  If health data was included
-    it is mapped into the biometric fields; otherwise a minimal stub is used
-    (the analysis pipeline handles empty biometrics gracefully via mock-data
-    fallback).
+    The narrative comes from the check-in payload. Biometric fields are
+    currently populated with minimal stub values, and the analysis pipeline
+    handles empty or stub biometrics gracefully via its own mock-data
+    fallback.
     """
     # -- Narrative ----------------------------------------------------------
     narrative = ""
@@ -55,9 +55,9 @@ def prep_episode_to_patient_payload(episode: PrepEpisode) -> PatientPayload:
         narrative = "Patient submitted preparation without a written narrative."
 
     # -- Biometric data -----------------------------------------------------
-    # If the mobile app included health data metrics we attempt to map them.
-    # The pipeline has a fallback that generates mock biometrics for empty
-    # payloads, so it is safe to pass minimal stubs here.
+    # We currently ignore any health data payload on the episode and always
+    # send minimal stub biometrics. The analysis pipeline has a fallback that
+    # generates mock biometrics as needed, so this is safe.
     stub_metric = MetricDataPoint(
         date=datetime.now(timezone.utc).strftime("%Y-%m-%d"),
         value=0.0,

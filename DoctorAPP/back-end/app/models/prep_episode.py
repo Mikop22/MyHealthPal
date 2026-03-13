@@ -8,9 +8,8 @@ ready_for_review → reviewed.
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
 from enum import Enum
-from typing import List, Optional, Union
+from typing import List, Optional
 
 from pydantic import BaseModel, Field
 
@@ -70,27 +69,27 @@ class ExtractedSymptom(BaseModel):
 
 class CheckinPayload(BaseModel):
     raw_text: str
-    extracted_symptoms: List[ExtractedSymptom] = []
-    confirmed_symptoms: List[str] = []
-    dismissed_symptoms: List[str] = []
+    extracted_symptoms: List[ExtractedSymptom] = Field(default_factory=list)
+    confirmed_symptoms: List[str] = Field(default_factory=list)
+    dismissed_symptoms: List[str] = Field(default_factory=list)
 
 
 class DocumentItem(BaseModel):
     document_id: str
     title: str = ""
-    summary_bullets: List[str] = []
+    summary_bullets: List[str] = Field(default_factory=list)
     patient_note: str = ""
     shared: bool = True
 
 
 class DocumentsPayload(BaseModel):
-    documents: List[DocumentItem] = []
+    documents: List[DocumentItem] = Field(default_factory=list)
 
 
 class HealthDataPayload(BaseModel):
     source: str = "unknown"
     sync_timestamp: Optional[str] = None
-    metrics: dict = {}
+    metrics: dict = Field(default_factory=dict)
     shared: bool = True
 
 
@@ -114,7 +113,7 @@ class PrepEpisode(BaseModel):
     reviewed_at: Optional[str] = None
 
     checkin_payload: Optional[CheckinPayload] = None
-    documents: List[DocumentItem] = []
+    documents: List[DocumentItem] = Field(default_factory=list)
     health_data_payload: Optional[HealthDataPayload] = None
 
     patient_safe_summary: Optional[List[str]] = None
