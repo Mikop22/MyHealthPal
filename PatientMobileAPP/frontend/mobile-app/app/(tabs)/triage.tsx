@@ -2,6 +2,7 @@ import React, { useState, useCallback, useRef, useEffect } from "react";
 import {
   ActivityIndicator,
   Keyboard,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -166,10 +167,24 @@ export default function TriageScreen() {
 
   useEffect(() => {
     (async () => {
-      const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== "granted") return;
-      const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
-      setUserLocation({ latitude: loc.coords.latitude, longitude: loc.coords.longitude });
+      try {
+        if (Platform.OS === "web" && navigator.geolocation) {
+          navigator.geolocation.getCurrentPosition(
+            (pos) => {
+              setUserLocation({ latitude: pos.coords.latitude, longitude: pos.coords.longitude });
+            },
+            () => { /* location denied or unavailable – fall back to defaults */ },
+            { enableHighAccuracy: false, timeout: 10000, maximumAge: 60000 },
+          );
+          return;
+        }
+        const { status } = await Location.requestForegroundPermissionsAsync();
+        if (status !== "granted") return;
+        const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+        setUserLocation({ latitude: loc.coords.latitude, longitude: loc.coords.longitude });
+      } catch {
+        /* location unavailable – map will use default center */
+      }
     })();
   }, []);
 
@@ -352,9 +367,9 @@ export default function TriageScreen() {
         keyboardShouldPersistTaps="handled"
       >
         <View style={styles.section}>
-          <Text style={styles.heroTitle}>Describe Your Symptoms</Text>
+          <Text style={styles.heroTitle}>Check In</Text>
           <Text style={styles.heroSub}>
-            Tell us how you're feeling in your own words
+            Tell us how you're feeling today
           </Text>
 
           <SurfaceCard style={styles.inputCard}>
@@ -381,7 +396,7 @@ export default function TriageScreen() {
               disabled={!inputText.trim()}
             >
               <AppIcon name="sparkles" size={18} color="#fff" />
-              <Text style={styles.primaryBtnText}>Analyze with MedGemma</Text>
+              <Text style={styles.primaryBtnText}>Log Symptoms</Text>
             </Pressable>
           )}
 
@@ -396,7 +411,7 @@ export default function TriageScreen() {
             <SurfaceCard style={styles.feedbackCard}>
               <ActivityIndicator size="large" color={Colors.accent} />
               <Text style={styles.loadingText}>
-                MedGemma is analyzing your symptoms...
+                Logging your symptoms...
               </Text>
             </SurfaceCard>
           )}

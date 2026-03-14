@@ -75,6 +75,79 @@ const CATEGORY_ICONS: Record<string, CategoryIconName> = {
   Recovery: "fitness",
 };
 
+const MOCK_CAMPAIGNS: CommunityRequest[] = [
+  {
+    id: "mock-1",
+    title: "Help Me Afford Monthly Insulin Supplies",
+    description:
+      "I was recently diagnosed with Type 1 diabetes and need help covering the cost of insulin and testing supplies while I wait for insurance approval.",
+    aboutMe:
+      "Hi, I'm Sarah, a 28-year-old teacher. I love hiking and volunteering at my local animal shelter.",
+    category: "Supplements",
+    requester: "Sarah Mitchell",
+    initials: "SM",
+    amount: 500,
+    raised: 315,
+    daysAgo: 3,
+  },
+  {
+    id: "mock-2",
+    title: "Post-Surgery Physical Therapy Sessions",
+    description:
+      "After my knee surgery, I need 12 weeks of physiotherapy to get back on my feet. Any contribution helps me recover and return to work.",
+    aboutMe:
+      "I'm James, a 45-year-old construction worker and father of two. I've been in the trades for over 20 years.",
+    category: "Recovery",
+    requester: "James O'Brien",
+    initials: "JO",
+    amount: 1200,
+    raised: 480,
+    daysAgo: 7,
+  },
+  {
+    id: "mock-3",
+    title: "Blood Pressure Monitor for Home Use",
+    description:
+      "My doctor recommended daily blood pressure monitoring at home. I need a reliable device to track my readings between appointments.",
+    aboutMe:
+      "I'm Maria, a retired nurse who now spends her time gardening and looking after grandchildren.",
+    category: "Monitoring",
+    requester: "Maria Garcia",
+    initials: "MG",
+    amount: 150,
+    raised: 150,
+    daysAgo: 12,
+  },
+  {
+    id: "mock-4",
+    title: "Chronic Pain Management Supplements",
+    description:
+      "Living with fibromyalgia is tough. I'm seeking help to cover anti-inflammatory supplements and a TENS unit recommended by my specialist.",
+    aboutMe:
+      "I'm David, a 37-year-old freelance graphic designer. I enjoy painting and playing guitar in my spare time.",
+    category: "Pain Mgmt",
+    requester: "David Chen",
+    initials: "DC",
+    amount: 300,
+    raised: 85,
+    daysAgo: 2,
+  },
+  {
+    id: "mock-5",
+    title: "Prenatal Vitamins & Wellness Check-ups",
+    description:
+      "Expecting my first child and need support covering prenatal vitamins and routine wellness visits not fully covered by my plan.",
+    aboutMe:
+      "I'm Aisha, a 31-year-old social worker passionate about community health and maternal care advocacy.",
+    category: "Supplements",
+    requester: "Aisha Johnson",
+    initials: "AJ",
+    amount: 400,
+    raised: 220,
+    daysAgo: 5,
+  },
+];
+
 function GradientProgressBar({ pct }: { pct: number }) {
   return (
     <View style={styles.progressTrack}>
@@ -179,11 +252,13 @@ function RequestCard({
   index,
   shouldAnimate,
   onContribute,
+  disableContribute,
 }: {
   item: CommunityRequest;
   index: number;
   shouldAnimate: boolean;
   onContribute: () => void;
+  disableContribute: boolean;
 }) {
   const pct = Math.round((item.raised / item.amount) * 100);
   const fulfilled = item.raised >= item.amount;
@@ -240,7 +315,7 @@ function RequestCard({
             </Text>
           </View>
 
-          {!fulfilled && (
+          {!fulfilled && !disableContribute && (
             <Pressable style={styles.donateBtn} onPress={onContribute}>
               <AppIcon name="heart" size={14} color="#fff" />
               <Text style={styles.donateBtnText}>Contribute</Text>
@@ -265,6 +340,7 @@ export default function CommunityScreen() {
   const shouldAnimateOnMount = !hasAnimated.current;
   const [requests, setRequests] = useState<CommunityRequest[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isMockData, setIsMockData] = useState(false);
 
   useEffect(() => {
     hasAnimated.current = true;
@@ -273,9 +349,18 @@ export default function CommunityScreen() {
   const loadCampaigns = useCallback(async () => {
     try {
       const campaigns = await listCampaigns();
-      setRequests(campaigns.map((c) => campaignToRequest(c)));
+      const mapped = campaigns.map((c) => campaignToRequest(c));
+      if (mapped.length > 0) {
+        setRequests(mapped);
+        setIsMockData(false);
+      } else {
+        setRequests(MOCK_CAMPAIGNS);
+        setIsMockData(true);
+      }
     } catch {
-      /* backend unavailable */
+      /* backend unavailable — show mock campaigns */
+      setRequests(MOCK_CAMPAIGNS);
+      setIsMockData(true);
     } finally {
       setLoading(false);
     }
@@ -307,9 +392,10 @@ export default function CommunityScreen() {
         index={index}
         shouldAnimate={shouldAnimateOnMount}
         onContribute={() => handleContribute(item.id)}
+        disableContribute={isMockData}
       />
     ),
-    [shouldAnimateOnMount, handleContribute],
+    [shouldAnimateOnMount, handleContribute, isMockData],
   );
 
   if (loading) {
