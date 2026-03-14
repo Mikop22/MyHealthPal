@@ -9,12 +9,40 @@ import { fetchPatients, fetchAppointmentsByDate } from "@/lib/api";
 import type { PatientRecord, AppointmentRecord } from "@/lib/types";
 import { AnimatedRow, AnimatedSidebar } from "./_components/AnimatedScheduleRows";
 
-const MOCK_APPOINTMENTS: AppointmentRecord[] = [
-  { id: "appt-1", patient_id: "mock-1", date: "2026-03-14", time: "09:00", status: "in_progress", form_token: "", created_at: "" },
-  { id: "appt-2", patient_id: "mock-2", date: "2026-03-14", time: "10:30", status: "scheduled", form_token: "", created_at: "" },
-  { id: "appt-3", patient_id: "mock-3", date: "2026-03-14", time: "14:00", status: "scheduled", form_token: "", created_at: "" },
-  { id: "appt-4", patient_id: "mock-4", date: "2026-03-14", time: "15:45", status: "pending", form_token: "", created_at: "" },
-];
+// Generate mock appointments using real patient IDs or mock IDs if no real patients
+function generateMockAppointments(patients: PatientRecord[]): AppointmentRecord[] {
+  const mockNames = ["Sarah Chen", "Michael Torres", "Emma Watson", "James Wilson"];
+  const baseAppointments = [
+    { time: "09:00", status: "in_progress" },
+    { time: "10:30", status: "scheduled" },
+    { time: "14:00", status: "scheduled" },
+    { time: "15:45", status: "pending" },
+  ];
+  
+  // If we have real patients, use them; otherwise create mock patients with IDs
+  const effectivePatients = patients.length > 0 
+    ? patients.slice(0, 4).map((p, i) => ({ ...p, name: p.name || mockNames[i] || "Patient" }))
+    : mockNames.map((name, i) => ({
+        id: `mock-${i + 1}`,
+        name,
+        email: "",
+        xrp_wallet_address: "",
+        xrp_wallet_seed: "",
+        created_at: "",
+        status: "active",
+        concern: "",
+      }));
+  
+  return baseAppointments.map((base, i) => ({
+    id: `appt-${i + 1}`,
+    patient_id: effectivePatients[i]?.id || `mock-${i + 1}`,
+    date: new Date().toISOString().split('T')[0],
+    time: base.time,
+    status: base.status,
+    form_token: "",
+    created_at: "",
+  }));
+}
 
 const MOCK_PATIENTS: PatientRecord[] = [
   { id: "mock-1", name: "Sarah Chen", email: "", xrp_wallet_address: "", xrp_wallet_seed: "", created_at: "", status: "active", concern: "Pelvic pain" },
@@ -135,9 +163,10 @@ export default async function SchedulePage() {
 
   // Use mock data when no real data exists
   const patients = rawPatients.length > 0 ? rawPatients : MOCK_PATIENTS;
+  const mockAppointments = generateMockAppointments(patients);
   const appointments = rawAppointments.length > 0
     ? mapAppointmentsToEntries(rawAppointments, patients)
-    : mapAppointmentsToEntries(MOCK_APPOINTMENTS, patients);
+    : mapAppointmentsToEntries(mockAppointments, patients);
 
   const summaryStats = deriveSummary(appointments);
   const typeBreakdown = deriveTypeBreakdown(appointments);
