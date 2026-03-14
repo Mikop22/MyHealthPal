@@ -3,7 +3,7 @@ import re
 from typing import Dict, List, Optional
 
 
-def _strip_fences(s: str) -> str:
+def strip_markdown_fences(s: str) -> str:
     s = (s or "").strip()
     if s.startswith("```"):
         lines = s.split("\n")
@@ -20,6 +20,12 @@ def _normalize_bullets(bullets: List[str], min_len: int = 3, max_len: int = 5) -
     if len(bullets) < min_len:
         bullets.extend([""] * (min_len - len(bullets)))
     return bullets[:max_len]
+
+
+def _normalize_questions(questions: List[str], max_len: int = 3) -> List[str]:
+    return [str(question).strip() for question in questions if str(question).strip()][
+        :max_len
+    ]
 
 
 def _is_refusal(raw: str) -> bool:
@@ -44,7 +50,7 @@ def _is_refusal(raw: str) -> bool:
 
 
 def parse_translate_response(text: str) -> Optional[Dict[str, object]]:
-    raw = _strip_fences(text or "")
+    raw = strip_markdown_fences(text or "")
     if not raw:
         return None
 
@@ -57,6 +63,7 @@ def parse_translate_response(text: str) -> Optional[Dict[str, object]]:
                 "Try a different image or contact support if this persists.",
             ],
             "nutritionalSwap": "—",
+            "followUpQuestions": [],
         }
 
     # Try JSON first (some models return JSON)
@@ -70,10 +77,19 @@ def parse_translate_response(text: str) -> Optional[Dict[str, object]]:
                 or []
             )
             swap = data.get("nutritionalSwap") or data.get("nutritional_swap")
+            questions = (
+                data.get("followUpQuestions")
+                or data.get("follow_up_questions")
+                or data.get("questions")
+                or []
+            )
             if isinstance(bullets, list) and bullets:
                 return {
                     "summaryBullets": _normalize_bullets(bullets),
                     "nutritionalSwap": (str(swap).strip() if swap else "No specific swap provided."),
+                    "followUpQuestions": _normalize_questions(
+                        questions if isinstance(questions, list) else [questions]
+                    ),
                 }
     except (json.JSONDecodeError, TypeError):
         pass
@@ -84,24 +100,37 @@ def parse_translate_response(text: str) -> Optional[Dict[str, object]]:
         raw = raw[summary_start.start() :]
 
     # Find section split: allow NUTRITIONAL_SWAP / Nutritional swap etc.
-    split_pattern = re.compile(
+    swap_pattern = re.compile(
         r"\n\s*NUTRITIONAL[_\s]?SWAP\s*:\s*\n",
         re.IGNORECASE,
     )
-    match = split_pattern.search(raw)
-    if not match:
+    swap_match = swap_pattern.search(raw)
+    follow_up_pattern = re.compile(
+        r"\n\s*FOLLOW[_\s-]?UP[_\s]?QUESTIONS?\s*:\s*\n",
+        re.IGNORECASE,
+    )
+
+    questions_text = ""
+    if not swap_match:
         if "NUTRITIONAL_SWAP" in raw.upper():
             idx = raw.upper().index("NUTRITIONAL_SWAP")
             line_end = raw.index("\n", idx) if "\n" in raw[idx:] else len(raw)
             summary_text = raw[:idx].strip()
-            nutritional_swap = raw[line_end + 1 :].strip()
+            remaining_text = raw[line_end + 1 :].strip()
         else:
             # No section headers: treat whole response as summary, extract bullets
             summary_text = raw
-            nutritional_swap = "No specific swap provided."
+            remaining_text = ""
     else:
-        summary_text = raw[: match.start()].strip()
-        nutritional_swap = raw[match.end() :].strip()
+        summary_text = raw[: swap_match.start()].strip()
+        remaining_text = raw[swap_match.end() :].strip()
+
+    follow_up_match = follow_up_pattern.search(remaining_text)
+    if follow_up_match:
+        nutritional_swap = remaining_text[: follow_up_match.start()].strip()
+        questions_text = remaining_text[follow_up_match.end() :].strip()
+    else:
+        nutritional_swap = remaining_text.strip() or "No specific swap provided."
 
     # Drop leading "SUMMARY:" or "Summary:" line
     summary_lines = summary_text.splitlines()
@@ -138,7 +167,20 @@ def parse_translate_response(text: str) -> Optional[Dict[str, object]]:
     if not nutritional_swap:
         nutritional_swap = "No specific swap provided."
 
+    question_lines = [ln.strip() for ln in questions_text.splitlines() if ln.strip()]
+    follow_up_questions: List[str] = []
+    for line in question_lines:
+        if line.startswith("- "):
+            question = line[2:].strip()
+        elif line.startswith("* "):
+            question = line[2:].strip()
+        else:
+            question = line.strip()
+        if question:
+            follow_up_questions.append(question)
+
     return {
         "summaryBullets": bullets,
         "nutritionalSwap": nutritional_swap,
+        "followUpQuestions": _normalize_questions(follow_up_questions),
     }

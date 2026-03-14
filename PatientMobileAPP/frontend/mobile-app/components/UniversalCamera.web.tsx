@@ -268,8 +268,14 @@ export const UniversalCamera = forwardRef<CameraHandle, UniversalCameraProps>(
             strokeLinecap="round"
             strokeLinejoin="round"
           >
-            <path d="M16 3h4l2 3h-2v11H4V6H2l2-3h4" />
-            <path d="M8 21H4l-2-3h2V7h12v11h-2l-2 3" />
+            <path
+              d="M4 8.5A2.5 2.5 0 0 1 6.5 6H9l1.6-2h2.8L15 6h2.5A2.5 2.5 0 0 1 20 8.5v7A2.5 2.5 0 0 1 17.5 18H6.5A2.5 2.5 0 0 1 4 15.5z"
+              fill="rgba(255,255,255,0.08)"
+            />
+            <path d="M9 11.25H6.75l1.9-1.9" />
+            <path d="M15 12.75h2.25l-1.9 1.9" />
+            <path d="M7.25 11.25a4.75 4.75 0 0 1 8.05-2.25" />
+            <path d="M16.75 12.75a4.75 4.75 0 0 1-8.05 2.25" />
           </svg>
         </button>
       </div>

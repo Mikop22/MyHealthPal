@@ -19,9 +19,32 @@ const API_BASE =
 export interface TranslateResult {
     summaryBullets: string[];
     nutritionalSwap: string;
+    followUpQuestions: string[];
+}
+
+export interface TranslateFollowUpResult {
+    answer: string;
 }
 
 /* ── /translate ── */
+
+async function appendImageToFormData(formData: FormData, imageUri: string) {
+    if (Platform.OS === "web") {
+        // Web camera gives us a data:image/jpeg;base64,... URL
+        const res = await fetch(imageUri);
+        const blob = await res.blob();
+        formData.append("image", blob, "scan.jpg");
+        return;
+    }
+
+    // Native camera gives us a file:/// URI — React Native's FormData
+    // accepts { uri, type, name } as a blob-like object.
+    formData.append("image", {
+        uri: imageUri,
+        type: "image/jpeg",
+        name: "scan.jpg",
+    } as unknown as Blob);
+}
 
 /**
  * Send a captured image to GET /translate for MedGemma analysis.
@@ -38,21 +61,7 @@ export async function postTranslate(
     biometrics?: string,
 ): Promise<TranslateResult> {
     const formData = new FormData();
-
-    if (Platform.OS === "web") {
-        // Web camera gives us a data:image/jpeg;base64,... URL
-        const res = await fetch(imageUri);
-        const blob = await res.blob();
-        formData.append("image", blob, "scan.jpg");
-    } else {
-        // Native camera gives us a file:/// URI — React Native's FormData
-        // accepts { uri, type, name } as a blob-like object.
-        formData.append("image", {
-            uri: imageUri,
-            type: "image/jpeg",
-            name: "scan.jpg",
-        } as unknown as Blob);
-    }
+    await appendImageToFormData(formData, imageUri);
 
     if (culture?.trim()) formData.append("culture", culture.trim());
     if (diet?.trim()) formData.append("diet", diet.trim());
@@ -81,6 +90,39 @@ export async function postTranslate(
     }
 
     return data as TranslateResult;
+}
+
+export async function postTranslateFollowUp(
+    imageUri: string,
+    question: string,
+): Promise<TranslateFollowUpResult> {
+    const formData = new FormData();
+    await appendImageToFormData(formData, imageUri);
+    formData.append("question", question.trim());
+
+    let response: Response;
+    try {
+        response = await fetch(`${API_BASE}/translate/follow-up`, {
+            method: "POST",
+            body: formData,
+        });
+    } catch (e) {
+        const msg =
+            e instanceof TypeError && e.message?.toLowerCase().includes("fetch")
+                ? `Cannot reach the backend at ${API_BASE}. Is it running? (uvicorn from backend/ with venv activated)`
+                : (e instanceof Error ? e.message : "Network error");
+        throw new Error(msg);
+    }
+
+    const data = await response.json().catch(() => ({}));
+
+    if (!response.ok) {
+        throw new Error(
+            data.error || data.detail || `Server error (${response.status})`,
+        );
+    }
+
+    return data as TranslateFollowUpResult;
 }
 
 /* ── Types: Triage ── */

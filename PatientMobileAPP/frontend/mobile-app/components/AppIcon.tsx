@@ -86,14 +86,37 @@ export function AppIcon({ name, size = 24, color = "#166534", style }: AppIconPr
             return (
                 <Svg width={s} height={s} viewBox="0 0 24 24" fill="none" style={style as any}>
                     <Path
-                        d="M16 3h4l2 3h-2v11H4V6H2l2-3h4"
+                        d="M4 8.5A2.5 2.5 0 0 1 6.5 6H9l1.6-2h2.8L15 6h2.5A2.5 2.5 0 0 1 20 8.5v7A2.5 2.5 0 0 1 17.5 18H6.5A2.5 2.5 0 0 1 4 15.5z"
+                        stroke={c}
+                        strokeWidth={1.8}
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        fill={c}
+                        fillOpacity={0.08}
+                    />
+                    <Path
+                        d="M9 11.25H6.75l1.9-1.9"
                         stroke={c}
                         strokeWidth={1.8}
                         strokeLinecap="round"
                         strokeLinejoin="round"
                     />
                     <Path
-                        d="M8 21H4l-2-3h2V7h12v11h-2l-2 3"
+                        d="M15 12.75h2.25l-1.9 1.9"
+                        stroke={c}
+                        strokeWidth={1.8}
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                    />
+                    <Path
+                        d="M7.25 11.25a4.75 4.75 0 0 1 8.05-2.25"
+                        stroke={c}
+                        strokeWidth={1.8}
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                    />
+                    <Path
+                        d="M16.75 12.75a4.75 4.75 0 0 1-8.05 2.25"
                         stroke={c}
                         strokeWidth={1.8}
                         strokeLinecap="round"
@@ -255,10 +278,35 @@ export function AppIcon({ name, size = 24, color = "#166534", style }: AppIconPr
         case "images":
             return (
                 <Svg width={s} height={s} viewBox="0 0 24 24" fill="none" style={style as any}>
-                    <Rect x={4} y={4} width={16} height={16} rx={2} stroke={c} strokeWidth={2} opacity={0.5} />
-                    <Rect x={8} y={8} width={12} height={12} rx={2} stroke={c} strokeWidth={2} fill="#fff" />
-                    <Path d="M8 16l3-3 2 2 4-4 3 3" stroke={c} strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" />
-                    <Circle cx={12} cy={12} r={1.5} fill={c} />
+                    <Rect
+                        x={3.5}
+                        y={5}
+                        width={13}
+                        height={12}
+                        rx={2.5}
+                        stroke={c}
+                        strokeWidth={1.7}
+                        opacity={0.55}
+                    />
+                    <Rect
+                        x={7.5}
+                        y={7}
+                        width={13}
+                        height={12}
+                        rx={2.5}
+                        stroke={c}
+                        strokeWidth={1.9}
+                        fill={c}
+                        fillOpacity={0.08}
+                    />
+                    <Path
+                        d="M9.5 16l2.7-3 2.1 2.1 2.9-3.6 1.3 1.5"
+                        stroke={c}
+                        strokeWidth={1.7}
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                    />
+                    <Circle cx={12} cy={10.5} r={1.2} fill={c} />
                 </Svg>
             );
 

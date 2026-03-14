@@ -66,7 +66,11 @@ def test_translate_uses_asyncio_to_thread_for_llm_call(monkeypatch):
             "- Two\n"
             "- Three\n"
             "NUTRITIONAL_SWAP:\n"
-            "Choose beans instead of processed chips."
+            "Choose beans instead of processed chips.\n"
+            "FOLLOW_UP_QUESTIONS:\n"
+            "- Which number should I watch most closely?\n"
+            "- What should I ask about these results?\n"
+            "- When should this test be repeated?"
         )
 
     monkeypatch.setattr(main_module, "call_medgemma", fake_medgemma)
@@ -92,7 +96,11 @@ def test_translate_uses_default_size_when_max_image_size_env_is_invalid(monkeypa
         "- Two\n"
         "- Three\n"
         "NUTRITIONAL_SWAP:\n"
-        "Choose beans instead of processed chips."
+        "Choose beans instead of processed chips.\n"
+        "FOLLOW_UP_QUESTIONS:\n"
+        "- Which number should I watch most closely?\n"
+        "- What should I ask about these results?\n"
+        "- When should this test be repeated?"
     ))
 
     response = client.post(
@@ -110,7 +118,11 @@ def test_translate_returns_200_with_expected_shape(monkeypatch):
         "- Two\n"
         "- Three\n"
         "NUTRITIONAL_SWAP:\n"
-        "Choose beans instead of processed chips."
+        "Choose beans instead of processed chips.\n"
+        "FOLLOW_UP_QUESTIONS:\n"
+        "- Which number should I watch most closely?\n"
+        "- What should I ask about these results?\n"
+        "- When should this test be repeated?"
     ))
 
     response = client.post(
@@ -123,7 +135,71 @@ def test_translate_returns_200_with_expected_shape(monkeypatch):
     assert response.json() == {
         "summaryBullets": ["One", "Two", "Three"],
         "nutritionalSwap": "Choose beans instead of processed chips.",
+        "followUpQuestions": [
+            "Which number should I watch most closely?",
+            "What should I ask about these results?",
+            "When should this test be repeated?",
+        ],
     }
+
+
+def test_translate_follow_up_returns_400_when_question_is_missing():
+    response = client.post(
+        "/translate/follow-up",
+        files={"image": ("scan.png", BytesIO(b"\x89PNG\r\n\x1a\npayload"), "image/png")},
+    )
+
+    assert response.status_code == 400
+    assert response.json() == {"error": "Question is required."}
+
+
+def test_translate_follow_up_returns_answer(monkeypatch):
+    monkeypatch.setattr(
+        main_module,
+        "call_medgemma",
+        lambda *args, **kwargs: "Your glucose looks higher than normal, so ask how to monitor it.",
+    )
+
+    response = client.post(
+        "/translate/follow-up",
+        data={"question": "What does the high glucose mean?"},
+        files={"image": ("scan.png", BytesIO(b"\x89PNG\r\n\x1a\npayload"), "image/png")},
+    )
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "answer": "Your glucose looks higher than normal, so ask how to monitor it."
+    }
+
+
+def test_translate_follow_up_uses_asyncio_to_thread(monkeypatch):
+    calls = {}
+
+    def fake_medgemma(*args, **kwargs):
+        raise AssertionError("follow-up route called sync medgemma client directly")
+
+    async def fake_to_thread(func, *args, **kwargs):
+        calls["func"] = func
+        calls["kwargs"] = kwargs
+        return "Ask your doctor whether this result needs repeat testing."
+
+    monkeypatch.setattr(main_module, "call_medgemma", fake_medgemma)
+    monkeypatch.setattr(main_module.asyncio, "to_thread", fake_to_thread)
+
+    response = client.post(
+        "/translate/follow-up",
+        data={"question": "Should I retest this soon?"},
+        files={"image": ("scan.png", BytesIO(b"\x89PNG\r\n\x1a\npayload"), "image/png")},
+    )
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "answer": "Ask your doctor whether this result needs repeat testing."
+    }
+    assert calls["func"] is fake_medgemma
+    assert "messages" in calls["kwargs"]
+    assert "image_b64" in calls["kwargs"]
+    assert "image_media_type" in calls["kwargs"]
 
 
 def test_translate_returns_500_when_parsing_fails(monkeypatch):
