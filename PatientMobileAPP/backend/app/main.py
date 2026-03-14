@@ -39,15 +39,37 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title="MyHealthPal Document Translator", lifespan=lifespan)
-# Allow any localhost / 127.0.0.1 origin (any port) for local dev (Expo, Vite, etc.)
-_cors_origin_regex = r"^https?://(localhost|127\.0\.0\.1)(:\d+)?$"
-app.add_middleware(
-    CORSMiddleware,
-    allow_origin_regex=_cors_origin_regex,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+
+# CORS: honour ALLOWED_ORIGINS env var when set (production / Vercel).
+# "*" → allow every origin (credentials disabled, per spec).
+# Comma-separated list → allow only those origins.
+# Unset / empty → fall back to localhost regex for local dev.
+_allowed_raw = os.environ.get("ALLOWED_ORIGINS", "").strip()
+if _allowed_raw == "*":
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=["*"],
+        allow_credentials=False,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+elif _allowed_raw:
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=[o.strip() for o in _allowed_raw.split(",") if o.strip()],
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+else:
+    # Local dev: any localhost / 127.0.0.1 origin on any port
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origin_regex=r"^https?://(localhost|127\.0\.0\.1)(:\d+)?$",
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
 app.include_router(crowdfunding_module.router)
 app.include_router(check_in_router)
 app.include_router(labels_router)
