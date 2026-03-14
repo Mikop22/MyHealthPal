@@ -168,7 +168,7 @@ export default function TriageScreen() {
   useEffect(() => {
     (async () => {
       try {
-        if (Platform.OS === "web" && typeof navigator !== "undefined" && navigator.geolocation) {
+        if (Platform.OS === "web" && navigator.geolocation) {
           navigator.geolocation.getCurrentPosition(
             (pos) => {
               setUserLocation({ latitude: pos.coords.latitude, longitude: pos.coords.longitude });
@@ -369,7 +369,7 @@ export default function TriageScreen() {
         <View style={styles.section}>
           <Text style={styles.heroTitle}>Check In</Text>
           <Text style={styles.heroSub}>
-            Tell us how you're feeling in your own words
+            Tell us how you're feeling today
           </Text>
 
           <SurfaceCard style={styles.inputCard}>
