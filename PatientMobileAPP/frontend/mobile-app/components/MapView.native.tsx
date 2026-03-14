@@ -13,19 +13,23 @@ export interface ClinicPin {
 export interface ClinicMapViewProps {
   clinics: ClinicPin[];
   height?: number;
+  userLocation?: { latitude: number; longitude: number } | null;
 }
 
 /**
  * Native map implementation using react-native-maps.
  * Plots clinic markers with the app's accent green colour.
  */
-export function ClinicMapView({ clinics, height = 220 }: ClinicMapViewProps) {
+export function ClinicMapView({ clinics, height = 220, userLocation }: ClinicMapViewProps) {
+  const center = userLocation ?? { latitude: 42.9849, longitude: -81.2453 };
+
   return (
     <RNMapView
       style={[styles.map, { height }]}
+      showsUserLocation={!!userLocation}
       initialRegion={{
-        latitude: 42.9849,
-        longitude: -81.2453,
+        latitude: center.latitude,
+        longitude: center.longitude,
         latitudeDelta: 0.05,
         longitudeDelta: 0.05,
       }}

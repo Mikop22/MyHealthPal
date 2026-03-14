@@ -35,7 +35,7 @@ export default function RootLayout() {
   const isOnboarding = pathname.includes("onboarding");
   const isScanner = pathname.includes("scanner");
 
-  return (
+  const appContent = (
     <View style={{ flex: 1, backgroundColor: isOnboarding ? Colors.background : "transparent" }}>
       {!isOnboarding && <GlassCanvas />}
       <StatusBar style={isScanner ? "light" : "dark"} />
@@ -61,6 +61,38 @@ export default function RootLayout() {
         <Stack.Screen name="onboarding" options={{ headerShown: false, contentStyle: { backgroundColor: Colors.background } }} />
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       </Stack>
+    </View>
+  );
+
+  if (Platform.OS !== "web") return appContent;
+
+  // On web, constrain to a mobile phone aspect ratio so judges see the intended design
+  return (
+    <View
+      style={{
+        flex: 1,
+        backgroundColor: "#1A1A2E",
+        alignItems: "center",
+        justifyContent: "center",
+      }}
+    >
+      <View
+        style={{
+          width: 390,
+          maxWidth: "100vw" as any,
+          height: "100vh" as any,
+          maxHeight: 844,
+          borderRadius: 40,
+          overflow: "hidden",
+          // subtle phone shadow
+          shadowColor: "#000",
+          shadowOffset: { width: 0, height: 20 },
+          shadowOpacity: 0.4,
+          shadowRadius: 40,
+        }}
+      >
+        {appContent}
+      </View>
     </View>
   );
 }

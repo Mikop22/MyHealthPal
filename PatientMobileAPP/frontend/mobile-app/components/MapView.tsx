@@ -13,6 +13,7 @@ export interface ClinicPin {
 export interface ClinicMapViewProps {
   clinics: ClinicPin[];
   height?: number;
+  userLocation?: { latitude: number; longitude: number } | null;
 }
 
 /**

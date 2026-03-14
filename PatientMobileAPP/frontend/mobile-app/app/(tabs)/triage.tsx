@@ -22,6 +22,7 @@ import Animated, {
 } from "react-native-reanimated";
 import { LinearGradient } from "expo-linear-gradient";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
+import * as Location from "expo-location";
 import { AppIcon } from "../../components/AppIcon";
 import { ClinicMapView, type ClinicPin } from "../../components/MapView";
 import { usePatientStore } from "../../store/patientStore";
@@ -35,29 +36,61 @@ const TEXT_PRIMARY = "#101828";
 const TEXT_SECONDARY = "#667085";
 const TEXT_TERTIARY = "#98A2B3";
 
-const LONDON_CLINICS: ClinicPin[] = [
+/** Haversine distance in km between two lat/lng points. */
+function haversineKm(
+  lat1: number, lon1: number,
+  lat2: number, lon2: number,
+): number {
+  const toRad = (deg: number) => (deg * Math.PI) / 180;
+  const R = 6371;
+  const dLat = toRad(lat2 - lat1);
+  const dLon = toRad(lon2 - lon1);
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+const CLINIC_LOCATIONS = [
   {
     name: "London Health Sciences Centre",
     address: "339 Windermere Rd, London, ON",
     latitude: 42.993,
     longitude: -81.271,
-    distance: "1.2 km",
   },
   {
     name: "St. Joseph's Health Care",
     address: "268 Grosvenor St, London, ON",
     latitude: 42.988,
     longitude: -81.256,
-    distance: "2.8 km",
   },
   {
     name: "Victoria Hospital",
     address: "800 Commissioners Rd E, London, ON",
     latitude: 42.967,
     longitude: -81.222,
-    distance: "3.5 km",
   },
 ];
+
+function buildClinicPins(
+  userLat?: number,
+  userLon?: number,
+): ClinicPin[] {
+  return CLINIC_LOCATIONS.map((c) => {
+    let distance = "—";
+    if (userLat !== undefined && userLon !== undefined) {
+      const km = haversineKm(userLat, userLon, c.latitude, c.longitude);
+      distance = km < 1 ? `${Math.round(km * 1000)} m` : `${km.toFixed(1)} km`;
+    }
+    return { ...c, distance };
+  }).sort((a, b) => {
+    // sort by distance when available
+    const numA = parseFloat(a.distance);
+    const numB = parseFloat(b.distance);
+    if (isNaN(numA) || isNaN(numB)) return 0;
+    return numA - numB;
+  });
+}
 
 const PLACEHOLDER_TEXT =
   "e.g. I've been having bad headaches for the past week, especially behind my eyes. I also feel dizzy when I stand up and I'm more tired than usual...";
@@ -128,6 +161,19 @@ function SurfaceCard({
 export default function TriageScreen() {
   const { width } = useWindowDimensions();
   const addSymptom = usePatientStore((s) => s.addSymptom);
+
+  const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number } | null>(null);
+
+  useEffect(() => {
+    (async () => {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== "granted") return;
+      const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+      setUserLocation({ latitude: loc.coords.latitude, longitude: loc.coords.longitude });
+    })();
+  }, []);
+
+  const clinics = buildClinicPins(userLocation?.latitude, userLocation?.longitude);
 
   const [inputText, setInputText] = useState("");
   const [loading, setLoading] = useState(false);
@@ -543,15 +589,15 @@ export default function TriageScreen() {
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Nearest Clinics</Text>
-          <Text style={styles.sectionSub}>London, Ontario</Text>
+          <Text style={styles.sectionSub}>Based on your location</Text>
 
           <View style={styles.mapShell}>
             <View style={styles.mapContainer}>
-              <ClinicMapView clinics={LONDON_CLINICS} height={220} />
+              <ClinicMapView clinics={clinics} height={220} userLocation={userLocation} />
             </View>
           </View>
 
-          {LONDON_CLINICS.map((clinic) => (
+          {clinics.map((clinic) => (
             <Pressable key={clinic.name} style={styles.clinicCard}>
               <View style={styles.clinicRow}>
                 <View style={styles.clinicIconPill}>
