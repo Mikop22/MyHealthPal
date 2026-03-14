@@ -45,6 +45,18 @@ export async function createPatient(name: string, email: string): Promise<Patien
   return res.json();
 }
 
+export async function createTestPatient(): Promise<PatientRecord> {
+  const res = await fetch(`${API_BASE}/api/v1/patients/test`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...COMMON_HEADERS },
+  });
+  if (!res.ok) {
+    const body = await res.text();
+    throw new Error(`Failed to create test patient: ${body}`);
+  }
+  return res.json();
+}
+
 export async function getIntakeStatus(
   token: string
 ): Promise<{ biometrics_received: boolean }> {

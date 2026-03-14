@@ -6,9 +6,11 @@ import {
   Search,
   SlidersHorizontal,
   CalendarPlus,
+  FlaskConical,
 } from "lucide-react";
 import Link from "next/link";
-import { fetchPatients } from "@/lib/api";
+import { useRouter } from "next/navigation";
+import { fetchPatients, createTestPatient } from "@/lib/api";
 import type { PatientRecord } from "@/lib/types";
 import { useCountUp } from "@/lib/useCountUp";
 import { ScheduleModal } from "./_components/ScheduleModal";
@@ -145,6 +147,8 @@ export default function PatientsPage() {
   const [loading, setLoading] = useState(true);
   const [scheduleTarget, setScheduleTarget] = useState<PatientRecord | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [creatingTest, setCreatingTest] = useState(false);
+  const router = useRouter();
 
   const loadPatients = useCallback(async () => {
     try {
@@ -160,6 +164,17 @@ export default function PatientsPage() {
   useEffect(() => {
     loadPatients();
   }, [loadPatients]);
+
+  const handleCreateTestPatient = async () => {
+    setCreatingTest(true);
+    try {
+      const patient = await createTestPatient();
+      await loadPatients();
+      router.push(`/dashboard/${patient.id}`);
+    } catch {
+      setCreatingTest(false);
+    }
+  };
 
   const filteredPatients = patients.filter((p) =>
     p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -226,6 +241,16 @@ export default function PatientsPage() {
                 <SlidersHorizontal className="h-4 w-4 shrink-0 text-[var(--text-nav)]" />
                 <span className="text-[14px] font-medium tracking-[-0.1px] text-[var(--text-nav)]">
                   Filters
+                </span>
+              </button>
+              <button
+                onClick={handleCreateTestPatient}
+                disabled={creatingTest}
+                className="glass-purple flex h-12 items-center gap-2 rounded-[24px] px-6 transition-all hover:brightness-110 hover:shadow-lg active:scale-[0.97] disabled:opacity-60 disabled:cursor-wait"
+              >
+                <FlaskConical className="h-4 w-4 shrink-0 text-white" />
+                <span className="text-[14px] font-medium tracking-[-0.1px] text-white whitespace-nowrap">
+                  {creatingTest ? "Running AI Pipeline…" : "Add Test Patient"}
                 </span>
               </button>
             </div>
