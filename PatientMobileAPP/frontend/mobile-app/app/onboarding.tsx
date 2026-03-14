@@ -4,7 +4,6 @@ import {
   ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -18,7 +17,6 @@ import Animated, {
   withSpring,
 } from "react-native-reanimated";
 
-import { AppIcon } from "../components/AppIcon";
 import { OnboardingOptionButton } from "../components/OnboardingOptionButton";
 import { Colors } from "../constants/Colors";
 import { Fonts } from "../constants/Typography";
@@ -31,7 +29,7 @@ const SCREEN_BG = "#F6F8F6";
 const CARD_BG = "#FFFFFF";
 const TEXT_PRIMARY = "#101828";
 const TEXT_SECONDARY = "#667085";
-const TEXT_TERTIARY = "#98A2B3";
+
 
 interface StepOption {
   label: string;
@@ -40,13 +38,11 @@ interface StepOption {
 }
 
 interface StepDef {
-  key: "age" | "sex" | "language" | "ethnicity" | "email";
+  key: "age" | "sex" | "language" | "ethnicity";
   question: string;
   description: string;
   options?: StepOption[];
   multiSelect?: boolean;
-  inputType?: "email";
-  inputPlaceholder?: string;
 }
 
 const STEPS: StepDef[] = [
@@ -109,14 +105,6 @@ const STEPS: StepDef[] = [
       { label: "Prefer not to say", value: "prefer_not_to_say" },
     ],
   },
-  {
-    key: "email",
-    question: "What's your email?",
-    description:
-      "We'll use this to send you appointment reminders and health updates.",
-    inputType: "email",
-    inputPlaceholder: "your.name@email.com",
-  },
 ];
 
 const TRANSITION_LOCK_MS = 180;
@@ -133,7 +121,6 @@ export default function OnboardingScreen() {
     setSex,
     setLanguage,
     setEthnicity,
-    setEmail,
     completeDemographics,
   } = usePatientStore();
 
@@ -148,16 +135,13 @@ export default function OnboardingScreen() {
 
   const step = STEPS[stepIndex];
   const isLastStep = stepIndex === STEPS.length - 1;
-  const isInputStep = step.inputType === "email";
 
   const currentSelection: SelectionValue | null =
     selections[step.key] ?? (step.multiSelect ? [] : null);
 
-  const hasSelection = isInputStep
-    ? typeof currentSelection === "string" && currentSelection.trim().length > 0
-    : step.multiSelect
-      ? Array.isArray(currentSelection) && currentSelection.length > 0
-      : currentSelection != null;
+  const hasSelection = step.multiSelect
+    ? Array.isArray(currentSelection) && currentSelection.length > 0
+    : currentSelection != null;
 
   const isOptionSelected = useCallback(
     (value: string | number): boolean => {
@@ -209,10 +193,6 @@ export default function OnboardingScreen() {
     [isTransitioning, step.key, step.multiSelect],
   );
 
-  const handleEmailChange = useCallback((text: string) => {
-    setSelections((prev) => ({ ...prev, email: text }));
-  }, []);
-
   const commitStep = useCallback(
     (stepKey: string, value: SelectionValue) => {
       switch (stepKey) {
@@ -228,12 +208,9 @@ export default function OnboardingScreen() {
         case "ethnicity":
           setEthnicity(value as string[]);
           break;
-        case "email":
-          setEmail(value as string);
-          break;
       }
     },
-    [setAge, setEmail, setEthnicity, setLanguage, setSex],
+    [setAge, setEthnicity, setLanguage, setSex],
   );
 
   const unlockTransition = useCallback(() => {
@@ -335,36 +312,7 @@ export default function OnboardingScreen() {
               <Text style={styles.descriptionText}>{step.description}</Text>
             </View>
 
-            {isInputStep && (
-              <Animated.View
-                entering={FadeInDown.delay(100).springify().damping(12)}
-                style={styles.inputWrap}
-              >
-                <View style={inputStyles.inputContainer}>
-                  <View style={inputStyles.iconWrap}>
-                    <AppIcon name="mail" size={18} color={Colors.accent} />
-                  </View>
-                  <TextInput
-                    style={inputStyles.input}
-                    placeholder={step.inputPlaceholder}
-                    placeholderTextColor={TEXT_TERTIARY}
-                    value={(selections.email as string) ?? ""}
-                    onChangeText={handleEmailChange}
-                    keyboardType="email-address"
-                    autoCapitalize="none"
-                    autoCorrect={false}
-                    autoComplete="email"
-                    returnKeyType="done"
-                    onSubmitEditing={handleNext}
-                  />
-                </View>
-                <Text style={inputStyles.hint}>
-                  Your email is kept private and never shared.
-                </Text>
-              </Animated.View>
-            )}
-
-            {!isInputStep && step.multiSelect ? (
+            {step.multiSelect ? (
               <ScrollView
                 style={styles.optionsScroll}
                 bounces={false}
@@ -373,9 +321,9 @@ export default function OnboardingScreen() {
               >
                 {optionsList}
               </ScrollView>
-            ) : !isInputStep ? (
+            ) : (
               <View style={styles.optionsList}>{optionsList}</View>
-            ) : null}
+            )}
           </View>
         </Animated.View>
       </View>
@@ -422,46 +370,6 @@ export default function OnboardingScreen() {
     </View>
   );
 }
-
-const inputStyles = StyleSheet.create({
-  inputContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: CARD_BG,
-    borderRadius: 20,
-    paddingHorizontal: 18,
-    height: 60,
-    shadowColor: "#0F172A",
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.05,
-    shadowRadius: 24,
-    elevation: 3,
-  },
-  iconWrap: {
-    width: 38,
-    height: 38,
-    borderRadius: 12,
-    backgroundColor: "#F4F7F5",
-    alignItems: "center",
-    justifyContent: "center",
-    marginRight: 14,
-  },
-  input: {
-    flex: 1,
-    fontSize: 16,
-    fontFamily: Fonts.medium,
-    color: TEXT_PRIMARY,
-    letterSpacing: -0.1,
-  },
-  hint: {
-    fontSize: 12,
-    fontFamily: Fonts.regular,
-    color: TEXT_SECONDARY,
-    textAlign: "center",
-    marginTop: 14,
-    letterSpacing: 0.2,
-  },
-});
 
 const styles = StyleSheet.create({
   container: {
@@ -541,9 +449,6 @@ const styles = StyleSheet.create({
     lineHeight: 21,
     color: TEXT_SECONDARY,
     fontFamily: Fonts.regular,
-  },
-  inputWrap: {
-    marginTop: 24,
   },
   optionsScroll: {
     marginTop: 24,

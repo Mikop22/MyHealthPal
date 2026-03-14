@@ -286,7 +286,6 @@ export interface ProfilePayload {
     sex: string | null;
     primary_language: string | null;
     ethnicity: string[];
-    email: string | null;
 }
 
 /* ── /profile ── */

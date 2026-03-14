@@ -9,7 +9,6 @@ export interface DemographicPayload {
   sex: BiologicalSex | null;
   primaryLanguage: string | null;
   ethnicity: string[];
-  email: string | null;
   completedAt: string | null;
 }
 
@@ -46,7 +45,6 @@ export interface PatientState {
   setSex: (sex: BiologicalSex) => void;
   setLanguage: (lang: string) => void;
   setEthnicity: (ethnicities: string[]) => void;
-  setEmail: (email: string) => void;
   completeDemographics: () => void;
 
   /* ── Actions: Triage ── */
@@ -74,7 +72,6 @@ const INITIAL_DEMOGRAPHICS: DemographicPayload = {
   sex: null,
   primaryLanguage: null,
   ethnicity: [],
-  email: null,
   completedAt: null,
 };
 
@@ -108,9 +105,6 @@ export const usePatientStore = create<PatientState>()((set) => ({
     set((s) => ({
       demographics: { ...s.demographics, ethnicity: ethnicities },
     })),
-
-  setEmail: (email) =>
-    set((s) => ({ demographics: { ...s.demographics, email } })),
 
   completeDemographics: () =>
     set((s) => ({

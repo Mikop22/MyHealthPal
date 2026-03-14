@@ -115,7 +115,7 @@ function ProfileHeader() {
 }
 
 export default function SettingsScreen() {
-  const { demographics, setAge, setSex, setLanguage, setEthnicity, setEmail } = usePatientStore();
+  const { demographics, setAge, setSex, setLanguage, setEthnicity } = usePatientStore();
 
   // Hydrate store from backend on mount
   useEffect(() => {
@@ -127,7 +127,6 @@ export default function SettingsScreen() {
         if (profile.sex) setSex(profile.sex as "female" | "male" | "intersex" | "prefer_not_to_say");
         if (profile.primary_language) setLanguage(profile.primary_language);
         if (profile.ethnicity.length > 0) setEthnicity(profile.ethnicity);
-        if (profile.email) setEmail(profile.email);
       })
       .catch(() => {
         /* backend unavailable — use local store */
@@ -143,7 +142,6 @@ export default function SettingsScreen() {
       sex: demographics.sex,
       primary_language: demographics.primaryLanguage,
       ethnicity: demographics.ethnicity,
-      email: demographics.email,
     }).catch(() => {
       /* backend unavailable */
     });
@@ -193,11 +191,6 @@ export default function SettingsScreen() {
               icon="globe"
               label="Primary Language"
               value={formatLanguage(demographics.primaryLanguage)}
-            />
-            <SettingsRow
-              icon="mail"
-              label="Email"
-              value={demographics.email ?? FALLBACK}
               isLast
             />
           </View>
