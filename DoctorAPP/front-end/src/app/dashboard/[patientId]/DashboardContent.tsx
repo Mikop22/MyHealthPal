@@ -176,7 +176,7 @@ export function DashboardContent({ data, patientId }: DashboardContentProps) {
         variants={sectionVariants}
         initial="hidden"
         animate="visible"
-        className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 min-h-0 lg:flex-[9] gap-4 md:gap-8"
+        className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 min-h-0 gap-4 md:gap-8"
       >
         <ClientCharts biometricDeltas={biometric_deltas} acuteData={acuteMetrics} />
       </motion.div>

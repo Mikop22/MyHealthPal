@@ -222,7 +222,7 @@ export default function PatientsPage() {
                   className="flex-1 bg-transparent text-[14px] md:text-[15px] font-medium tracking-[-0.1px] text-[var(--text-primary)] placeholder:text-[var(--text-muted)] outline-none"
                 />
               </div>
-              <button className="glass-control shadow-sm border border-[var(--border-nav-inactive)] flex h-10 md:h-12 items-center gap-2 rounded-[24px] px-4 md:px-6 transition-all hover:bg-[rgba(243,237,250,0.5)] active:scale-[0.97]">
+              <button aria-label="Filters" className="glass-control shadow-sm border border-[var(--border-nav-inactive)] flex h-10 md:h-12 items-center gap-2 rounded-[24px] px-4 md:px-6 transition-all hover:bg-[rgba(243,237,250,0.5)] active:scale-[0.97]">
                 <SlidersHorizontal className="h-4 w-4 shrink-0 text-[var(--text-nav)]" />
                 <span className="hidden sm:inline text-[14px] font-medium tracking-[-0.1px] text-[var(--text-nav)]">
                   Filters
