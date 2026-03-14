@@ -5,6 +5,7 @@ import {
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   View,
   useWindowDimensions,
 } from "react-native";
@@ -20,7 +21,11 @@ import {
   UniversalCamera,
   type CameraHandle,
 } from "../../components/UniversalCamera";
-import { postTranslate, type TranslateResult } from "../../services/api";
+import {
+  postTranslate,
+  postTranslateFollowUp,
+  type TranslateResult,
+} from "../../services/api";
 import { Colors } from "../../constants/Colors";
 import { Fonts } from "../../constants/Typography";
 
@@ -34,11 +39,16 @@ const DARK_OVERLAY = "rgba(4, 8, 15, 0.44)";
 
 export default function ScannerScreen() {
   const cameraRef = useRef<CameraHandle>(null);
+  const activeScanIdRef = useRef(0);
   const { width, height } = useWindowDimensions();
   const [capturedUri, setCapturedUri] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<TranslateResult | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [followUpQuestion, setFollowUpQuestion] = useState("");
+  const [followUpAnswer, setFollowUpAnswer] = useState<string | null>(null);
+  const [followUpError, setFollowUpError] = useState<string | null>(null);
+  const [followUpLoading, setFollowUpLoading] = useState(false);
 
   const shutterScale = useSharedValue(1);
 
@@ -48,17 +58,26 @@ export default function ScannerScreen() {
   const frameLeft = Math.round((width - frameW) / 2);
 
   const handleCapture = useCallback(async (uri: string) => {
+    const scanId = activeScanIdRef.current + 1;
+    activeScanIdRef.current = scanId;
     setCapturedUri(uri);
     setLoading(true);
     setResult(null);
     setError(null);
+    setFollowUpQuestion("");
+    setFollowUpAnswer(null);
+    setFollowUpError(null);
+    setFollowUpLoading(false);
 
     try {
       const data = await postTranslate(uri);
+      if (activeScanIdRef.current !== scanId) return;
       setResult(data);
     } catch (e: any) {
+      if (activeScanIdRef.current !== scanId) return;
       setError(e.message || "Something went wrong");
     } finally {
+      if (activeScanIdRef.current !== scanId) return;
       setLoading(false);
     }
   }, []);
@@ -92,14 +111,44 @@ export default function ScannerScreen() {
   }, [handleCapture]);
 
   const handleDismiss = useCallback(() => {
+    activeScanIdRef.current += 1;
     setCapturedUri(null);
     setResult(null);
     setError(null);
+    setFollowUpQuestion("");
+    setFollowUpAnswer(null);
+    setFollowUpError(null);
+    setFollowUpLoading(false);
   }, []);
 
   const handleRetry = useCallback(() => {
     if (capturedUri) handleCapture(capturedUri);
   }, [capturedUri, handleCapture]);
+
+  const handleAskFollowUp = useCallback(
+    async (questionOverride?: string) => {
+      const nextQuestion = (questionOverride ?? followUpQuestion).trim();
+      if (!capturedUri || !nextQuestion || followUpLoading) return;
+      const scanId = activeScanIdRef.current;
+
+      setFollowUpQuestion(nextQuestion);
+      setFollowUpLoading(true);
+      setFollowUpError(null);
+
+      try {
+        const data = await postTranslateFollowUp(capturedUri, nextQuestion);
+        if (activeScanIdRef.current !== scanId) return;
+        setFollowUpAnswer(data.answer);
+      } catch (e: any) {
+        if (activeScanIdRef.current !== scanId) return;
+        setFollowUpError(e.message || "Could not answer your follow-up question.");
+      } finally {
+        if (activeScanIdRef.current !== scanId) return;
+        setFollowUpLoading(false);
+      }
+    },
+    [capturedUri, followUpLoading, followUpQuestion],
+  );
 
   const shutterAnim = useAnimatedStyle(() => ({
     transform: [{ scale: shutterScale.value }],
@@ -237,6 +286,7 @@ export default function ScannerScreen() {
               <ScrollView
                 showsVerticalScrollIndicator={false}
                 style={styles.scroll}
+                keyboardShouldPersistTaps="handled"
               >
                 <Text style={styles.sectionLabel}>AI SUMMARY</Text>
 
@@ -262,6 +312,89 @@ export default function ScannerScreen() {
                     <Text style={styles.swapTitle}>Nutritional Swap</Text>
                   </View>
                   <Text style={styles.swapBody}>{result.nutritionalSwap}</Text>
+                </View>
+
+                <View style={styles.followUpSection}>
+                  <Text style={styles.sectionLabel}>ASK A FOLLOW-UP</Text>
+                  <Text style={styles.followUpIntro}>
+                    Ask MedGemma one more question about what this document means.
+                  </Text>
+
+                  {result.followUpQuestions.length > 0 && (
+                    <View style={styles.suggestedQuestionsWrap}>
+                      {result.followUpQuestions.map((question, index) => (
+                        <Pressable
+                          key={`${question}-${index}`}
+                          onPress={() => handleAskFollowUp(question)}
+                          style={styles.suggestedQuestionChip}
+                        >
+                          <AppIcon
+                            name="sparkles"
+                            size={14}
+                            color={Colors.brand}
+                          />
+                          <Text style={styles.suggestedQuestionText}>
+                            {question}
+                          </Text>
+                        </Pressable>
+                      ))}
+                    </View>
+                  )}
+
+                  <View style={styles.followUpInputCard}>
+                    <TextInput
+                      style={styles.followUpInput}
+                      placeholder="Ask a follow-up question"
+                      placeholderTextColor={TEXT_SECONDARY}
+                      multiline
+                      numberOfLines={3}
+                      textAlignVertical="top"
+                      value={followUpQuestion}
+                      onChangeText={setFollowUpQuestion}
+                    />
+                  </View>
+
+                  <Pressable
+                    onPress={() => handleAskFollowUp()}
+                    style={[
+                      styles.followUpBtn,
+                      !followUpQuestion.trim() && styles.followUpBtnDisabled,
+                    ]}
+                    disabled={!followUpQuestion.trim() || followUpLoading}
+                  >
+                    {followUpLoading ? (
+                      <ActivityIndicator size="small" color="#FFFFFF" />
+                    ) : (
+                      <>
+                        <AppIcon name="sparkles" size={16} color="#FFFFFF" />
+                        <Text style={styles.followUpBtnText}>
+                          Ask Follow-Up
+                        </Text>
+                      </>
+                    )}
+                  </Pressable>
+
+                  {followUpError && (
+                    <Text style={styles.followUpErrorText}>{followUpError}</Text>
+                  )}
+
+                  {followUpAnswer && !followUpLoading && (
+                    <View style={styles.followUpAnswerCard}>
+                      <View style={styles.followUpAnswerHeader}>
+                        <AppIcon
+                          name="information-circle"
+                          size={18}
+                          color={Colors.brand}
+                        />
+                        <Text style={styles.followUpAnswerTitle}>
+                          Follow-Up Answer
+                        </Text>
+                      </View>
+                      <Text style={styles.followUpAnswerBody}>
+                        {followUpAnswer}
+                      </Text>
+                    </View>
+                  )}
                 </View>
               </ScrollView>
             )}
@@ -521,6 +654,107 @@ const styles = StyleSheet.create({
     fontSize: 15,
     lineHeight: 22,
     color: "rgba(255,255,255,0.94)",
+    fontFamily: Fonts.regular,
+  },
+  followUpSection: {
+    marginTop: 22,
+  },
+  followUpIntro: {
+    fontSize: 14,
+    lineHeight: 21,
+    color: Colors.text.secondary,
+    marginBottom: 14,
+  },
+  suggestedQuestionsWrap: {
+    gap: 10,
+    marginBottom: 14,
+  },
+  suggestedQuestionChip: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "rgba(68, 173, 79, 0.18)",
+    backgroundColor: "#F7FBF7",
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+  },
+  suggestedQuestionText: {
+    flex: 1,
+    fontSize: 14,
+    lineHeight: 20,
+    color: Colors.text.primary,
+    fontFamily: Fonts.medium,
+  },
+  followUpInputCard: {
+    borderRadius: 18,
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1,
+    borderColor: "#E4E7EC",
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+  },
+  followUpInput: {
+    minHeight: 86,
+    fontSize: 15,
+    lineHeight: 22,
+    color: TEXT_PRIMARY,
+    fontFamily: Fonts.regular,
+  },
+  followUpBtn: {
+    minHeight: 54,
+    marginTop: 14,
+    borderRadius: 16,
+    backgroundColor: Colors.brand,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    shadowColor: Colors.accent,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.16,
+    shadowRadius: 18,
+    elevation: 3,
+  },
+  followUpBtnDisabled: {
+    opacity: 0.5,
+    shadowOpacity: 0,
+  },
+  followUpBtnText: {
+    color: "#FFFFFF",
+    fontSize: 15,
+    fontFamily: Fonts.semiBold,
+  },
+  followUpErrorText: {
+    marginTop: 10,
+    color: "#B42318",
+    fontSize: 14,
+    lineHeight: 20,
+  },
+  followUpAnswerCard: {
+    marginTop: 16,
+    borderRadius: 20,
+    padding: 18,
+    backgroundColor: "#F7FBF7",
+    borderWidth: 1,
+    borderColor: "rgba(68, 173, 79, 0.14)",
+  },
+  followUpAnswerHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginBottom: 10,
+  },
+  followUpAnswerTitle: {
+    fontSize: 15,
+    color: Colors.text.primary,
+    fontFamily: Fonts.semiBold,
+  },
+  followUpAnswerBody: {
+    fontSize: 15,
+    lineHeight: 22,
+    color: Colors.text.primary,
     fontFamily: Fonts.regular,
   },
 });

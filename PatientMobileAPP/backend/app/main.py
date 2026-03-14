@@ -26,9 +26,9 @@ from app.doctorapp_client import close_client as _close_doctorapp_client
 from app.triage import router as triage_router
 from app.profile import router as profile_router
 from app.medgemma import call_medgemma
-from app.parser import parse_translate_response
-from app.prompt import build_messages
-from app.schemas import TranslateResponse
+from app.parser import parse_translate_response, strip_markdown_fences
+from app.prompt import build_follow_up_messages, build_messages
+from app.schemas import TranslateFollowUpResponse, TranslateResponse
 from app.validation import validate_image
 
 
@@ -84,7 +84,7 @@ async def handle_request_validation_error(request: Request, exc: RequestValidati
         errors = exc.errors()
         detail = errors[0]["msg"] if errors else "Invalid input."
         return JSONResponse(status_code=400, content={"detail": detail})
-    if request.url.path == "/translate":
+    if request.url.path in {"/translate", "/translate/follow-up"}:
         return JSONResponse(status_code=400, content={"error": "Image is required."})
 
     return await request_validation_exception_handler(request, exc)
@@ -152,3 +152,47 @@ async def translate(
     except ValidationError as e:
         logger.warning("Translate response validation failed: %s", e)
         return _translate_error(500, "Could not process document")
+
+
+@app.post("/translate/follow-up", response_model=TranslateFollowUpResponse)
+async def translate_follow_up(
+    image: UploadFile = File(...),
+    question: Optional[str] = Form(None),
+) -> TranslateFollowUpResponse:
+    validation_error = validate_image(image, max_size_mb=_max_image_size_mb())
+    if validation_error:
+        return _translate_error(400, validation_error)
+
+    if not (question or "").strip():
+        return _translate_error(400, "Question is required.")
+
+    image_bytes = await image.read()
+    image_b64 = base64.b64encode(image_bytes).decode("ascii")
+    messages = build_follow_up_messages(
+        image_b64=image_b64,
+        image_media_type=image.content_type,
+        question=question,
+    )
+
+    try:
+        llm_output = await asyncio.to_thread(
+            call_medgemma,
+            messages=messages,
+            image_b64=image_b64,
+            image_media_type=image.content_type,
+        )
+    except TimeoutError as exc:
+        return _translate_error(504, "Upstream service timed out.")
+    except (RuntimeError, ValueError) as exc:
+        return _translate_error(502, "Upstream service unavailable.")
+
+    answer = strip_markdown_fences(llm_output or "").strip()
+    if not answer:
+        logger.warning("Follow-up response was empty.")
+        return _translate_error(500, "Could not process follow-up question")
+
+    try:
+        return TranslateFollowUpResponse(answer=answer)
+    except ValidationError as e:
+        logger.warning("Translate follow-up response validation failed: %s", e)
+        return _translate_error(500, "Could not process follow-up question")
