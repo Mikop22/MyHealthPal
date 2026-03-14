@@ -47,7 +47,7 @@ async function appendImageToFormData(formData: FormData, imageUri: string) {
 }
 
 /**
- * Send a captured image to GET /translate for MedGemma analysis.
+ * Send a captured image to POST /translate for MedGemma analysis.
  *
  * @param imageUri - file URI (native) or data-URL (web) from the camera
  * @param culture  - optional cultural context

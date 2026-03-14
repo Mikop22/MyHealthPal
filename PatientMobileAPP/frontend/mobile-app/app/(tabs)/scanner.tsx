@@ -39,6 +39,7 @@ const DARK_OVERLAY = "rgba(4, 8, 15, 0.44)";
 
 export default function ScannerScreen() {
   const cameraRef = useRef<CameraHandle>(null);
+  const activeScanIdRef = useRef(0);
   const { width, height } = useWindowDimensions();
   const [capturedUri, setCapturedUri] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -57,20 +58,26 @@ export default function ScannerScreen() {
   const frameLeft = Math.round((width - frameW) / 2);
 
   const handleCapture = useCallback(async (uri: string) => {
+    const scanId = activeScanIdRef.current + 1;
+    activeScanIdRef.current = scanId;
     setCapturedUri(uri);
     setLoading(true);
     setResult(null);
     setError(null);
+    setFollowUpQuestion("");
+    setFollowUpAnswer(null);
+    setFollowUpError(null);
+    setFollowUpLoading(false);
 
     try {
       const data = await postTranslate(uri);
+      if (activeScanIdRef.current !== scanId) return;
       setResult(data);
-      setFollowUpQuestion("");
-      setFollowUpAnswer(null);
-      setFollowUpError(null);
     } catch (e: any) {
+      if (activeScanIdRef.current !== scanId) return;
       setError(e.message || "Something went wrong");
     } finally {
+      if (activeScanIdRef.current !== scanId) return;
       setLoading(false);
     }
   }, []);
@@ -104,6 +111,7 @@ export default function ScannerScreen() {
   }, [handleCapture]);
 
   const handleDismiss = useCallback(() => {
+    activeScanIdRef.current += 1;
     setCapturedUri(null);
     setResult(null);
     setError(null);
@@ -121,6 +129,7 @@ export default function ScannerScreen() {
     async (questionOverride?: string) => {
       const nextQuestion = (questionOverride ?? followUpQuestion).trim();
       if (!capturedUri || !nextQuestion || followUpLoading) return;
+      const scanId = activeScanIdRef.current;
 
       setFollowUpQuestion(nextQuestion);
       setFollowUpLoading(true);
@@ -128,10 +137,13 @@ export default function ScannerScreen() {
 
       try {
         const data = await postTranslateFollowUp(capturedUri, nextQuestion);
+        if (activeScanIdRef.current !== scanId) return;
         setFollowUpAnswer(data.answer);
       } catch (e: any) {
+        if (activeScanIdRef.current !== scanId) return;
         setFollowUpError(e.message || "Could not answer your follow-up question.");
       } finally {
+        if (activeScanIdRef.current !== scanId) return;
         setFollowUpLoading(false);
       }
     },

@@ -143,6 +143,27 @@ def test_translate_returns_200_with_expected_shape(monkeypatch):
     }
 
 
+def test_translate_filters_null_and_sentinel_follow_up_questions(monkeypatch):
+    monkeypatch.setattr(main_module, "call_medgemma", lambda *args, **kwargs: """
+    {
+      "summaryBullets": ["One", "Two", "Three"],
+      "nutritionalSwap": "Choose beans instead of processed chips.",
+      "followUpQuestions": [null, "Which number matters most?", " ", "None", "Should I retest soon?"]
+    }
+    """)
+
+    response = client.post(
+        "/translate",
+        files={"image": ("scan.png", BytesIO(b"\x89PNG\r\n\x1a\npayload"), "image/png")},
+    )
+
+    assert response.status_code == 200
+    assert response.json()["followUpQuestions"] == [
+        "Which number matters most?",
+        "Should I retest soon?",
+    ]
+
+
 def test_translate_follow_up_returns_400_when_question_is_missing():
     response = client.post(
         "/translate/follow-up",

@@ -22,10 +22,18 @@ def _normalize_bullets(bullets: List[str], min_len: int = 3, max_len: int = 5) -
     return bullets[:max_len]
 
 
-def _normalize_questions(questions: List[str], max_len: int = 3) -> List[str]:
-    return [str(question).strip() for question in questions if str(question).strip()][
-        :max_len
-    ]
+def _normalize_questions(questions: List[str | None], max_len: int = 3) -> List[str]:
+    normalized: List[str] = []
+    for question in questions:
+        if question is None:
+            continue
+        text = str(question).strip()
+        if not text or text.lower() in {"none", "null"}:
+            continue
+        normalized.append(text)
+        if len(normalized) >= max_len:
+            break
+    return normalized
 
 
 def _is_refusal(raw: str) -> bool:
@@ -88,7 +96,9 @@ def parse_translate_response(text: str) -> Optional[Dict[str, object]]:
                     "summaryBullets": _normalize_bullets(bullets),
                     "nutritionalSwap": (str(swap).strip() if swap else "No specific swap provided."),
                     "followUpQuestions": _normalize_questions(
-                        questions if isinstance(questions, list) else [questions]
+                        questions
+                        if isinstance(questions, list)
+                        else ([str(questions)] if questions is not None else [])
                     ),
                 }
     except (json.JSONDecodeError, TypeError):
