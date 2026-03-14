@@ -148,6 +148,7 @@ export default function PatientsPage() {
   const [scheduleTarget, setScheduleTarget] = useState<PatientRecord | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [creatingTest, setCreatingTest] = useState(false);
+  const [testError, setTestError] = useState<string | null>(null);
   const router = useRouter();
 
   const loadPatients = useCallback(async () => {
@@ -167,11 +168,13 @@ export default function PatientsPage() {
 
   const handleCreateTestPatient = async () => {
     setCreatingTest(true);
+    setTestError(null);
     try {
       const patient = await createTestPatient();
       await loadPatients();
       router.push(`/dashboard/${patient.id}`);
-    } catch {
+    } catch (err) {
+      setTestError(err instanceof Error ? err.message : "Failed to create test patient");
       setCreatingTest(false);
     }
   };
@@ -255,6 +258,21 @@ export default function PatientsPage() {
               </button>
             </div>
           </div>
+
+          {testError && (
+            <motion.div
+              initial={{ opacity: 0, y: -8 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="rounded-[14px] px-4 py-3 text-[13px] font-medium text-red-600"
+              style={{
+                background: "rgba(255,200,200,0.25)",
+                backdropFilter: "blur(8px)",
+                border: "1px solid rgba(255,150,150,0.3)",
+              }}
+            >
+              {testError}
+            </motion.div>
+          )}
 
           {/* Patient table card */}
           <div className="glass-card flex min-h-0 flex-1 flex-col overflow-hidden rounded-[24px]">
