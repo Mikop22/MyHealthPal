@@ -138,13 +138,13 @@ export default async function SchedulePage() {
   });
 
   return (
-    <div className="flex min-h-0 flex-1 gap-6 p-7">
+    <div className="flex min-h-0 flex-1 flex-col lg:flex-row gap-5 lg:gap-6 p-4 md:p-7 overflow-y-auto lg:overflow-hidden">
         {/* Left Column — Schedule */}
-        <div className="flex min-h-0 flex-1 flex-col gap-5">
+        <div className="flex min-h-0 flex-1 flex-col gap-4 md:gap-5">
           {/* Date header with navigation */}
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div className="flex flex-col gap-0.5">
-              <h1 className="text-[22px] font-medium tracking-[-0.1px] text-[var(--text-primary)]">
+              <h1 className="text-[18px] md:text-[22px] font-medium tracking-[-0.1px] text-[var(--text-primary)]">
                 {dateLabel}
               </h1>
               <span className="text-[13px] font-medium tracking-[-0.1px] text-[var(--text-nav)]">
@@ -153,24 +153,24 @@ export default async function SchedulePage() {
             </div>
 
             <div className="flex items-center gap-2">
-              <button className="flex h-10 w-10 items-center justify-center rounded-[20px] border border-[var(--border-nav-inactive)] transition-all hover:bg-[var(--lavender-bg)] active:scale-[0.92]">
-                <ChevronLeft className="h-[18px] w-[18px] text-[var(--purple-primary)]" />
+              <button className="flex h-9 w-9 md:h-10 md:w-10 items-center justify-center rounded-[20px] border border-[var(--border-nav-inactive)] transition-all hover:bg-[var(--lavender-bg)] active:scale-[0.92]">
+                <ChevronLeft className="h-[16px] w-[16px] md:h-[18px] md:w-[18px] text-[var(--purple-primary)]" />
               </button>
-              <button className="flex items-center justify-center rounded-[18px] border border-[var(--border-nav-inactive)] px-6 py-2 transition-all hover:bg-[var(--lavender-bg)] active:scale-[0.96]">
+              <button className="flex items-center justify-center rounded-[18px] border border-[var(--border-nav-inactive)] px-4 md:px-6 py-2 transition-all hover:bg-[var(--lavender-bg)] active:scale-[0.96]">
                 <span className="text-[13px] font-medium text-[var(--purple-primary)]">
                   Today
                 </span>
               </button>
-              <button className="flex h-10 w-10 items-center justify-center rounded-[20px] border border-[var(--border-nav-inactive)] transition-all hover:bg-[var(--lavender-bg)] active:scale-[0.92]">
-                <ChevronLeft className="h-[18px] w-[18px] rotate-180 text-[var(--purple-primary)]" />
+              <button className="flex h-9 w-9 md:h-10 md:w-10 items-center justify-center rounded-[20px] border border-[var(--border-nav-inactive)] transition-all hover:bg-[var(--lavender-bg)] active:scale-[0.92]">
+                <ChevronLeft className="h-[16px] w-[16px] md:h-[18px] md:w-[18px] rotate-180 text-[var(--purple-primary)]" />
               </button>
             </div>
           </div>
 
           {/* Schedule card */}
-          <div className="glass-card flex min-h-0 flex-1 flex-col overflow-hidden rounded-[24px]">
-            {/* Column headers */}
-            <div className="flex shrink-0 items-center px-6 py-5 [border-bottom:var(--table-border-header)] bg-[rgba(255,255,255,0.4)] backdrop-blur-md">
+          <div className="glass-card flex min-h-0 flex-1 flex-col overflow-hidden rounded-[20px] md:rounded-[24px]">
+            {/* Column headers — hidden on mobile */}
+            <div className="hidden md:flex shrink-0 items-center px-6 py-5 [border-bottom:var(--table-border-header)] bg-[rgba(255,255,255,0.4)] backdrop-blur-md">
               <span className="w-[120px] text-[12px] font-semibold tracking-[1px] uppercase text-[var(--text-secondary)]">
                 Time
               </span>
@@ -196,11 +196,20 @@ export default async function SchedulePage() {
                 ? "text-[var(--text-muted)]"
                 : "text-[var(--text-secondary)]";
 
-              const rowClass = `row-hover flex items-center px-6 py-5 hover:bg-[var(--lavender-bg)] ${appt.highlighted ? "rounded-[12px] bg-[rgba(68,173,79,0.04)]" : ""}`;
+              const rowClass = `row-hover flex flex-col md:flex-row md:items-center px-4 md:px-6 py-3 md:py-5 gap-1.5 md:gap-0 hover:bg-[var(--lavender-bg)] ${appt.highlighted ? "rounded-[12px] bg-[rgba(68,173,79,0.04)]" : ""}`;
 
               const rowContent = (
                 <>
-                  <span className={`w-[120px] text-[14px] font-semibold ${textColor}`}>
+                  {/* Mobile: time + status inline */}
+                  <div className="flex md:hidden items-center justify-between">
+                    <span className={`text-[13px] font-semibold ${textColor}`}>
+                      {appt.time}
+                    </span>
+                    <Badge status={appt.status} />
+                  </div>
+
+                  {/* Desktop: time column */}
+                  <span className={`hidden md:inline w-[120px] text-[14px] font-semibold ${textColor}`}>
                     {appt.time}
                   </span>
 
@@ -211,13 +220,17 @@ export default async function SchedulePage() {
                     <span className={`text-[14px] font-medium ${textColor}`}>
                       {appt.name}
                     </span>
+                    {/* Mobile: show type inline */}
+                    <span className={`md:hidden text-[12px] font-medium ${typeColor}`}>
+                      · {appt.type}
+                    </span>
                   </div>
 
-                  <span className={`w-[180px] text-[13px] font-medium ${typeColor}`}>
+                  <span className={`hidden md:inline w-[180px] text-[13px] font-medium ${typeColor}`}>
                     {appt.type}
                   </span>
 
-                  <div className="flex w-[120px] justify-end">
+                  <div className="hidden md:flex w-[120px] justify-end">
                     <Badge status={appt.status} />
                   </div>
                 </>
@@ -242,10 +255,10 @@ export default async function SchedulePage() {
         </div>
 
         {/* Right Sidebar */}
-        <div className="flex w-[340px] shrink-0 flex-col gap-8">
+        <div className="flex w-full lg:w-[340px] shrink-0 flex-col gap-6 lg:gap-8">
           {/* Next Up card */}
           <AnimatedSidebar delay={0.1}>
-          <div className="glass-card flex flex-col gap-6 rounded-[24px] p-7">
+          <div className="glass-card flex flex-col gap-4 md:gap-6 rounded-[24px] p-5 md:p-7">
             <h3 className="text-[16px] font-medium tracking-[-0.1px] text-[var(--text-primary)]">
               Next Up
             </h3>
@@ -285,7 +298,7 @@ export default async function SchedulePage() {
 
           {/* Today's Summary card */}
           <AnimatedSidebar delay={0.2}>
-          <div className="glass-card flex flex-col gap-6 rounded-[24px] p-7">
+          <div className="glass-card flex flex-col gap-4 md:gap-6 rounded-[24px] p-5 md:p-7">
             <h3 className="text-[16px] font-medium tracking-[-0.1px] text-[var(--text-primary)]">
               Today&apos;s Summary
             </h3>

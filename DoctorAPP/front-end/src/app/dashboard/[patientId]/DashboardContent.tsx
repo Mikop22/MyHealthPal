@@ -126,7 +126,7 @@ export function DashboardContent({ data, patientId }: DashboardContentProps) {
         animate="visible"
         className="flex shrink-0 items-center justify-between"
       >
-        <h1 className="text-[22px] font-semibold tracking-[-0.5px] text-[var(--text-primary)]">
+        <h1 className="text-[18px] md:text-[22px] font-semibold tracking-[-0.5px] text-[var(--text-primary)]">
           {patientName}
         </h1>
       </motion.div>
@@ -137,16 +137,16 @@ export function DashboardContent({ data, patientId }: DashboardContentProps) {
         variants={sectionVariants}
         initial="hidden"
         animate="visible"
-        className="flex min-h-0 flex-[10] gap-8"
+        className="flex flex-col lg:flex-row min-h-0 lg:flex-[10] gap-4 md:gap-8"
       >
         {/* Col 1 — Clinical Intake (25%): patient narrative */}
-        <div className="glass-card flex w-[25%] shrink-0 flex-col overflow-hidden rounded-[24px]">
-          <div className="flex shrink-0 items-center px-5 py-4">
-            <span className="text-[15px] font-semibold tracking-[-0.2px] text-[var(--text-primary)]">
+        <div className="glass-card flex w-full lg:w-[25%] shrink-0 flex-col overflow-hidden rounded-[20px] md:rounded-[24px]">
+          <div className="flex shrink-0 items-center px-4 md:px-5 py-3 md:py-4">
+            <span className="text-[14px] md:text-[15px] font-semibold tracking-[-0.2px] text-[var(--text-primary)]">
               Clinical Intake
             </span>
           </div>
-          <div className="min-h-0 flex-1 overflow-y-auto px-5 pb-4">
+          <div className="min-h-0 flex-1 overflow-y-auto px-4 md:px-5 pb-4 max-h-[200px] lg:max-h-none">
             <p className="text-[13px] leading-[1.65] text-[var(--text-body)]">
               {clinical_brief?.clinical_intake || narrative}
             </p>
@@ -162,7 +162,7 @@ export function DashboardContent({ data, patientId }: DashboardContentProps) {
         />
 
         {/* Col 3 — Longitudinal Drift (30%): 6-month baseline vs acute */}
-        <div className="flex w-[30%] shrink-0 flex-col">
+        <div className="flex w-full lg:w-[30%] shrink-0 flex-col">
           <LongitudinalDrift
             biometricDeltas={biometric_deltas}
             acuteMetrics={acuteMetrics}
@@ -176,7 +176,7 @@ export function DashboardContent({ data, patientId }: DashboardContentProps) {
         variants={sectionVariants}
         initial="hidden"
         animate="visible"
-        className="flex min-h-0 flex-[9] gap-8"
+        className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 min-h-0 lg:flex-[9] gap-4 md:gap-8"
       >
         <ClientCharts biometricDeltas={biometric_deltas} acuteData={acuteMetrics} />
       </motion.div>
@@ -187,10 +187,10 @@ export function DashboardContent({ data, patientId }: DashboardContentProps) {
         variants={sectionVariants}
         initial="hidden"
         animate="visible"
-        className="flex min-h-0 flex-[12] gap-8"
+        className="flex flex-col lg:flex-row min-h-0 lg:flex-[12] gap-4 md:gap-8"
       >
         {/* Stratified Protocols — replaces Risk Profile */}
-        <div className="flex w-[36%] shrink-0 flex-col">
+        <div className="flex w-full lg:w-[36%] shrink-0 flex-col">
           <StratifiedProtocols
             riskFactors={riskFactors}
             biometricDeltas={biometric_deltas}
@@ -198,13 +198,13 @@ export function DashboardContent({ data, patientId }: DashboardContentProps) {
         </div>
 
         {/* Possible Diagnosis — DiagnosticNudgeAccordion */}
-        <div className="glass-card flex flex-1 flex-col overflow-hidden rounded-[24px]">
-          <div className="flex shrink-0 items-center gap-2 px-[18px] py-3.5">
-            <span className="text-[14px] font-semibold tracking-[-0.2px] text-[var(--text-primary)]">
+        <div className="glass-card flex flex-1 flex-col overflow-hidden rounded-[20px] md:rounded-[24px]">
+          <div className="flex shrink-0 items-center gap-2 px-4 md:px-[18px] py-3 md:py-3.5">
+            <span className="text-[13px] md:text-[14px] font-semibold tracking-[-0.2px] text-[var(--text-primary)]">
               Possible Diagnosis
             </span>
           </div>
-          <div className="min-h-0 flex-1 overflow-y-auto px-[18px] pb-4">
+          <div className="min-h-0 flex-1 overflow-y-auto px-4 md:px-[18px] pb-4">
             {condition_matches.length > 0 ? (
               <DiagnosticNudgeAccordion matches={condition_matches} />
             ) : (

@@ -104,7 +104,7 @@ function ChartCard({ index, acuteVal, unit, delta, alert, title, subtitle, child
       animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
       transition={{ duration: 0.5, delay: index * 0.1, ease: [0.16, 1, 0.3, 1] }}
       whileHover={{ scale: 1.015, transition: { type: "spring", stiffness: 300, damping: 22 } }}
-      className="glass-card flex flex-1 flex-col overflow-hidden rounded-[24px]"
+      className="glass-card flex flex-1 flex-col overflow-hidden rounded-[20px] md:rounded-[24px] min-h-[220px]"
     >
       {/* Header — big delta number top-left, chart title top-right */}
       <div className="flex shrink-0 items-start justify-between px-[18px] pt-[14px] pb-2">

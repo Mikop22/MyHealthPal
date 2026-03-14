@@ -172,25 +172,25 @@ export default function PatientsPage() {
 
   return (
     <>
-      <div className="flex min-h-0 flex-1 gap-8 p-8">
+      <div className="flex min-h-0 flex-1 flex-col lg:flex-row gap-6 lg:gap-8 p-4 md:p-8 overflow-y-auto lg:overflow-hidden">
         {/* Left Column — Patient List */}
-        <div className="flex min-h-0 flex-1 flex-col gap-6">
+        <div className="flex min-h-0 flex-1 flex-col gap-4 md:gap-6">
           {/* Welcome header */}
           <motion.div
             initial={{ opacity: 0, y: 12, filter: "blur(8px)" }}
             animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
             transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-            className="flex items-center justify-between pb-2"
+            className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2"
           >
             <div className="flex flex-col gap-1">
               <span className="text-[14px] font-medium tracking-[-0.1px] text-[var(--text-muted)]">
                 Welcome back,
               </span>
-              <h1 className="text-[32px] font-medium tracking-[-0.3px] text-[var(--text-primary)]">
+              <h1 className="text-[24px] md:text-[32px] font-medium tracking-[-0.3px] text-[var(--text-primary)]">
                 Dr. Maya Patel
               </h1>
             </div>
-            <span className="text-[14px] font-medium tracking-[-0.1px] text-[var(--text-muted)]">
+            <span className="text-[13px] md:text-[14px] font-medium tracking-[-0.1px] text-[var(--text-muted)]">
               {new Date().toLocaleDateString("en-US", {
                 weekday: "long",
                 year: "numeric",
@@ -201,9 +201,9 @@ export default function PatientsPage() {
           </motion.div>
 
           {/* Section header with search */}
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div className="flex flex-col gap-1">
-              <h2 className="text-[28px] font-medium tracking-[-0.3px] text-[var(--text-primary)]">
+              <h2 className="text-[22px] md:text-[28px] font-medium tracking-[-0.3px] text-[var(--text-primary)]">
                 Your Patients
               </h2>
               <span className="text-[14px] font-medium tracking-[-0.1px] text-[var(--text-muted)]">
@@ -211,20 +211,20 @@ export default function PatientsPage() {
               </span>
             </div>
 
-            <div className="flex items-center gap-3">
-              <div className="glass-control shadow-sm border border-[var(--border-nav-inactive)] flex h-12 w-[380px] items-center gap-2.5 rounded-[24px] px-5">
-                <Search className="h-[20px] w-[20px] shrink-0 text-[var(--text-secondary)]" />
+            <div className="flex items-center gap-2 md:gap-3">
+              <div className="glass-control shadow-sm border border-[var(--border-nav-inactive)] flex h-10 md:h-12 flex-1 sm:flex-none sm:w-[280px] lg:w-[380px] items-center gap-2.5 rounded-[24px] px-4 md:px-5">
+                <Search className="h-[18px] w-[18px] md:h-[20px] md:w-[20px] shrink-0 text-[var(--text-secondary)]" />
                 <input
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Search patients..."
-                  className="flex-1 bg-transparent text-[15px] font-medium tracking-[-0.1px] text-[var(--text-primary)] placeholder:text-[var(--text-muted)] outline-none"
+                  className="flex-1 bg-transparent text-[14px] md:text-[15px] font-medium tracking-[-0.1px] text-[var(--text-primary)] placeholder:text-[var(--text-muted)] outline-none"
                 />
               </div>
-              <button className="glass-control shadow-sm border border-[var(--border-nav-inactive)] flex h-12 items-center gap-2 rounded-[24px] px-6 transition-all hover:bg-[rgba(243,237,250,0.5)] active:scale-[0.97]">
+              <button className="glass-control shadow-sm border border-[var(--border-nav-inactive)] flex h-10 md:h-12 items-center gap-2 rounded-[24px] px-4 md:px-6 transition-all hover:bg-[rgba(243,237,250,0.5)] active:scale-[0.97]">
                 <SlidersHorizontal className="h-4 w-4 shrink-0 text-[var(--text-nav)]" />
-                <span className="text-[14px] font-medium tracking-[-0.1px] text-[var(--text-nav)]">
+                <span className="hidden sm:inline text-[14px] font-medium tracking-[-0.1px] text-[var(--text-nav)]">
                   Filters
                 </span>
               </button>
@@ -232,9 +232,9 @@ export default function PatientsPage() {
           </div>
 
           {/* Patient table card */}
-          <div className="glass-card flex min-h-0 flex-1 flex-col overflow-hidden rounded-[24px]">
-            {/* Column headers — XRP WALLET removed; PRIORITY + LAST SYNC added */}
-            <div className="flex shrink-0 items-center px-6 py-5 [border-bottom:var(--table-border-header)] bg-[rgba(255,255,255,0.4)] backdrop-blur-md">
+          <div className="glass-card flex min-h-0 flex-1 flex-col overflow-hidden rounded-[20px] md:rounded-[24px]">
+            {/* Column headers — hidden on mobile, visible on desktop */}
+            <div className="hidden md:flex shrink-0 items-center px-6 py-5 [border-bottom:var(--table-border-header)] bg-[rgba(255,255,255,0.4)] backdrop-blur-md">
               <div className="w-[280px] text-[12px] font-semibold tracking-[1px] uppercase text-[var(--text-secondary)]">
                 Patient
               </div>
@@ -277,14 +277,14 @@ export default function PatientsPage() {
                     >
                       <Link
                         href={`/dashboard/${patient.id}`}
-                        className={`row-hover flex items-center px-6 py-5 hover:bg-[var(--lavender-bg)] ${
+                        className={`row-hover flex flex-col md:flex-row md:items-center px-4 md:px-6 py-3 md:py-5 gap-2 md:gap-0 hover:bg-[var(--lavender-bg)] ${
                           index < filteredPatients.length - 1
                             ? "[border-bottom:var(--table-border-row)]"
                             : ""
                         }`}
                       >
                         {/* Patient */}
-                        <div className="flex w-[280px] items-center gap-3">
+                        <div className="flex md:w-[280px] items-center gap-3">
                           <div
                             className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-[16px] text-[13px] font-medium ${
                               index % 2 === 0
@@ -294,7 +294,7 @@ export default function PatientsPage() {
                           >
                             {getInitials(patient.name)}
                           </div>
-                          <div className="flex min-w-0 flex-col">
+                          <div className="flex min-w-0 flex-col flex-1">
                             <span className="text-[14px] font-medium tracking-[-0.1px] text-[var(--text-primary)]">
                               {patient.name}
                             </span>
@@ -302,34 +302,36 @@ export default function PatientsPage() {
                               {patient.email}
                             </span>
                           </div>
+                          {/* Mobile-only: badges inline with name */}
+                          <div className="flex md:hidden items-center gap-2">
+                            <PriorityBadge priority={priority} delay={index * 0.04 + 0.15} />
+                            <StatusBadge status={patient.status} delay={index * 0.04 + 0.2} />
+                          </div>
                         </div>
 
-                        {/* Primary Concern — min-w-0 lets the flex item shrink/wrap freely */}
-                        <div className="min-w-0 flex-1 pr-4 text-[14px] font-medium tracking-[-0.1px] text-[var(--text-secondary)]">
+                        {/* Primary Concern */}
+                        <div className="md:min-w-0 md:flex-1 md:pr-4 text-[13px] md:text-[14px] font-medium tracking-[-0.1px] text-[var(--text-secondary)] pl-12 md:pl-0">
                           <span className="block whitespace-normal break-words">
                             {patient.concern || "—"}
                           </span>
                         </div>
 
-                        {/* Priority — replaces the XRP Wallet column */}
-                        <div className="w-[130px]">
+                        {/* Desktop-only columns */}
+                        <div className="hidden md:block w-[130px]">
                           <PriorityBadge priority={priority} delay={index * 0.04 + 0.15} />
                         </div>
 
-                        {/* Last Sync */}
-                        <div className="w-[130px]">
+                        <div className="hidden md:block w-[130px]">
                           <span className="text-[13px] font-medium text-[var(--text-secondary)]">
                             {syncTime}
                           </span>
                         </div>
 
-                        {/* Status */}
-                        <div className="w-[110px]">
+                        <div className="hidden md:block w-[110px]">
                           <StatusBadge status={patient.status} delay={index * 0.04 + 0.2} />
                         </div>
 
-                        {/* Actions */}
-                        <div className="w-[110px]">
+                        <div className="hidden md:block w-[110px]">
                           <button
                             onClick={(e) => { e.preventDefault(); setScheduleTarget(patient); }}
                             className="flex items-center gap-2 rounded-[14px] border border-[var(--border-nav-inactive)] px-4 py-2 text-[13px] font-medium text-[var(--purple-primary)] transition-all hover:bg-[var(--lavender-bg)] active:scale-[0.96]"
@@ -347,13 +349,13 @@ export default function PatientsPage() {
           </div>
         </div>
 
-        {/* Right Sidebar — unchanged */}
-        <div className="flex w-[340px] shrink-0 flex-col gap-6">
+        {/* Right Sidebar */}
+        <div className="flex w-full lg:w-[340px] shrink-0 flex-col gap-6">
           <motion.div
             initial={{ opacity: 0, y: 16, filter: "blur(8px)" }}
             animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
             transition={{ duration: 0.6, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
-            className="glass-card rounded-[24px] p-7"
+            className="glass-card rounded-[24px] p-5 md:p-7"
           >
             <h3 className="text-[16px] font-medium tracking-[-0.1px] text-[var(--text-primary)]">
               Overview
@@ -383,7 +385,7 @@ export default function PatientsPage() {
             initial={{ opacity: 0, y: 16, filter: "blur(8px)" }}
             animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
             transition={{ duration: 0.6, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
-            className="glass-card flex flex-col gap-5 rounded-[24px] p-7"
+            className="glass-card flex flex-col gap-5 rounded-[24px] p-5 md:p-7"
           >
             <h3 className="text-[16px] font-medium tracking-[-0.1px] text-[var(--text-primary)]">
               Recent Activity

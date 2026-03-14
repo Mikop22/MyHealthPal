@@ -12,7 +12,7 @@ function NavPill({ href, label, active }: { href: string; label: string; active:
   return (
     <Link
       href={href}
-      className="relative flex items-center justify-center rounded-[20px] px-5 py-2 transition-colors"
+      className="relative flex items-center justify-center rounded-[20px] px-3 md:px-5 py-1.5 md:py-2 transition-colors"
     >
       {active && (
         <motion.div
@@ -40,22 +40,22 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
 
   return (
     <div className="flex h-full w-full flex-col bg-transparent font-poppins">
-      <nav className="glass-nav flex h-16 shrink-0 items-center justify-between px-8">
-        <div className="flex items-center gap-8">
-          <Link href="/patients" className="gradient-logo text-[24px] font-medium tracking-[-0.1px]">
+      <nav className="glass-nav flex h-14 md:h-16 shrink-0 items-center justify-between px-4 md:px-8">
+        <div className="flex items-center gap-4 md:gap-8">
+          <Link href="/patients" className="gradient-logo text-[20px] md:text-[24px] font-medium tracking-[-0.1px]">
             MyHealthPal
           </Link>
-          <div className="flex gap-2">
+          <div className="flex gap-1.5 md:gap-2">
             <NavPill href="/patients" label="Patients" active={pathname === "/patients"} />
             <NavPill href="/schedule" label="Schedule" active={pathname === "/schedule"} />
           </div>
         </div>
-        <div className="flex items-center gap-3">
-          <CircleUserRound className="h-7 w-7 text-[var(--purple-primary)]" strokeWidth={1.5} />
-          <span className="text-[14px] font-medium tracking-[-0.1px] text-[var(--text-primary)]">
+        <div className="flex items-center gap-2 md:gap-3">
+          <CircleUserRound className="h-6 w-6 md:h-7 md:w-7 text-[var(--purple-primary)]" strokeWidth={1.5} />
+          <span className="hidden sm:inline text-[14px] font-medium tracking-[-0.1px] text-[var(--text-primary)]">
             Dr. Patel
           </span>
-          <ChevronDown className="h-4 w-4 text-[var(--text-nav)]" />
+          <ChevronDown className="hidden sm:block h-4 w-4 text-[var(--text-nav)]" />
         </div>
       </nav>
 
