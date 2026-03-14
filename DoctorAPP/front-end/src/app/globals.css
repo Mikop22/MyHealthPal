@@ -3,6 +3,8 @@
 :root {
   --background: #F8FDF8;
   --foreground: #171717;
+  --font-lato: "Lato", "Segoe UI", Arial, sans-serif;
+  --font-geist-mono: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
 
   /* ── Brand palette (My HealthPal green) ── */
   --purple-primary: #44AD4F;
