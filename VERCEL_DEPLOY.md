@@ -25,6 +25,7 @@ This repo has **two frontends**. Create **two Vercel projects** and set each pro
 - **Root Directory:** `PatientMobileAPP/frontend/mobile-app`
 - **Build Command:** `npm run build:web` (runs `expo export --platform web`)
 - **Output Directory:** `dist`
+- **Routing:** `cleanUrls: true` so Vercel serves Expo's exported `route.html` files at clean paths like `/route`
 - **Install Command:** `npm ci` (or leave default)
 
 **Steps:**
@@ -34,6 +35,7 @@ This repo has **two frontends**. Create **two Vercel projects** and set each pro
 3. Vercel will use `vercel.json` in that root:
    - Build: `npm run build:web`
    - Output: `dist`
+   - Clean URLs: enabled so direct visits to `/scanner`, `/community`, etc. resolve to Expo's exported `.html` files
 4. Add env vars if the web app needs them (e.g. `EXPO_PUBLIC_API_URL`).
 5. Deploy.
 

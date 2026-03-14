@@ -1,17 +1,5 @@
 import type { Metadata } from "next";
-import { Geist_Mono, Lato } from "next/font/google";
 import "./globals.css";
-
-const lato = Lato({
-  variable: "--font-lato",
-  weight: ["400", "700"],
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
 
 export const metadata: Metadata = {
   title: "My HealthPal",
@@ -25,9 +13,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="h-full">
-      <body
-        className={`${lato.variable} ${geistMono.variable} antialiased h-full`}
-      >
+      <body className="antialiased h-full">
         {/* Liquid Glass Canvas — animated mesh gradient substrate */}
         <div className="liquid-canvas" aria-hidden="true">
           <div className="blob blob-1" />
