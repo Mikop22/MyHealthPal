@@ -1,6 +1,8 @@
 import type { PatientPayload, AnalysisResponse, PatientRecord, AppointmentRecord, ClinicalNote } from "./types";
 
-const API_BASE = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000").replace(/\/+$/, "");
+// In production, requests to /api/v1/* are proxied through Next.js rewrites
+// to the backend, avoiding mixed-content (HTTPS→HTTP) browser blocks.
+const API_BASE = typeof window !== "undefined" ? "" : (process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000").replace(/\/+$/, "");
 
 const COMMON_HEADERS: Record<string, string> = {
   "ngrok-skip-browser-warning": "true",

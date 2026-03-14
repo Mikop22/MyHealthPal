@@ -4,8 +4,6 @@ import useSWR from "swr";
 import type { AnalysisResponse } from "@/lib/types";
 import { DashboardContent } from "./DashboardContent";
 
-const API_BASE = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000").replace(/\/+$/, "");
-
 async function fetchDashboard(url: string): Promise<AnalysisResponse> {
   const res = await fetch(url, {
     cache: "no-store",
@@ -25,7 +23,7 @@ interface DashboardClientProps {
 
 export function DashboardClient({ patientId }: DashboardClientProps) {
   const { data, error, isLoading } = useSWR<AnalysisResponse>(
-    `${API_BASE}/api/v1/patients/${patientId}/dashboard`,
+    `/api/v1/patients/${patientId}/dashboard`,
     fetchDashboard,
     {
       refreshInterval: 3000,

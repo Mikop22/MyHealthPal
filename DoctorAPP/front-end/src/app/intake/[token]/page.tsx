@@ -5,8 +5,6 @@ import { useParams } from "next/navigation";
 import { motion, AnimatePresence, useSpring, useMotionValue, useTransform } from "framer-motion";
 import AppleHealthSync from "@/components/AppleHealthSync";
 
-const API_BASE = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000").replace(/\/+$/, "");
-
 type Question = {
   id: number;
   question: string;
@@ -187,7 +185,7 @@ export default function IntakePage() {
 
   // Check if this intake link has already been used
   useEffect(() => {
-    fetch(`${API_BASE}/api/v1/intake/${encodeURIComponent(token)}/status`, {
+    fetch(`/api/v1/intake/${encodeURIComponent(token)}/status`, {
       headers: { "ngrok-skip-browser-warning": "true" },
     })
       .then((res) => res.json())
@@ -400,7 +398,7 @@ export default function IntakePage() {
     };
 
     try {
-      const res = await fetch(`${API_BASE}/api/v1/intake/${token}/submit`, {
+      const res = await fetch(`/api/v1/intake/${token}/submit`, {
         method: "POST",
         headers: { "Content-Type": "application/json", "ngrok-skip-browser-warning": "true" },
         body: JSON.stringify(payload),
