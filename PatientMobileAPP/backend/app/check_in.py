@@ -1,6 +1,6 @@
 import asyncio
 import json
-from typing import List
+from typing import List, Optional
 
 from fastapi import APIRouter, HTTPException
 from openai import APITimeoutError, OpenAIError
@@ -40,6 +40,24 @@ def _serialize_selected_cards(card_ids: List[str]) -> List[dict]:
     ]
 
 
+def _serialize_cards_for_action_plan(
+    card_ids: List[str],
+    label_map: Optional[dict] = None,
+) -> List[dict]:
+    """Build list of {id, text} from card bank or label_map (triage flow)."""
+    known_ids = _known_card_ids()
+    label_map = label_map or {}
+    result = []
+    for cid in card_ids:
+        if cid in known_ids:
+            card = next((c for c in CHECK_IN_CARD_BANK if c.id == cid), None)
+            if card:
+                result.append({"id": card.id, "text": card.text})
+        else:
+            result.append({"id": cid, "text": label_map.get(cid, f"Symptom ({cid})")})
+    return result
+
+
 def _build_extract_messages(transcript: str) -> List[dict]:
     return [
         {
@@ -58,12 +76,20 @@ def _build_extract_messages(transcript: str) -> List[dict]:
 
 
 def _build_action_plan_messages(request: ActionPlanRequest) -> List[dict]:
+    confirmed_cards = _serialize_cards_for_action_plan(
+        request.confirmed_card_ids,
+        request.confirmed_symptom_labels,
+    )
+    rejected_cards = _serialize_cards_for_action_plan(
+        request.rejected_card_ids,
+        request.rejected_symptom_labels,
+    )
     payload = {
         "transcript": request.transcript,
         "confirmed_card_ids": request.confirmed_card_ids,
         "rejected_card_ids": request.rejected_card_ids,
-        "confirmed_cards": _serialize_selected_cards(request.confirmed_card_ids),
-        "rejected_cards": _serialize_selected_cards(request.rejected_card_ids),
+        "confirmed_cards": confirmed_cards,
+        "rejected_cards": rejected_cards,
     }
     return [
         {
@@ -158,13 +184,7 @@ async def extract_check_in(request: ExtractRequest) -> ExtractResponse:
 
 @router.post("/action-plan", response_model=ActionPlanResponse)
 async def build_action_plan(request: ActionPlanRequest) -> ActionPlanResponse:
-    unknown_card_ids = _unknown_card_ids(request.confirmed_card_ids + request.rejected_card_ids)
-    if unknown_card_ids:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Unknown card ids: {', '.join(unknown_card_ids)}",
-        )
-
+    # Allow triage flow: unknown card ids are OK when we have symptom labels or can still build cards
     messages = _build_action_plan_messages(request)
 
     try:

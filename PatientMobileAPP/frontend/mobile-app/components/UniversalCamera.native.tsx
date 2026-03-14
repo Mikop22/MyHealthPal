@@ -1,4 +1,4 @@
-import React, { forwardRef, useImperativeHandle, useRef } from "react";
+import React, { forwardRef, useImperativeHandle, useRef, useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { CameraView, useCameraPermissions } from "expo-camera";
 import { AppIcon } from "./AppIcon";
@@ -9,6 +9,8 @@ export interface CameraHandle {
   capture: () => void;
 }
 
+type Facing = "back" | "front";
+
 interface UniversalCameraProps {
   onCapture: (uri: string) => void;
   isActive: boolean;
@@ -18,6 +20,7 @@ export const UniversalCamera = forwardRef<CameraHandle, UniversalCameraProps>(
   function UniversalCamera({ onCapture, isActive }, ref) {
     const cameraRef = useRef<CameraView>(null);
     const [permission, requestPermission] = useCameraPermissions();
+    const [facing, setFacing] = useState<Facing>("back");
 
     useImperativeHandle(
       ref,
@@ -59,11 +62,19 @@ export const UniversalCamera = forwardRef<CameraHandle, UniversalCameraProps>(
     if (!isActive) return <View style={styles.fallback} />;
 
     return (
-      <CameraView
-        ref={cameraRef}
-        style={StyleSheet.absoluteFill}
-        facing="back"
-      />
+      <View style={StyleSheet.absoluteFill}>
+        <CameraView
+          ref={cameraRef}
+          style={StyleSheet.absoluteFill}
+          facing={facing}
+        />
+        <Pressable
+          style={styles.flipBtn}
+          onPress={() => setFacing((f) => (f === "back" ? "front" : "back"))}
+        >
+          <AppIcon name="camera-reverse" size={24} color="#FFFFFF" />
+        </Pressable>
+      </View>
     );
   },
 );
@@ -127,5 +138,16 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontFamily: Fonts.semiBold,
     letterSpacing: 0.1,
+  },
+  flipBtn: {
+    position: "absolute",
+    top: 48,
+    right: 20,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: "rgba(0,0,0,0.45)",
+    alignItems: "center",
+    justifyContent: "center",
   },
 });

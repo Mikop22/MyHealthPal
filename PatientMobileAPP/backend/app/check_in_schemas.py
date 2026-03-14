@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import Dict, List, Optional
 
 from pydantic import BaseModel, Field, constr, model_validator
 
@@ -32,6 +32,9 @@ class ActionPlanRequest(BaseModel):
     transcript: TranscriptStr
     confirmed_card_ids: List[CardIdStr]
     rejected_card_ids: List[CardIdStr]
+    # Optional labels for triage flow (id -> label) when card IDs are not from CHECK_IN_CARD_BANK
+    confirmed_symptom_labels: Optional[Dict[str, str]] = None
+    rejected_symptom_labels: Optional[Dict[str, str]] = None
 
     @model_validator(mode="after")
     def validate_card_selections(self):

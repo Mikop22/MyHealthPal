@@ -1,9 +1,7 @@
-import { useEffect } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
-  withSequence,
   withSpring,
 } from "react-native-reanimated";
 import { Ionicons } from "@expo/vector-icons";
@@ -26,22 +24,7 @@ export function OnboardingOptionButton({
   selected = false,
   onPress,
 }: OnboardingOptionButtonProps) {
-  const checkScale = useSharedValue(0);
   const cardScale = useSharedValue(1);
-
-  useEffect(() => {
-    checkScale.value = selected
-      ? withSequence(
-          withSpring(1.15, { damping: 10, stiffness: 280 }),
-          withSpring(1, { damping: 12, stiffness: 300 }),
-        )
-      : withSpring(0, { damping: 15, stiffness: 300 });
-  }, [selected]);
-
-  const checkStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: checkScale.value }],
-    opacity: checkScale.value,
-  }));
 
   const cardStyle = useAnimatedStyle(() => ({
     transform: [{ scale: cardScale.value }],
@@ -71,13 +54,11 @@ export function OnboardingOptionButton({
 
           <View style={styles.iconWrap}>
             {selected ? (
-              <Animated.View style={checkStyle}>
-                <Ionicons
-                  name="checkmark-circle"
-                  size={24}
-                  color={Colors.accent}
-                />
-              </Animated.View>
+              <Ionicons
+                name="checkmark-circle"
+                size={24}
+                color={Colors.accent}
+              />
             ) : (
               <View style={styles.idleDot} />
             )}

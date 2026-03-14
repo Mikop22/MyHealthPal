@@ -159,18 +159,32 @@ def test_action_plan_returns_422_for_overlapping_confirmed_and_rejected_ids():
     assert response.status_code == 422
 
 
-def test_action_plan_returns_400_for_unknown_card_ids():
+def test_action_plan_accepts_unknown_card_ids_with_labels_triage_flow(monkeypatch):
+    """Triage flow sends triage_xxx IDs and symptom labels; action plan should succeed."""
+    monkeypatch.setattr(
+        check_in_module,
+        "call_gpt4o_text",
+        lambda *args, **kwargs: (
+            '{'
+            '"summary_bullets": ["Bullet 1", "Bullet 2", "Bullet 3"], '
+            '"questions": ["Q1?", "Q2?", "Q3?", "Q4?", "Q5?"]'
+            "}"
+        ),
+    )
     response = client.post(
         "/check-in/action-plan",
         json={
-            "transcript": "I have stomach pain.",
-            "confirmed_card_ids": ["not-a-real-card"],
-            "rejected_card_ids": [],
+            "transcript": "I have a headache and feel dizzy.",
+            "confirmed_card_ids": ["triage_abc123"],
+            "rejected_card_ids": ["triage_def456"],
+            "confirmed_symptom_labels": {"triage_abc123": "Headache"},
+            "rejected_symptom_labels": {"triage_def456": "Dizziness"},
         },
     )
-
-    assert response.status_code == 400
-    assert response.json() == {"detail": "Unknown card ids: not-a-real-card"}
+    assert response.status_code == 200
+    data = response.json()
+    assert len(data["summary_bullets"]) >= 3
+    assert len(data["questions"]) == 5
 
 
 def test_action_plan_returns_500_when_question_count_is_out_of_contract(monkeypatch):

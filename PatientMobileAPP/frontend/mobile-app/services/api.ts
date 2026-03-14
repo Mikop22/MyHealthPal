@@ -235,12 +235,25 @@ export async function postActionPlan(data: {
     transcript: string;
     confirmed_card_ids: string[];
     rejected_card_ids: string[];
+    confirmed_symptom_labels?: Record<string, string>;
+    rejected_symptom_labels?: Record<string, string>;
 }): Promise<ActionPlanResponse> {
+    const payload = {
+        transcript: data.transcript,
+        confirmed_card_ids: data.confirmed_card_ids,
+        rejected_card_ids: data.rejected_card_ids,
+        ...(data.confirmed_symptom_labels && { confirmed_symptom_labels: data.confirmed_symptom_labels }),
+        ...(data.rejected_symptom_labels && { rejected_symptom_labels: data.rejected_symptom_labels }),
+    };
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 65000);
     const response = await fetch(`${API_BASE}/check-in/action-plan`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
+        body: JSON.stringify(payload),
+        signal: controller.signal,
     });
+    clearTimeout(timeoutId);
     const body = await response.json().catch(() => ({}));
     if (!response.ok) throw new Error(body.detail || `Server error (${response.status})`);
     return body as ActionPlanResponse;

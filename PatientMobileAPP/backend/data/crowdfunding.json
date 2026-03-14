@@ -1,15 +1,86 @@
 {
   "campaigns": [
     {
-      "id": "1bed78cd0e374ecea32eb2b604ad0f0b",
-      "owner_identifier": "Jill",
-      "title": "Surgery",
-      "description": "Open heart surgery",
+      "id": "mock-supplements-01",
+      "owner_identifier": "Maria Chen",
+      "title": "Vitamin D & B12 supplements for chronic fatigue",
+      "description": "Ongoing supplements prescribed by my doctor to manage fatigue and low energy. Looking for help covering 6 months of costs.",
+      "goal_amount": 420,
+      "status": "active",
+      "deadline": "2026-05-01",
+      "category": "Supplements",
+      "about_me": "I'm a single parent working full-time. Managing fatigue has been a long journey and these supplements have made a real difference.",
+      "created_at": "2026-03-08T14:20:00.000000+00:00"
+    },
+    {
+      "id": "mock-pain-02",
+      "owner_identifier": "James Wilson",
+      "title": "Physical therapy for chronic back pain",
+      "description": "Funding 12 sessions of PT to avoid surgery. My insurance only covers 6; I need the rest to get back to work.",
+      "goal_amount": 1200,
+      "status": "active",
+      "deadline": "2026-04-15",
+      "category": "Pain Mgmt",
+      "about_me": "Construction worker, 48. Back injury last year. PT has already helped\u2014I just need to finish the program.",
+      "created_at": "2026-03-05T09:00:00.000000+00:00"
+    },
+    {
+      "id": "mock-monitoring-03",
+      "owner_identifier": "Sarah Kim",
+      "title": "CGM and glucose monitoring supplies",
+      "description": "Continuous glucose monitor and test strips for 3 months. My insurance changed and no longer covers the full amount.",
+      "goal_amount": 680,
+      "status": "active",
+      "deadline": null,
+      "category": "Monitoring",
+      "about_me": "Type 2 diabetic, 34. CGM has helped me avoid spikes and stay on track. Grateful for any support.",
+      "created_at": "2026-03-10T18:45:00.000000+00:00"
+    },
+    {
+      "id": "mock-recovery-04",
+      "owner_identifier": "David Okonkwo",
+      "title": "Post-surgery rehab and mobility aids",
+      "description": "Knee replacement recovery: home exercises, follow-up PT, and a few mobility aids to get back on my feet safely.",
+      "goal_amount": 950,
+      "status": "active",
+      "deadline": "2026-05-30",
+      "category": "Recovery",
+      "about_me": "Retired teacher. Surgery went well; now I need to do the rehab right so I can walk without pain again.",
+      "created_at": "2026-03-01T11:30:00.000000+00:00"
+    },
+    {
+      "id": "mock-other-05",
+      "owner_identifier": "Alex Rivera",
+      "title": "Mental health counseling copays",
+      "description": "Covering copays for 10 therapy sessions. My therapist has been essential for managing anxiety and I don\u2019t want to pause now.",
+      "goal_amount": 350,
+      "status": "active",
+      "deadline": null,
+      "category": "Other",
+      "about_me": "Working on my mental health after a tough year. Every bit helps me stay consistent with care.",
+      "created_at": "2026-03-12T08:00:00.000000+00:00"
+    },
+    {
+      "id": "2dea18ecb06a444f833177b6f2988104",
+      "owner_identifier": "current_user",
+      "title": "Medical Funding Campaign",
+      "description": "Help support my medical needs",
       "goal_amount": 2000.0,
       "status": "active",
       "deadline": null,
-      "created_at": "2026-03-12T00:40:33.505647+00:00"
+      "category": null,
+      "about_me": null,
+      "created_at": "2026-03-14T03:01:43.931683+00:00"
     }
   ],
-  "contributions": []
+  "contributions": [
+    {
+      "id": "cecd1caa4b9145348c114e567dd626e5",
+      "campaign_id": "mock-monitoring-03",
+      "contributor_identifier": "anonymous",
+      "amount": 5.0,
+      "message": null,
+      "created_at": "2026-03-14T03:23:20.464809+00:00"
+    }
+  ]
 }

@@ -16,6 +16,7 @@ import Svg, {
 export type AppIconName =
     | "scanner"
     | "camera"
+    | "camera-reverse"
     | "triage"
     | "vitals"
     | "funding"
@@ -77,6 +78,27 @@ export function AppIcon({ name, size = 24, color = "#166534", style }: AppIconPr
                     />
                     <Circle cx={12} cy={13} r={4} stroke={c} strokeWidth={1.8} />
                     <Circle cx={12} cy={13} r={1.5} fill={c} fillOpacity={0.3} />
+                </Svg>
+            );
+
+        /* ── Camera flip (front/back) ── */
+        case "camera-reverse":
+            return (
+                <Svg width={s} height={s} viewBox="0 0 24 24" fill="none" style={style as any}>
+                    <Path
+                        d="M16 3h4l2 3h-2v11H4V6H2l2-3h4"
+                        stroke={c}
+                        strokeWidth={1.8}
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                    />
+                    <Path
+                        d="M8 21H4l-2-3h2V7h12v11h-2l-2 3"
+                        stroke={c}
+                        strokeWidth={1.8}
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                    />
                 </Svg>
             );
 

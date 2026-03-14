@@ -206,6 +206,12 @@ export default function TriageScreen() {
     const rejectedIds = store.triageSymptoms
       .filter((s) => !s.confirmed)
       .map((s) => s.id);
+    const confirmed_symptom_labels = Object.fromEntries(
+      store.triageSymptoms.filter((s) => s.confirmed).map((s) => [s.id, s.label]),
+    );
+    const rejected_symptom_labels = Object.fromEntries(
+      store.triageSymptoms.filter((s) => !s.confirmed).map((s) => [s.id, s.label]),
+    );
 
     // Fire-and-forget label submission (Gap 7)
     postLabel({
@@ -221,6 +227,8 @@ export default function TriageScreen() {
       transcript: inputText,
       confirmed_card_ids: confirmedIds,
       rejected_card_ids: rejectedIds,
+      confirmed_symptom_labels,
+      rejected_symptom_labels,
     })
       .then(setActionPlan)
       .catch(() => {})

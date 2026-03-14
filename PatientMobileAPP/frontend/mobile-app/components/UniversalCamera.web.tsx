@@ -74,6 +74,8 @@ const iconWrapStyle: React.CSSProperties = {
   marginBottom: "18px",
 };
 
+type FacingMode = "user" | "environment";
+
 export const UniversalCamera = forwardRef<CameraHandle, UniversalCameraProps>(
   function UniversalCamera({ onCapture, isActive }, ref) {
     const videoRef = useRef<HTMLVideoElement>(null);
@@ -82,6 +84,7 @@ export const UniversalCamera = forwardRef<CameraHandle, UniversalCameraProps>(
       "initial" | "pending" | "granted" | "denied"
     >("initial");
     const [errorMsg, setErrorMsg] = useState<string>("");
+    const [facing, setFacing] = useState<FacingMode>("environment");
 
     useImperativeHandle(
       ref,
@@ -103,17 +106,21 @@ export const UniversalCamera = forwardRef<CameraHandle, UniversalCameraProps>(
       [onCapture],
     );
 
-    const requestAccess = async () => {
-      setStatus("pending");
-      setErrorMsg("");
+    const startStream = async (facingMode: FacingMode, isFlip = false) => {
+      if (!isFlip) {
+        setStatus("pending");
+        setErrorMsg("");
+      }
       try {
         if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
           throw new Error("Camera API is not supported in this browser.");
         }
+        streamRef.current?.getTracks().forEach((track) => track.stop());
+        streamRef.current = null;
 
         const stream = await navigator.mediaDevices.getUserMedia({
           video: {
-            facingMode: { ideal: "environment" },
+            facingMode: { ideal: facingMode },
             width: { ideal: 1920 },
             height: { ideal: 1080 },
           },
@@ -130,6 +137,15 @@ export const UniversalCamera = forwardRef<CameraHandle, UniversalCameraProps>(
         setErrorMsg(err.message || String(err));
         setStatus("denied");
       }
+    };
+
+    const requestAccess = () => startStream(facing);
+
+    const handleFlip = async () => {
+      if (status !== "granted") return;
+      const next: FacingMode = facing === "environment" ? "user" : "environment";
+      setFacing(next);
+      await startStream(next, true);
     };
 
     useEffect(() => {
@@ -223,6 +239,39 @@ export const UniversalCamera = forwardRef<CameraHandle, UniversalCameraProps>(
             objectFit: "cover",
           }}
         />
+        <button
+          type="button"
+          onClick={handleFlip}
+          style={{
+            position: "absolute",
+            top: 48,
+            right: 20,
+            width: 48,
+            height: 48,
+            borderRadius: 24,
+            backgroundColor: "rgba(0,0,0,0.45)",
+            border: "none",
+            cursor: "pointer",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+          aria-label="Flip camera"
+        >
+          <svg
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="#FFFFFF"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="M16 3h4l2 3h-2v11H4V6H2l2-3h4" />
+            <path d="M8 21H4l-2-3h2V7h12v11h-2l-2 3" />
+          </svg>
+        </button>
       </div>
     );
   },
