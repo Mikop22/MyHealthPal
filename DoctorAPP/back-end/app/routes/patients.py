@@ -12,7 +12,7 @@ from app.models.patient import AnalysisResponse, PatientPayload, RiskProfile, Ri
 from app.services.xrp_wallet import create_patient_wallet
 from app.services.email_service import send_appointment_email
 from app.services.analysis_pipeline import analyze_patient_pipeline
-from app.routes.intake import _build_mock_biometric_data
+from app.services.demo_data import build_mock_biometric_data
 from app.config import settings
 
 logger = logging.getLogger(__name__)
@@ -172,8 +172,15 @@ async def create_test_patient(request: Request):
     RAG diagnostic pipeline (embeddings → vector search → GPT), and stores
     the results so the dashboard is instantly available.
 
-    No request body required.
+    No request body required.  Gated behind the ``ENABLE_DEMO_ENDPOINTS``
+    config flag (default: true).
     """
+    if not settings.ENABLE_DEMO_ENDPOINTS:
+        raise HTTPException(
+            status_code=403,
+            detail="Demo endpoints are disabled in this environment.",
+        )
+
     patient_id = str(uuid.uuid4())
     now = datetime.now(timezone.utc).isoformat()
 
@@ -211,7 +218,7 @@ async def create_test_patient(request: Request):
         sync_timestamp=now,
         hardware_source="Apple Watch Series 9 (Demo)",
         patient_narrative=_TEST_NARRATIVE,
-        data=_build_mock_biometric_data(),
+        data=build_mock_biometric_data(),
         risk_profile=_TEST_RISK_PROFILE,
     )
 
@@ -223,10 +230,13 @@ async def create_test_patient(request: Request):
             embedding_model=request.app.state.embedding_model,
         )
     except Exception as exc:
-        logger.error("Test patient pipeline failed: %s", exc)
+        logger.error("Test patient pipeline failed: %s", exc, exc_info=True)
+        # Clean up orphaned records so repeated attempts don't pollute the DB
+        db.patients.delete_one({"id": patient_id})
+        db.appointments.delete_one({"id": appointment_id})
         raise HTTPException(
             status_code=500,
-            detail=f"Analysis pipeline error: {str(exc)}",
+            detail="Analysis pipeline failed. Please check server logs for details.",
         )
 
     # Persist results so the dashboard endpoint can serve them

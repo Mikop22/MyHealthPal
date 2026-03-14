@@ -63,10 +63,12 @@ def _make_client():
     mock_patients_coll = MagicMock()
     mock_patients_coll.insert_one.return_value = MagicMock()
     mock_patients_coll.update_one.return_value = MagicMock()
+    mock_patients_coll.delete_one.return_value = MagicMock()
 
     mock_appointments_coll = MagicMock()
     mock_appointments_coll.insert_one.return_value = MagicMock()
     mock_appointments_coll.update_one.return_value = MagicMock()
+    mock_appointments_coll.delete_one.return_value = MagicMock()
 
     mock_db = MagicMock()
     mock_db.patients = mock_patients_coll
@@ -90,8 +92,10 @@ class TestCreateTestPatient:
         new_callable=AsyncMock,
         return_value=STUB_ANALYSIS,
     )
-    def test_success_creates_patient_and_runs_pipeline(self, mock_pipeline):
+    @patch("app.routes.patients.settings")
+    def test_success_creates_patient_and_runs_pipeline(self, mock_settings, mock_pipeline):
         """Happy path — creates patient, runs pipeline, returns completed record."""
+        mock_settings.ENABLE_DEMO_ENDPOINTS = True
         client, mock_patients, mock_appointments = _make_client()
         resp = client.post("/api/v1/patients/test")
         assert resp.status_code == 200
@@ -126,9 +130,27 @@ class TestCreateTestPatient:
         new_callable=AsyncMock,
         side_effect=RuntimeError("LLM timed out"),
     )
-    def test_500_on_pipeline_failure(self, mock_pipeline):
-        """ML pipeline failure → 500 with error detail."""
-        client, _, _ = _make_client()
+    @patch("app.routes.patients.settings")
+    def test_500_on_pipeline_failure_cleans_up(self, mock_settings, mock_pipeline):
+        """ML pipeline failure → 500 with generic message + orphaned records cleaned up."""
+        mock_settings.ENABLE_DEMO_ENDPOINTS = True
+        client, mock_patients, mock_appointments = _make_client()
         resp = client.post("/api/v1/patients/test")
         assert resp.status_code == 500
-        assert "pipeline" in resp.json()["detail"].lower()
+        detail = resp.json()["detail"]
+        # Should NOT leak the raw exception string
+        assert "LLM timed out" not in detail
+        assert "pipeline" in detail.lower()
+
+        # Orphaned records should be cleaned up
+        mock_patients.delete_one.assert_called_once()
+        mock_appointments.delete_one.assert_called_once()
+
+    @patch("app.routes.patients.settings")
+    def test_403_when_demo_endpoints_disabled(self, mock_settings):
+        """Endpoint returns 403 when ENABLE_DEMO_ENDPOINTS is false."""
+        mock_settings.ENABLE_DEMO_ENDPOINTS = False
+        client, _, _ = _make_client()
+        resp = client.post("/api/v1/patients/test")
+        assert resp.status_code == 403
+        assert "disabled" in resp.json()["detail"].lower()

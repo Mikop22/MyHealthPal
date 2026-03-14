@@ -175,6 +175,7 @@ export default function PatientsPage() {
       router.push(`/dashboard/${patient.id}`);
     } catch (err) {
       setTestError(err instanceof Error ? err.message : "Failed to create test patient");
+    } finally {
       setCreatingTest(false);
     }
   };
@@ -261,6 +262,7 @@ export default function PatientsPage() {
 
           {testError && (
             <motion.div
+              role="alert"
               initial={{ opacity: 0, y: -8 }}
               animate={{ opacity: 1, y: 0 }}
               className="rounded-[14px] px-4 py-3 text-[13px] font-medium text-red-600"

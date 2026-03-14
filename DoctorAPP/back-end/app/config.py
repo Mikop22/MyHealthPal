@@ -16,5 +16,8 @@ class Settings:
     FRONTEND_URL: str = os.getenv("FRONTEND_URL", "http://localhost:3000")
     # Default to * for hackathon/ngrok; restrict via env var in production
     ALLOWED_ORIGINS: str = os.getenv("ALLOWED_ORIGINS", "*")
+    # Enable demo-only endpoints (e.g. POST /patients/test); defaults to true
+    # for hackathon, set to "false" in production to disable.
+    ENABLE_DEMO_ENDPOINTS: bool = os.getenv("ENABLE_DEMO_ENDPOINTS", "true").lower() in ("1", "true", "yes")
 
 settings = Settings()
