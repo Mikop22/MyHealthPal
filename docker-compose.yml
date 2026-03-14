@@ -1,0 +1,70 @@
+# docker-compose.yml — One-command local demo for MyHealthPal
+#
+# Usage:
+#   1. Copy the env files:
+#        cp DoctorAPP/back-end/.env.example  DoctorAPP/back-end/.env
+#        cp PatientMobileAPP/backend/.env.example PatientMobileAPP/backend/.env
+#      Then fill in your API keys in each .env file.
+#
+#   2. Start everything:
+#        docker compose up --build
+#
+#   3. Access:
+#        DoctorAPP  frontend : http://localhost:3000
+#        DoctorAPP  backend  : http://localhost:8000/health
+#        PatientApp backend  : http://localhost:8080/health
+#
+#   Note: The PatientMobileAPP Expo frontend is not included here because
+#   React Native / Expo requires a native device or emulator. See DEPLOYMENT.md
+#   for instructions on running it with Expo Go.
+
+services:
+  # ── DoctorAPP FastAPI backend ──────────────────────────────────
+  doctorapp-backend:
+    build:
+      context: ./DoctorAPP/back-end
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    env_file:
+      - ./DoctorAPP/back-end/.env
+    environment:
+      - ALLOWED_ORIGINS=*
+      - FRONTEND_URL=http://localhost:3000
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  # ── DoctorAPP Next.js frontend ─────────────────────────────────
+  doctorapp-frontend:
+    build:
+      context: ./DoctorAPP/front-end
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:8000
+    depends_on:
+      - doctorapp-backend
+
+  # ── PatientMobileAPP FastAPI backend ───────────────────────────
+  patient-backend:
+    build:
+      context: ./PatientMobileAPP/backend
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    env_file:
+      - ./PatientMobileAPP/backend/.env
+    environment:
+      - DOCTORAPP_BASE_URL=http://doctorapp-backend:8000
+      - ALLOWED_ORIGINS=*
+    depends_on:
+      - doctorapp-backend
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
