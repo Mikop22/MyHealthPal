@@ -767,8 +767,6 @@ const s = StyleSheet.create({
     textAlign: "center",
     paddingVertical: 16,
   },
-    borderBottomWidth: 0,
-  },
   donorAvatar: {
     width: 40,
     height: 40,
