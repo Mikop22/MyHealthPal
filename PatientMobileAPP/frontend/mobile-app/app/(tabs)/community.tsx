@@ -252,11 +252,13 @@ function RequestCard({
   index,
   shouldAnimate,
   onContribute,
+  disableContribute,
 }: {
   item: CommunityRequest;
   index: number;
   shouldAnimate: boolean;
   onContribute: () => void;
+  disableContribute: boolean;
 }) {
   const pct = Math.round((item.raised / item.amount) * 100);
   const fulfilled = item.raised >= item.amount;
@@ -313,7 +315,7 @@ function RequestCard({
             </Text>
           </View>
 
-          {!fulfilled && (
+          {!fulfilled && !disableContribute && (
             <Pressable style={styles.donateBtn} onPress={onContribute}>
               <AppIcon name="heart" size={14} color="#fff" />
               <Text style={styles.donateBtnText}>Contribute</Text>
@@ -338,6 +340,7 @@ export default function CommunityScreen() {
   const shouldAnimateOnMount = !hasAnimated.current;
   const [requests, setRequests] = useState<CommunityRequest[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isMockData, setIsMockData] = useState(false);
 
   useEffect(() => {
     hasAnimated.current = true;
@@ -347,10 +350,17 @@ export default function CommunityScreen() {
     try {
       const campaigns = await listCampaigns();
       const mapped = campaigns.map((c) => campaignToRequest(c));
-      setRequests(mapped.length > 0 ? mapped : MOCK_CAMPAIGNS);
+      if (mapped.length > 0) {
+        setRequests(mapped);
+        setIsMockData(false);
+      } else {
+        setRequests(MOCK_CAMPAIGNS);
+        setIsMockData(true);
+      }
     } catch {
       /* backend unavailable — show mock campaigns */
       setRequests(MOCK_CAMPAIGNS);
+      setIsMockData(true);
     } finally {
       setLoading(false);
     }
@@ -382,9 +392,10 @@ export default function CommunityScreen() {
         index={index}
         shouldAnimate={shouldAnimateOnMount}
         onContribute={() => handleContribute(item.id)}
+        disableContribute={isMockData}
       />
     ),
-    [shouldAnimateOnMount, handleContribute],
+    [shouldAnimateOnMount, handleContribute, isMockData],
   );
 
   if (loading) {

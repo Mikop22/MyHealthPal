@@ -411,7 +411,7 @@ export default function TriageScreen() {
             <SurfaceCard style={styles.feedbackCard}>
               <ActivityIndicator size="large" color={Colors.accent} />
               <Text style={styles.loadingText}>
-                MedGemma is analyzing your symptoms...
+                Logging your symptoms...
               </Text>
             </SurfaceCard>
           )}

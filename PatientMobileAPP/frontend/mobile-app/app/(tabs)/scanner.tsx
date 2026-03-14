@@ -419,6 +419,7 @@ const styles = StyleSheet.create({
   },
   instructionPill: {
     minHeight: 44,
+    maxWidth: "90%",
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
@@ -431,6 +432,7 @@ const styles = StyleSheet.create({
     borderColor: "rgba(255,255,255,0.10)",
   },
   instructionText: {
+    flexShrink: 1,
     color: "rgba(255,255,255,0.96)",
     fontSize: 14,
     fontFamily: Fonts.semiBold,
