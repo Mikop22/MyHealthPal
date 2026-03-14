@@ -10,7 +10,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { fetchPatients, createTestPatient } from "@/lib/api";
+import { fetchPatients, createTestPatient, submitTestPatientAnalysis } from "@/lib/api";
 import type { PatientRecord } from "@/lib/types";
 import { useCountUp } from "@/lib/useCountUp";
 import { ScheduleModal } from "./_components/ScheduleModal";
@@ -149,6 +149,9 @@ export default function PatientsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [creatingTest, setCreatingTest] = useState(false);
   const [testError, setTestError] = useState<string | null>(null);
+  const [showOnboardingModal, setShowOnboardingModal] = useState(false);
+  const [patientNarrative, setPatientNarrative] = useState("");
+  const [currentTestPatient, setCurrentTestPatient] = useState<PatientRecord | null>(null);
   const router = useRouter();
 
   const loadPatients = useCallback(async () => {
@@ -170,11 +173,33 @@ export default function PatientsPage() {
     setCreatingTest(true);
     setTestError(null);
     try {
+      // Create patient immediately with default narrative
       const patient = await createTestPatient();
+      setCurrentTestPatient(patient);
       await loadPatients();
-      router.push(`/dashboard/${patient.id}`);
+      setShowOnboardingModal(true);
     } catch (err) {
       setTestError(err instanceof Error ? err.message : "Failed to create test patient");
+    } finally {
+      setCreatingTest(false);
+    }
+  };
+
+  const handleOnboardingSubmit = async () => {
+    if (!currentTestPatient) return;
+    
+    setCreatingTest(true);
+    setTestError(null);
+    try {
+      // Update the patient with custom narrative
+      await submitTestPatientAnalysis(currentTestPatient.id);
+      setShowOnboardingModal(false);
+      setPatientNarrative("");
+      setCurrentTestPatient(null);
+      await loadPatients();
+      router.push(`/dashboard/${currentTestPatient.id}`);
+    } catch (err) {
+      setTestError(err instanceof Error ? err.message : "Failed to submit analysis");
     } finally {
       setCreatingTest(false);
     }
@@ -254,7 +279,7 @@ export default function PatientsPage() {
               >
                 <FlaskConical className="h-4 w-4 shrink-0 text-white" />
                 <span className="text-[14px] font-medium tracking-[-0.1px] text-white whitespace-nowrap">
-                  {creatingTest ? "Running AI Pipeline…" : "Add Test Patient"}
+                  {creatingTest ? "Creating Patient…" : "Test Patient Onboarding"}
                 </span>
               </button>
             </div>
@@ -464,6 +489,107 @@ export default function PatientsPage() {
           onClose={() => setScheduleTarget(null)}
           onScheduled={loadPatients}
         />
+      )}
+
+      {/* Test Patient Onboarding Modal */}
+      {showOnboardingModal && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
+          onClick={() => setShowOnboardingModal(false)}
+        >
+          <motion.div
+            initial={{ scale: 0.95, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0.95, opacity: 0 }}
+            transition={{ type: "spring", damping: 20, stiffness: 300 }}
+            className="relative w-full max-w-[600px] mx-4 bg-white/95 border border-white/30 rounded-[24px] backdrop-blur-[24px] shadow-[0_20px_60px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.5)] p-8"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h2 className="text-[24px] font-medium text-[var(--text-primary)] mb-2">
+                  Test Patient Onboarding
+                </h2>
+                <p className="text-[14px] text-[var(--text-secondary)]">
+                  Describe the symptoms for this test patient to see AI analysis in action.
+                </p>
+              </div>
+              <button
+                onClick={() => setShowOnboardingModal(false)}
+                className="w-8 h-8 rounded-full bg-[var(--lavender-bg)] hover:bg-[var(--lavender-border)] transition-colors flex items-center justify-center"
+              >
+                <span className="text-[var(--text-secondary)] text-lg">×</span>
+              </button>
+            </div>
+
+            {/* Symptom Input */}
+            <div className="mb-6">
+              <label className="block text-[14px] font-medium text-[var(--text-primary)] mb-3">
+                Patient Symptoms
+              </label>
+              <textarea
+                value={patientNarrative}
+                onChange={(e) => setPatientNarrative(e.target.value)}
+                placeholder="Describe the patient's symptoms in detail. For example: 'I've been experiencing severe headaches for the past week, accompanied by nausea and sensitivity to light. The pain is worse in the morning and improves throughout the day.'"
+                className="w-full h-32 px-4 py-3 bg-[var(--lavender-bg)]/50 border border-[var(--lavender-border)] rounded-[16px] text-[14px] text-[var(--text-primary)] placeholder-[var(--text-muted)] resize-none focus:outline-none focus:border-[var(--purple-primary)] focus:bg-white/70 transition-colors"
+              />
+            </div>
+
+            {/* Quick Options */}
+            <div className="mb-8">
+              <p className="text-[12px] font-medium text-[var(--text-secondary)] mb-3">
+                Quick Examples (click to use):
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <button
+                  onClick={() => setPatientNarrative("I've been experiencing severe lower abdominal pain for the past four days. It started suddenly and has been constant. The pain wakes me up at night and I feel warm but haven't taken my temperature.")}
+                  className="px-3 py-2 text-[12px] bg-[var(--lavender-bg)]/70 hover:bg-[var(--lavender-bg)] text-[var(--text-primary)] rounded-[12px] transition-colors text-left"
+                >
+                  Abdominal Pain
+                </button>
+                <button
+                  onClick={() => setPatientNarrative("I've been having frequent headaches and dizziness for the past two weeks. Sometimes I see spots in my vision and feel nauseous. This happens more often when I'm stressed.")}
+                  className="px-3 py-2 text-[12px] bg-[var(--lavender-bg)]/70 hover:bg-[var(--lavender-bg)] text-[var(--text-primary)] rounded-[12px] transition-colors text-left"
+                >
+                  Headaches & Dizziness
+                </button>
+                <button
+                  onClick={() => setPatientNarrative("I've been feeling extremely tired for the past month. I can barely get through the day without needing a nap. I also have muscle aches and trouble concentrating at work.")}
+                  className="px-3 py-2 text-[12px] bg-[var(--lavender-bg)]/70 hover:bg-[var(--lavender-bg)] text-[var(--text-primary)] rounded-[12px] transition-colors text-left"
+                >
+                  Fatigue & Muscle Pain
+                </button>
+                <button
+                  onClick={() => setPatientNarrative("I've been having chest pain and shortness of breath when walking up stairs. I also notice my heart racing sometimes even when I'm resting. This has been getting worse over the past month.")}
+                  className="px-3 py-2 text-[12px] bg-[var(--lavender-bg)]/70 hover:bg-[var(--lavender-bg)] text-[var(--text-primary)] rounded-[12px] transition-colors text-left"
+                >
+                  Chest Pain & Heart Issues
+                </button>
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => setShowOnboardingModal(false)}
+                className="px-6 py-3 text-[14px] font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleOnboardingSubmit}
+                disabled={!patientNarrative.trim() || creatingTest}
+                className="px-6 py-3 bg-[var(--purple-primary)] hover:bg-[var(--purple-hover)] disabled:opacity-50 disabled:cursor-not-allowed text-white text-[14px] font-medium rounded-[16px] transition-colors"
+              >
+                {creatingTest ? "Running Analysis..." : "Start AI Analysis"}
+              </button>
+            </div>
+          </motion.div>
+        </motion.div>
       )}
     </>
   );

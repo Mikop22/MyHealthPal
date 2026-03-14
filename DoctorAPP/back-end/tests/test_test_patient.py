@@ -93,8 +93,8 @@ class TestCreateTestPatient:
         return_value=STUB_ANALYSIS,
     )
     @patch("app.routes.patients.settings")
-    def test_success_creates_patient_and_runs_pipeline(self, mock_settings, mock_pipeline):
-        """Happy path — creates patient, runs pipeline, returns completed record."""
+    def test_success_creates_patient_and_returns_in_progress(self, mock_settings, mock_pipeline):
+        """Happy path — creates patient with In Progress status, stores narrative for later analysis."""
         mock_settings.ENABLE_DEMO_ENDPOINTS = True
         client, mock_patients, mock_appointments = _make_client()
         resp = client.post("/api/v1/patients/test")
@@ -104,47 +104,40 @@ class TestCreateTestPatient:
         # Patient record returned with expected fields
         assert body["name"] == "Test Patient"
         assert body["email"] == "test@demo.myhealthpal.com"
-        assert body["status"] == "Completed"
-        assert body["concern"] == "Severe Pelvic Pain"
+        assert body["status"] == "In Progress"
+        assert body["concern"] == ""
         assert "id" in body
 
-        # Pipeline was called
-        mock_pipeline.assert_called_once()
+        # Pipeline should NOT be called in the create endpoint
+        mock_pipeline.assert_not_called()
 
         # DB inserts: one for patient, one for appointment
         assert mock_patients.insert_one.call_count == 1
         assert mock_appointments.insert_one.call_count == 1
 
-        # DB updates: appointment marked completed, patient status updated
+        # DB updates: appointment should have narrative stored, patient status unchanged
         assert mock_appointments.update_one.call_count == 1
         appt_update = mock_appointments.update_one.call_args[0][1]
-        assert appt_update["$set"]["status"] == "completed"
-        assert "analysis_result" in appt_update["$set"]
+        assert "patient_narrative" in appt_update["$set"]
+        # Should contain the actual test narrative, not "stub"
+        assert "I've been experiencing severe lower abdominal pain" in appt_update["$set"]["patient_narrative"]
 
-        assert mock_patients.update_one.call_count == 1
-        patient_update = mock_patients.update_one.call_args[0][1]
-        assert patient_update["$set"]["status"] == "Completed"
+        # Patient should not be updated yet
+        assert mock_patients.update_one.call_count == 0
 
-    @patch(
-        "app.routes.patients.analyze_patient_pipeline",
-        new_callable=AsyncMock,
-        side_effect=RuntimeError("LLM timed out"),
-    )
     @patch("app.routes.patients.settings")
-    def test_500_on_pipeline_failure_cleans_up(self, mock_settings, mock_pipeline):
-        """ML pipeline failure → 500 with generic message + orphaned records cleaned up."""
+    def test_creates_patient_successfully_even_with_pipeline_mocked(self, mock_settings):
+        """Create endpoint should succeed regardless of pipeline issues (pipeline not called)."""
         mock_settings.ENABLE_DEMO_ENDPOINTS = True
         client, mock_patients, mock_appointments = _make_client()
         resp = client.post("/api/v1/patients/test")
-        assert resp.status_code == 500
-        detail = resp.json()["detail"]
-        # Should NOT leak the raw exception string
-        assert "LLM timed out" not in detail
-        assert "pipeline" in detail.lower()
+        assert resp.status_code == 200
+        body = resp.json()
 
-        # Orphaned records should be cleaned up
-        mock_patients.delete_one.assert_called_once()
-        mock_appointments.delete_one.assert_called_once()
+        # Should return patient with In Progress status
+        assert body["status"] == "In Progress"
+        assert body["name"] == "Test Patient"
+        assert body["email"] == "test@demo.myhealthpal.com"
 
     @patch("app.routes.patients.settings")
     def test_403_when_demo_endpoints_disabled(self, mock_settings):
@@ -152,5 +145,70 @@ class TestCreateTestPatient:
         mock_settings.ENABLE_DEMO_ENDPOINTS = False
         client, _, _ = _make_client()
         resp = client.post("/api/v1/patients/test")
+        assert resp.status_code == 403
+        assert "disabled" in resp.json()["detail"].lower()
+
+
+class TestSubmitTestPatientAnalysis:
+    """Tests for POST /api/v1/patients/test/submit."""
+
+    @patch(
+        "app.routes.patients.analyze_patient_pipeline",
+        new_callable=AsyncMock,
+        return_value=STUB_ANALYSIS,
+    )
+    @patch("app.routes.patients.settings")
+    def test_success_runs_pipeline_and_updates_patient(self, mock_settings, mock_pipeline):
+        """Happy path — runs pipeline, updates patient and appointment status."""
+        mock_settings.ENABLE_DEMO_ENDPOINTS = True
+        client, mock_patients, mock_appointments = _make_client()
+        
+        # First create a test patient
+        create_resp = client.post("/api/v1/patients/test")
+        patient_id = create_resp.json()["id"]
+        
+        # Mock the appointment lookup to return a test appointment
+        mock_appointments.find_one.return_value = {
+            "patient_id": patient_id,
+            "patient_narrative": "Test symptoms",
+        }
+        
+        # Now submit the analysis
+        resp = client.post("/api/v1/patients/test/submit", json={"patient_id": patient_id})
+        assert resp.status_code == 200
+        body = resp.json()
+        
+        assert body["status"] == "success"
+        assert "primary_concern" in body
+        
+        # Pipeline should be called
+        mock_pipeline.assert_called_once()
+        
+        # Appointment should be updated with completed status and analysis
+        assert mock_appointments.update_one.call_count >= 1
+        # Patient should be updated with completed status
+        assert mock_patients.update_one.call_count >= 1
+
+    @patch("app.routes.patients.settings")
+    def test_404_when_patient_not_found(self, mock_settings):
+        """Returns 404 when patient doesn't exist."""
+        mock_settings.ENABLE_DEMO_ENDPOINTS = True
+        client, mock_patients, mock_appointments = _make_client()
+        
+        # Mock both lookups to return None (not found)
+        mock_patients.find_one.return_value = None
+        mock_appointments.find_one.return_value = None
+        
+        resp = client.post("/api/v1/patients/test/submit", json={"patient_id": "nonexistent"})
+        assert resp.status_code == 404
+        assert "not found" in resp.json()["detail"].lower()
+
+    @patch("app.routes.patients.settings")
+    def test_403_when_demo_endpoints_disabled(self, mock_settings):
+        """Returns 403 when demo endpoints are disabled."""
+        mock_settings.ENABLE_DEMO_ENDPOINTS = False
+        client, _, _ = _make_client()
+        
+        resp = client.post("/api/v1/patients/test/submit", json={"patient_id": "test-id"})
         assert resp.status_code == 403
         assert "disabled" in resp.json()["detail"].lower()

@@ -9,6 +9,7 @@ from datetime import datetime, timezone
 from fastapi import APIRouter, Request, HTTPException
 from app.models.patient_management import PatientCreate, PatientRecord, AppointmentRecord
 from app.models.patient import AnalysisResponse, PatientPayload, RiskProfile, RiskFactor
+from pydantic import BaseModel
 from app.services.xrp_wallet import create_patient_wallet
 from app.services.email_service import send_appointment_email
 from app.services.analysis_pipeline import analyze_patient_pipeline
@@ -18,6 +19,10 @@ from app.config import settings
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/v1", tags=["patients"])
+
+
+class TestPatientRequest(BaseModel):
+    patient_narrative: str | None = None
 
 
 @router.get("/patients", response_model=list[PatientRecord])
@@ -163,17 +168,17 @@ _TEST_RISK_PROFILE = RiskProfile(
 
 
 @router.post("/patients/test", response_model=PatientRecord)
-async def create_test_patient(request: Request):
-    """Create a test patient with pre-populated biometric data and run the
-    full AI analysis pipeline immediately.
+async def create_test_patient(request: Request, body: TestPatientRequest = TestPatientRequest()):
+    """Create a test patient with pre-populated biometric data.
 
-    Designed for hackathon demos — creates a patient, populates mock Apple
-    Health biometrics and a realistic patient narrative, runs the complete
-    RAG diagnostic pipeline (embeddings → vector search → GPT), and stores
-    the results so the dashboard is instantly available.
+    Designed for hackathon demos — creates a patient with "In Progress" status
+    and stores the custom narrative for later analysis. The AI pipeline runs
+    separately via the submit endpoint.
 
-    No request body required.  Gated behind the ``ENABLE_DEMO_ENDPOINTS``
-    config flag (default: true).
+    Request Body (optional):
+        patient_narrative: Custom symptoms narrative (uses default if not provided)
+    
+    Gated behind the ``ENABLE_DEMO_ENDPOINTS`` config flag (default: true).
     """
     if not settings.ENABLE_DEMO_ENDPOINTS:
         raise HTTPException(
@@ -198,7 +203,7 @@ async def create_test_patient(request: Request):
     db = request.app.state.mongo_client[request.app.state.db_name]
     db.patients.insert_one(record.model_dump())
 
-    # Create an appointment record (mirrors the normal patient flow)
+    # Create an appointment record to store the narrative and future analysis results
     form_token = str(uuid.uuid4())
     appointment_id = str(uuid.uuid4())
     appointment = AppointmentRecord(
@@ -212,12 +217,68 @@ async def create_test_patient(request: Request):
     )
     db.appointments.insert_one(appointment.model_dump())
 
+    # Store the custom narrative (or default) for later analysis
+    narrative = body.patient_narrative or _TEST_NARRATIVE
+    db.appointments.update_one(
+        {"id": appointment_id},
+        {
+            "$set": {
+                "patient_narrative": narrative,
+            },
+        },
+    )
+
+    return record
+
+
+class TestPatientSubmitRequest(BaseModel):
+    patient_id: str
+
+
+@router.post("/patients/test/submit")
+async def submit_test_patient_analysis(request: Request, body: TestPatientSubmitRequest):
+    """Run AI analysis pipeline for a test patient.
+
+    Takes a previously created test patient and runs the full analysis pipeline
+    using their stored narrative and mock biometric data.
+    
+    Request Body:
+        patient_id: ID of the test patient to analyze
+    
+    Gated behind the ``ENABLE_DEMO_ENDPOINTS`` config flag (default: true).
+    """
+    if not settings.ENABLE_DEMO_ENDPOINTS:
+        raise HTTPException(
+            status_code=403,
+            detail="Demo endpoints are disabled in this environment.",
+        )
+
+    db = request.app.state.mongo_client[request.app.state.db_name]
+    
+    # Find the test patient and their appointment
+    patient = db.patients.find_one({"id": body.patient_id})
+    if not patient:
+        raise HTTPException(
+            status_code=404,
+            detail="Test patient not found.",
+        )
+    
+    appointment = db.appointments.find_one({"patient_id": body.patient_id})
+    if not appointment:
+        raise HTTPException(
+            status_code=404,
+            detail="Test patient appointment not found.",
+        )
+    
+    # Get the stored narrative (or use default)
+    narrative = appointment.get("patient_narrative", _TEST_NARRATIVE)
+    
     # Build the test payload with mock biometrics + narrative
     payload = PatientPayload(
-        patient_id=patient_id,
-        sync_timestamp=now,
+        patient_id=body.patient_id,
+        sync_timestamp=datetime.now(timezone.utc).isoformat(),
         hardware_source="Apple Watch Series 9 (Demo)",
-        patient_narrative=_TEST_NARRATIVE,
+        patient_narrative=narrative,
         data=build_mock_biometric_data(),
         risk_profile=_TEST_RISK_PROFILE,
     )
@@ -231,9 +292,6 @@ async def create_test_patient(request: Request):
         )
     except Exception as exc:
         logger.error("Test patient pipeline failed: %s", exc, exc_info=True)
-        # Clean up orphaned records so repeated attempts don't pollute the DB
-        db.patients.delete_one({"id": patient_id})
-        db.appointments.delete_one({"id": appointment_id})
         raise HTTPException(
             status_code=500,
             detail="Analysis pipeline failed. Please check server logs for details.",
@@ -241,7 +299,7 @@ async def create_test_patient(request: Request):
 
     # Persist results so the dashboard endpoint can serve them
     db.appointments.update_one(
-        {"id": appointment_id},
+        {"patient_id": body.patient_id},
         {
             "$set": {
                 "status": "completed",
@@ -253,7 +311,7 @@ async def create_test_patient(request: Request):
 
     # Update patient status & concern
     db.patients.update_one(
-        {"id": patient_id},
+        {"id": body.patient_id},
         {
             "$set": {
                 "status": "Completed",
@@ -262,6 +320,8 @@ async def create_test_patient(request: Request):
         },
     )
 
-    record.status = "Completed"
-    record.concern = analysis.clinical_brief.primary_concern
-    return record
+    return {
+        "status": "success",
+        "message": "Analysis completed successfully.",
+        "primary_concern": analysis.clinical_brief.primary_concern,
+    }

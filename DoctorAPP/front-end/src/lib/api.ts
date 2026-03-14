@@ -47,14 +47,28 @@ export async function createPatient(name: string, email: string): Promise<Patien
   return res.json();
 }
 
-export async function createTestPatient(): Promise<PatientRecord> {
+export async function createTestPatient(patientNarrative?: string): Promise<PatientRecord> {
   const res = await fetch(`${API_BASE}/api/v1/patients/test`, {
     method: "POST",
     headers: { "Content-Type": "application/json", ...COMMON_HEADERS },
+    body: JSON.stringify({ patient_narrative: patientNarrative }),
   });
   if (!res.ok) {
     const body = await res.text();
     throw new Error(`Failed to create test patient: ${body}`);
+  }
+  return res.json();
+}
+
+export async function submitTestPatientAnalysis(patientId: string): Promise<{ status: string; message: string; primary_concern: string }> {
+  const res = await fetch(`${API_BASE}/api/v1/patients/test/submit`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...COMMON_HEADERS },
+    body: JSON.stringify({ patient_id: patientId }),
+  });
+  if (!res.ok) {
+    const body = await res.text();
+    throw new Error(`Failed to submit test patient analysis: ${body}`);
   }
   return res.json();
 }

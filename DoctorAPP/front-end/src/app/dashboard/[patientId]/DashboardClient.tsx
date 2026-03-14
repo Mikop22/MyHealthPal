@@ -1,7 +1,7 @@
 "use client";
 
 import useSWR from "swr";
-import type { AnalysisResponse } from "@/lib/types";
+import type { AnalysisResponse, PatientRecord } from "@/lib/types";
 import { DashboardContent } from "./DashboardContent";
 
 async function fetchDashboard(url: string): Promise<AnalysisResponse> {
@@ -13,6 +13,17 @@ async function fetchDashboard(url: string): Promise<AnalysisResponse> {
     const err = new Error("Dashboard data not ready");
     (err as Error & { status: number }).status = res.status;
     throw err;
+  }
+  return res.json();
+}
+
+async function fetchPatient(url: string): Promise<PatientRecord> {
+  const res = await fetch(url, {
+    cache: "no-store",
+    headers: { "ngrok-skip-browser-warning": "true" },
+  });
+  if (!res.ok) {
+    throw new Error("Patient not found");
   }
   return res.json();
 }
@@ -33,6 +44,17 @@ export function DashboardClient({ patientId }: DashboardClientProps) {
     }
   );
 
+  const { data: patient } = useSWR<PatientRecord>(
+    `/api/v1/patients/${patientId}`,
+    fetchPatient,
+    {
+      revalidateOnFocus: false,
+      shouldRetryOnError: false,
+    }
+  );
+
+  const isTestPatient = patient?.email.includes("demo.myhealthpal.com");
+
   if (isLoading || (!data && !error)) {
     return (
       <div className="flex h-full items-center justify-center">
@@ -51,9 +73,14 @@ export function DashboardClient({ patientId }: DashboardClientProps) {
           <div className="h-10 w-10 animate-pulse rounded-full bg-[var(--lavender-bg)] flex items-center justify-center">
             <div className="h-5 w-5 rounded-full bg-[var(--purple-primary)] animate-ping" />
           </div>
-          <p className="text-[18px] font-medium text-[var(--text-primary)]">Waiting for patient intake…</p>
+          <p className="text-[18px] font-medium text-[var(--text-primary)]">
+            {isTestPatient ? "Analyzing symptoms with AI…" : "Waiting for patient intake…"}
+          </p>
           <p className="text-[14px] text-[var(--text-muted)]">
-            The dashboard will automatically update once the patient completes their intake form.
+            {isTestPatient 
+              ? "The AI is processing symptoms and generating clinical insights. This usually takes 10-15 seconds."
+              : "The dashboard will automatically update once the patient completes their intake form."
+            }
           </p>
           <p className="text-[12px] text-[var(--text-muted)]">Polling every 3 seconds</p>
         </div>
