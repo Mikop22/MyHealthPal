@@ -168,7 +168,7 @@ export default function ScannerScreen() {
             <View style={styles.instructionPill}>
               <AppIcon name="scan-outline" size={16} color="#FFFFFF" />
               <Text style={styles.instructionText}>
-                Align document within frame
+                Scan any medical document for deeper understanding
               </Text>
             </View>
           </View>
@@ -412,7 +412,7 @@ const styles = StyleSheet.create({
   },
   instructionWrap: {
     position: "absolute",
-    top: 60,
+    top: 110,
     left: 0,
     right: 0,
     alignItems: "center",
