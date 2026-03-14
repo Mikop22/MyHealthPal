@@ -9,7 +9,19 @@ import { fetchPatients, fetchAppointmentsByDate } from "@/lib/api";
 import type { PatientRecord, AppointmentRecord } from "@/lib/types";
 import { AnimatedRow, AnimatedSidebar } from "./_components/AnimatedScheduleRows";
 
-/* ── Appointment data ── */
+const MOCK_APPOINTMENTS: AppointmentRecord[] = [
+  { id: "appt-1", patient_id: "mock-1", date: "2026-03-14", time: "09:00", status: "in_progress", form_token: "", created_at: "" },
+  { id: "appt-2", patient_id: "mock-2", date: "2026-03-14", time: "10:30", status: "scheduled", form_token: "", created_at: "" },
+  { id: "appt-3", patient_id: "mock-3", date: "2026-03-14", time: "14:00", status: "scheduled", form_token: "", created_at: "" },
+  { id: "appt-4", patient_id: "mock-4", date: "2026-03-14", time: "15:45", status: "pending", form_token: "", created_at: "" },
+];
+
+const MOCK_PATIENTS: PatientRecord[] = [
+  { id: "mock-1", name: "Sarah Chen", email: "", xrp_wallet_address: "", xrp_wallet_seed: "", created_at: "", status: "active", concern: "Pelvic pain" },
+  { id: "mock-2", name: "Michael Torres", email: "", xrp_wallet_address: "", xrp_wallet_seed: "", created_at: "", status: "active", concern: "Annual checkup" },
+  { id: "mock-3", name: "Emma Watson", email: "", xrp_wallet_address: "", xrp_wallet_seed: "", created_at: "", status: "active", concern: "Follow-up" },
+  { id: "mock-4", name: "James Wilson", email: "", xrp_wallet_address: "", xrp_wallet_seed: "", created_at: "", status: "active", concern: "Blood work review" },
+];
 
 type ApptStatus = "In Progress" | "Confirmed" | "Pending";
 
@@ -116,14 +128,16 @@ function Divider({ strong }: { strong?: boolean }) {
 export default async function SchedulePage() {
   const now = new Date();
   const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
-  const [patients, rawAppointments] = await Promise.all([
+  const [rawPatients, rawAppointments] = await Promise.all([
     fetchPatients().catch(() => [] as PatientRecord[]),
     fetchAppointmentsByDate(today).catch(() => [] as AppointmentRecord[]),
   ]);
 
+  // Use mock data when no real data exists
+  const patients = rawPatients.length > 0 ? rawPatients : MOCK_PATIENTS;
   const appointments = rawAppointments.length > 0
     ? mapAppointmentsToEntries(rawAppointments, patients)
-    : [];
+    : mapAppointmentsToEntries(MOCK_APPOINTMENTS, patients);
 
   const summaryStats = deriveSummary(appointments);
   const typeBreakdown = deriveTypeBreakdown(appointments);
