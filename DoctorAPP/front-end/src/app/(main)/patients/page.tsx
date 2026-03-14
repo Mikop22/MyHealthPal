@@ -6,9 +6,11 @@ import {
   Search,
   SlidersHorizontal,
   CalendarPlus,
+  FlaskConical,
 } from "lucide-react";
 import Link from "next/link";
-import { fetchPatients } from "@/lib/api";
+import { useRouter } from "next/navigation";
+import { fetchPatients, createTestPatient } from "@/lib/api";
 import type { PatientRecord } from "@/lib/types";
 import { useCountUp } from "@/lib/useCountUp";
 import { ScheduleModal } from "./_components/ScheduleModal";
@@ -145,6 +147,9 @@ export default function PatientsPage() {
   const [loading, setLoading] = useState(true);
   const [scheduleTarget, setScheduleTarget] = useState<PatientRecord | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [creatingTest, setCreatingTest] = useState(false);
+  const [testError, setTestError] = useState<string | null>(null);
+  const router = useRouter();
 
   const loadPatients = useCallback(async () => {
     try {
@@ -160,6 +165,20 @@ export default function PatientsPage() {
   useEffect(() => {
     loadPatients();
   }, [loadPatients]);
+
+  const handleCreateTestPatient = async () => {
+    setCreatingTest(true);
+    setTestError(null);
+    try {
+      const patient = await createTestPatient();
+      await loadPatients();
+      router.push(`/dashboard/${patient.id}`);
+    } catch (err) {
+      setTestError(err instanceof Error ? err.message : "Failed to create test patient");
+    } finally {
+      setCreatingTest(false);
+    }
+  };
 
   const filteredPatients = patients.filter((p) =>
     p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -228,8 +247,34 @@ export default function PatientsPage() {
                   Filters
                 </span>
               </button>
+              <button
+                onClick={handleCreateTestPatient}
+                disabled={creatingTest}
+                className="glass-purple flex h-12 items-center gap-2 rounded-[24px] px-6 transition-all hover:brightness-110 hover:shadow-lg active:scale-[0.97] disabled:opacity-60 disabled:cursor-wait"
+              >
+                <FlaskConical className="h-4 w-4 shrink-0 text-white" />
+                <span className="text-[14px] font-medium tracking-[-0.1px] text-white whitespace-nowrap">
+                  {creatingTest ? "Running AI Pipeline…" : "Add Test Patient"}
+                </span>
+              </button>
             </div>
           </div>
+
+          {testError && (
+            <motion.div
+              role="alert"
+              initial={{ opacity: 0, y: -8 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="rounded-[14px] px-4 py-3 text-[13px] font-medium text-red-600"
+              style={{
+                background: "rgba(255,200,200,0.25)",
+                backdropFilter: "blur(8px)",
+                border: "1px solid rgba(255,150,150,0.3)",
+              }}
+            >
+              {testError}
+            </motion.div>
+          )}
 
           {/* Patient table card */}
           <div className="glass-card flex min-h-0 flex-1 flex-col overflow-hidden rounded-[24px]">
